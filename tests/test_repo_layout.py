@@ -54,6 +54,7 @@ class RepoLayoutTest(unittest.TestCase):
         self.assertTrue((ROOT / "apps" / "worker" / "worker" / "main.py").is_file())
         self.assertTrue((ROOT / "run_api.py").is_file())
         self.assertTrue((ROOT / "run_web.py").is_file())
+        self.assertTrue((ROOT / "bootstrap_workstation.ps1").is_file())
 
 
 if __name__ == "__main__":

@@ -187,30 +187,20 @@ git clone git@github.com:YOUR_GITHUB_USERNAME/real_estate_trust_ledger.git
 cd real_estate_trust_ledger
 ```
 
-Then rebuild local dependencies:
+Then the simplest supported setup path is:
 
 ```powershell
-py -3.11 -m venv .venv
-.\.venv\Scripts\python -m pip install --upgrade pip
-.\.venv\Scripts\pip install -r apps\api\requirements.txt
+.\bootstrap_workstation.ps1
 ```
 
-Frontend dependencies:
+That one command will:
 
-```powershell
-Push-Location apps\web
-npm install
-Pop-Location
-```
-
-Database and demo seed:
-
-```powershell
-Push-Location apps\api
-..\..\.venv\Scripts\python -m alembic upgrade head
-..\..\.venv\Scripts\python dev_seed.py
-Pop-Location
-```
+- create `.venv`
+- upgrade `pip`
+- install backend requirements
+- install frontend dependencies
+- run Alembic migrations
+- seed demo data
 
 Start the app from the repo root:
 
@@ -218,6 +208,8 @@ Start the app from the repo root:
 .\.venv\Scripts\python run_api.py
 .\.venv\Scripts\python run_web.py
 ```
+
+If you need a more manual setup for debugging or recovery, the script is just automating the older explicit steps and can be inspected directly in `bootstrap_workstation.ps1`.
 
 ## Daily Push/Pull Routine
 

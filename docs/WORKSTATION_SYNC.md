@@ -86,6 +86,12 @@ For backend logic changes, also run the relevant targeted backend tests and any 
 
 5. continue from the `Next Recommended Actions` in `docs/HANDOFF.md`
 
+If this is the first time the repository is being used on that machine, run:
+
+```powershell
+.\bootstrap_workstation.ps1
+```
+
 ## Repo-Root Runtime Commands
 
 These are the safest cross-device commands because they do not depend on manually changing into subfolders first.
@@ -149,8 +155,9 @@ This is intentionally better than trying to preserve the whole old chat by memor
 4. run verification
 5. sync/push the repo
 6. pull/open the repo at home
-7. read the continuity docs
-8. continue from the exact next actions
+7. if this is the first time on that machine, run `.\bootstrap_workstation.ps1`
+8. read the continuity docs
+9. continue from the exact next actions
 
 ### Home Machine -> Work Machine
 
@@ -161,8 +168,9 @@ The same flow in reverse:
 3. verify
 4. sync
 5. open on the other device
-6. read the continuity docs
-7. resume
+6. if this is the first time on that machine, run `.\bootstrap_workstation.ps1`
+7. read the continuity docs
+8. resume
 
 ## What Not To Rely On
 

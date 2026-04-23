@@ -98,6 +98,16 @@ Run the current regression suite with:
 .\.venv\Scripts\python -m unittest discover -s tests -p "test_*.py"
 ```
 
+## First-Time Machine Bootstrap
+
+For a brand-new home or work machine, the fastest setup path is now:
+
+```powershell
+.\bootstrap_workstation.ps1
+```
+
+That script creates the virtual environment, installs backend/frontend dependencies, runs migrations, and seeds demo data.
+
 ## Fastest Way To See It Live
 
 Use [docs/LOCAL_RUN.md](C:/Users/penty/Documents/dev_apps/gna_version/f33f50b4c7c20f826cd265fc68a54d4cc5921865/docs/LOCAL_RUN.md) for the local live demo path and [docs/GO_LIVE.md](C:/Users/penty/Documents/dev_apps/gna_version/f33f50b4c7c20f826cd265fc68a54d4cc5921865/docs/GO_LIVE.md) for the staged path from local demo to hosted pilot.

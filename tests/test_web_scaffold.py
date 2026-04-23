@@ -174,6 +174,7 @@ class WebScaffoldTests(unittest.TestCase):
         self.assertIn("Sprint 18: Bilingual Frontend Localization", sprint_source)
         self.assertIn("Sprint 19: Compact Workspace And Cinematic Visual System", sprint_source)
         self.assertIn("bilingual frontend localization", readme_source.lower())
+        self.assertIn("bootstrap_workstation.ps1", readme_source)
         self.assertIn("AGENTS.md", readme_source)
         self.assertIn("docs/HANDOFF.md", readme_source)
         self.assertIn("docs/WORKFLOW_GAPS.md", readme_source)
