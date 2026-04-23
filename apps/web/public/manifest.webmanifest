@@ -1,0 +1,17 @@
+{
+  "name": "Trust Ledger",
+  "short_name": "TrustLedger",
+  "description": "Evidence-backed trust workflows for tenants, landlords, agencies, and reviewers.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f2eee6",
+  "theme_color": "#7c2b1a",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

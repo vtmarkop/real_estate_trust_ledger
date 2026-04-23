@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+
+# Node
+node_modules/
+dist/
+coverage/
+
+# Editors and OS
+.idea/
+.vscode/
+Thumbs.db
+.DS_Store
+
+# Local env
+.env
+.env.*
+
+# Build and runtime
+*.log
+tmp/
+temp/
+
+# Local databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Local artifact storage
+private_artifacts/
+apps/api/private_artifacts/

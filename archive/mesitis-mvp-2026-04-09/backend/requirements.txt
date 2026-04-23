@@ -1,0 +1,13 @@
+fastapi
+uvicorn[standard]
+sqlmodel
+psycopg2-binary
+alembic
+passlib
+bcrypt==4.0.1
+PyJWT
+pydantic-settings
+python-multipart
+email-validator
+redis>=5.0.0
+boto3

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title">
+  <title>Trust Ledger</title>
+  <defs>
+    <linearGradient id="bg" x1="0%" x2="100%" y1="0%" y2="100%">
+      <stop offset="0%" stop-color="#221f33" />
+      <stop offset="100%" stop-color="#7c2b1a" />
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="30" fill="url(#bg)" />
+  <path d="M35 33h58v12H67v50H55V45H35z" fill="#fffaf1" />
+  <path d="M72 72h23v23H72z" fill="#0f766e" opacity="0.9" />
+</svg>
