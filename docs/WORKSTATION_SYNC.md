@@ -37,6 +37,8 @@ If Git is temporarily unavailable, a synchronized copy of the repository can sti
 
 For the first-time repository publish flow, use `docs/GITHUB_BOOTSTRAP.md`.
 
+For the shortest ready-to-run morning checklist on the next machine, use `docs/TOMORROW_MORNING.md`.
+
 ## End-Of-Day Checklist On The Current Machine
 
 Before stopping work:
@@ -178,7 +180,7 @@ Do not rely on:
 
 - memory of the last chat alone
 - the visible sidebar thread history alone
-- “I think we were about to...”
+- "I think we were about to..."
 - a single monolithic note that mixes architecture, sprint state, and current tasks together
 
 The continuity system is intentionally split:
