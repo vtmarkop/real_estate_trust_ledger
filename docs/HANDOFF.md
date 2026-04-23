@@ -8,7 +8,7 @@ This file is the current resume point for any new device, new Codex thread, or i
 - Latest non-sprint checkpoint: cross-device continuity and handoff system added
 - Next planned sprint: Sprint 21
 - Recommended immediate focus: workflow continuity audit and product-handoff clarity pass before or alongside deeper Sprint 21 polish
-- Repository bootstrap state: ready for first push to GitHub as `real_estate_trust_ledger`
+- Repository bootstrap state: published to GitHub as `real_estate_trust_ledger` and ready to clone on a new machine
 
 ## Last Completed Work
 

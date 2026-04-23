@@ -25,7 +25,7 @@ Sprint 20 applied that system across the main product pages: richer hero summari
 
 The cross-device continuity checkpoint is now also complete. The repo now carries a professional handoff system for moving the project between machines and new Codex threads without depending on chat memory alone.
 
-The GitHub bootstrap checkpoint is now also complete. The repo is prepared for a first private push under the chosen repository name `real_estate_trust_ledger`, with local-only runtime data excluded and the full home/work handoff routine documented in-project.
+The GitHub bootstrap checkpoint is now also complete. The repo is published to the private GitHub repository `real_estate_trust_ledger`, with local-only runtime data excluded and the full home/work handoff routine documented in-project.
 
 The original launch-critical roadmap remains complete through Sprint 16. The current post-pilot track is now:
 
