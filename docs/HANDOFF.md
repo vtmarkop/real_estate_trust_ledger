@@ -10,6 +10,16 @@ This file is the current resume point for any new device, new Codex thread, or i
 - Recommended immediate focus: continue the archive-alignment UX reset on top of the existing architecture, starting with tighter payment/ticket detail views and task-first navigation in `Rent & Issues`, then continue the broader workflow continuity audit across the remaining role surfaces
 - Repository bootstrap state: published to GitHub as `real_estate_trust_ledger` and ready to clone on a new machine
 
+## Current Git Sync State
+
+- Active branch: `codex/archive-ux-reset`
+- Latest pushed checkpoint commit: `0a928d9`
+- Remote branch status: pushed to `origin/codex/archive-ux-reset`
+- Pull request shortcut:
+  - `https://github.com/vtmarkop/real_estate_trust_ledger/pull/new/codex/archive-ux-reset`
+- Intentional local-only leftover:
+  - `apps/web/package-lock.json` is still locally modified and was not included in the UX reset checkpoint push because it looked like unrelated lockfile churn
+
 ## Last Completed Work
 
 The project is currently coming out of a long frontend refinement arc:
@@ -39,6 +49,7 @@ The newest UX-reset checkpoint added:
 - a dedicated reset branch `codex/archive-ux-reset`
 - a repo-resident change journal in `docs/UX_RESET_LOG.md`
 - the first object-first operations slice, so `Rent & Issues` now starts with property targeting and a selected-property history timeline instead of forcing cross-property scrolling
+- a pushed git checkpoint at commit `0a928d9` so home/work continuation can resume from the same branch state
 
 ## Current Product Reality
 

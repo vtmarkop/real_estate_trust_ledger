@@ -73,6 +73,7 @@ For backend logic changes, also run the relevant targeted backend tests and any 
 ## Start-Of-Day Checklist On The Next Machine
 
 1. sync or pull the latest repository state
+   - if you are continuing the active UX reset, switch to `codex/archive-ux-reset`
 2. open the repository in Codex
 3. read:
    - `README.md`
@@ -125,7 +126,7 @@ Continue the Trust Ledger rebuild from the current repo state.
 
 Read README.md, AGENTS.md, docs/HANDOFF.md, docs/WORKFLOW_GAPS.md, docs/SPRINTS.md, docs/ROADMAP.md, docs/DECISIONS.md, docs/WORKFLOW_MAP.md, and docs/WORKFLOW_DIAGRAMS.md first.
 
-Treat the repository as the primary continuity source. We are currently post-Sprint-20 and the next recommended focus is a workflow continuity audit and role-handoff clarity pass.
+Treat the repository as the primary continuity source. We are currently on branch codex/archive-ux-reset, post-Sprint-20, and the current checkpoint is the archive-alignment UX reset with the first Rent & Issues property-targeting slice complete.
 ```
 
 ## Daily Chat Handoff Procedure

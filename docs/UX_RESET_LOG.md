@@ -15,6 +15,7 @@ The goal is not to weaken the rebuilt backend or role model. The goal is to rest
 - Start date: 2026-04-24
 - Base commit: `a6cfeb4`
 - Working branch: `codex/archive-ux-reset`
+- Latest pushed checkpoint commit: `0a928d9`
 - Backup snapshot: `C:\Users\vmarkopoulos\Documents\dev_projects\MESITIS_app\repo_backups\real_estate_trust_ledger\20260424_134119`
 
 Backup contents:
@@ -83,3 +84,15 @@ For each slice of this reset:
 - Next likely slice:
   - restore tighter payment/ticket detail focus inside the selected property workflow
   - continue replacing note-heavy operational cards with more compact timeline/detail patterns where appropriate
+
+### 2026-04-24 - Home/work handoff note
+
+- The active reset branch was pushed to `origin/codex/archive-ux-reset`
+- The current remote checkpoint is commit `0a928d9`
+- The repo handoff state is now recorded in:
+  - `docs/HANDOFF.md`
+  - `docs/WORKFLOW_GAPS.md`
+  - `docs/WORKFLOW_MAP.md`
+  - this log file
+- One local file remains intentionally outside the checkpoint:
+  - `apps/web/package-lock.json`
