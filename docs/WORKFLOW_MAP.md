@@ -63,6 +63,11 @@ The dense pages are now intentionally split into tabs or lanes:
 
 This matters because it gives us clearer separation of concerns both in the UI and in future code changes.
 
+Current UX-reset note:
+
+- the non-dispute `Rent & Issues` lanes now begin with property targeting, so normal tenant/landlord work can stay inside one selected tenancy context instead of requiring cross-property scrolling
+- the selected property also surfaces an operational history timeline built from the existing payment, deposit, and maintenance workflow timestamps
+
 ## Role Model
 
 The rebuilt product works with capability-driven roles instead of only hard-coded app personas.
@@ -471,12 +476,15 @@ Important architectural difference from the archive MVP:
 
 ### Typical flow
 
-1. Payment is recorded.
-2. Payer attaches proof.
-3. Payee confirms or disputes.
-4. Reviewer issues verdict if needed.
-5. Either side may appeal.
-6. Score impact is recalculated through the central scoring service.
+1. User selects the relevant property from the `Rent & Issues` property menu.
+2. Payment is recorded.
+3. Payer attaches proof.
+4. Payee confirms or rejects.
+5. If rejected, the other party may dispute and send the case into reviewer flow.
+6. Once a payment is disputed or re-opened for review, the normal payee decision path is blocked.
+7. Reviewer issues verdict if needed.
+8. Either side may appeal, which returns the case to `UNDER_REVIEW` for a fresh verdict.
+9. Score impact is recalculated through the central scoring service.
 
 ## Workflow 11: Deposit Settlement, Dispute, Verdict, Appeal
 
@@ -509,10 +517,12 @@ Important architectural difference from the archive MVP:
 
 ### Typical flow
 
-1. Landlord proposes settlement.
-2. Tenant disputes if necessary.
-3. Reviewer issues verdict.
-4. Appeal can reopen the case.
+1. User selects the relevant property from the `Rent & Issues` property menu.
+2. Landlord proposes settlement.
+3. Tenant disputes if necessary.
+4. Reviewer issues verdict.
+5. Either side may appeal, which returns the case to `UNDER_REVIEW`.
+6. The previous verdict is no longer final until a fresh verdict is issued.
 
 ## Workflow 12: Maintenance Ticket, Response, Dispute, Verdict, Appeal
 
@@ -545,10 +555,12 @@ Important architectural difference from the archive MVP:
 
 ### Typical flow
 
-1. Tenant reports a problem with evidence.
-2. Landlord acknowledges and resolves with response evidence.
-3. If disputed, reviewer decides.
-4. Either party can appeal.
+1. User selects the relevant property from the `Rent & Issues` property menu.
+2. Tenant reports a problem with evidence.
+3. Landlord acknowledges and resolves with response evidence.
+4. If disputed, reviewer decides.
+5. Either party can appeal, which returns the case to `UNDER_REVIEW`.
+6. The reopened case stays in reviewer flow until a fresh verdict is issued.
 
 ### Example
 
@@ -590,7 +602,7 @@ Important architectural difference from the archive MVP:
 
 1. Reviewer opens `Review Center`.
 2. They move to `Reviews` for tenancy/evidence/history decisions.
-3. They move to `Disputes` for verdict work.
+3. They move to `Disputes` for first verdicts and appealed re-review work.
 4. Decisions feed the trust ledger and scoring system.
 
 ## Workflow 14: Trust Scores And Score Runtime

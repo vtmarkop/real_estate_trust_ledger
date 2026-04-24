@@ -171,6 +171,8 @@ sequenceDiagram
     end
 ```
 
+Continuity note: once a payment is disputed or appealed, the next action belongs to `Review Center > Disputes` until a reviewer issues the next verdict. The normal counterparty decision path is no longer the active handoff.
+
 ### Why this matters
 
 This is one of the clearest examples of “real workflow” in the rebuild:
@@ -218,6 +220,8 @@ sequenceDiagram
     end
 ```
 
+Continuity note: an appeal returns the ticket to `Review Center > Disputes`, and the earlier verdict is no longer final until a fresh verdict is issued.
+
 ## Diagram 7: Deposit Settlement Workflow With Dispute And Appeal
 
 ```mermaid
@@ -251,6 +255,8 @@ sequenceDiagram
         Service-->>API: settlement stands
     end
 ```
+
+Continuity note: an appeal returns the deposit case to `Review Center > Disputes`, and the earlier verdict is no longer final until a fresh verdict is issued.
 
 ## Diagram 8: Review Center Internal Flow
 

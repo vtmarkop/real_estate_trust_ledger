@@ -5,9 +5,9 @@ This file is the current resume point for any new device, new Codex thread, or i
 ## Current Checkpoint
 
 - Program state: completed through Sprint 20
-- Latest non-sprint checkpoint: cross-device continuity and handoff system added
+- Latest non-sprint checkpoint: archive-alignment UX reset started, with the first `Rent & Issues` targeting/timeline slice completed
 - Next planned sprint: Sprint 21
-- Recommended immediate focus: workflow continuity audit and product-handoff clarity pass before or alongside deeper Sprint 21 polish
+- Recommended immediate focus: continue the archive-alignment UX reset on top of the existing architecture, starting with tighter payment/ticket detail views and task-first navigation in `Rent & Issues`, then continue the broader workflow continuity audit across the remaining role surfaces
 - Repository bootstrap state: published to GitHub as `real_estate_trust_ledger` and ready to clone on a new machine
 
 ## Last Completed Work
@@ -27,29 +27,43 @@ The newest repo-level continuity work added:
 - `docs/WORKSTATION_SYNC.md` for daily home/work machine continuity
 - `docs/GITHUB_BOOTSTRAP.md` for first-repo creation and remote setup
 
+The newest product continuity checkpoint added:
+
+- explicit appealed-versus-first-review stage language in the user dispute desk
+- matching reviewer handoff framing in `Review Center > Disputes`
+- a payment guard that keeps disputed or re-opened payment cases inside reviewer flow until a fresh verdict is issued
+
+The newest UX-reset checkpoint added:
+
+- a protected pre-reset backup snapshot under `repo_backups\real_estate_trust_ledger\20260424_134119`
+- a dedicated reset branch `codex/archive-ux-reset`
+- a repo-resident change journal in `docs/UX_RESET_LOG.md`
+- the first object-first operations slice, so `Rent & Issues` now starts with property targeting and a selected-property history timeline instead of forcing cross-property scrolling
+
 ## Current Product Reality
 
 The rebuilt application is functionally broad and much more complete than the original MVP, but the current product risk is no longer missing core architecture. The main risk is workflow continuity and user clarity across role handoffs.
 
-That means the highest-value continuation work is not “add random new capability.” It is:
+That means the highest-value continuation work is not "add random new capability." It is:
 
 - verify every important workflow end to end
 - confirm each role sees the minimum necessary surface
 - confirm score, dispute, appeal, and review state changes are obvious to users
 - fix any workflow that is technically implemented but operationally confusing
 
-## Known Active Concern
+## Latest Audit Outcome
 
-The clearest current example is dispute appeal continuity:
+The first workflow continuity checkpoint after Sprint 20 focused on dispute appeal continuity.
 
-- the backend is correct
+This checkpoint confirmed and tightened the following behavior:
+
 - appealed maintenance/payment/deposit items return to `UNDER_REVIEW`
-- the internal reviewer/admin queue does pick them back up
-- score deltas only count while a case is in `VERDICT_ISSUED`
+- the reviewer queue now surfaces them as appealed re-reviews awaiting a fresh verdict
+- the user-facing dispute desk now shows explicit stage, notes, and next-step messaging
+- payment disputes can no longer be overridden through the normal payee decision path once reviewer flow has started
+- score deltas still only count while a case is in `VERDICT_ISSUED`
 
-But the product continuity is still weaker than it should be because the user-facing side does not make the “appealed -> re-entered internal review -> waiting for a fresh verdict” handoff obvious enough.
-
-This concern should be treated as a model for the next audit, not as an isolated bug.
+The active concern now is broader audit coverage plus archive-alignment on presentation. Other workflows may still be technically complete but less obvious than they should be, and the operations workspace is now in an active UI reset to recover original task clarity without weakening the rebuild architecture.
 
 ## Workflow Audit Standard
 
@@ -64,24 +78,26 @@ Record active findings in `docs/WORKFLOW_GAPS.md`.
 
 ## Next Recommended Actions
 
-1. Run a full workflow continuity scan across:
+1. Continue the `Rent & Issues` archive-alignment reset:
+   - tighten payment and maintenance detail focus inside the selected property workflow
+   - keep one property active at a time for normal tenant/landlord work
+   - continue reintroducing compact timeline/history readability where the archive was clearer
+2. Run the broader workflow continuity scan across:
    - property creation and assignment
    - tenancy creation and activation
    - evidence upload and review
-   - payment lifecycle and disputes
-   - deposit lifecycle and disputes
-   - maintenance lifecycle and disputes
-   - appeal and reviewer re-verdict flows
-   - score side effects after verdicts and appeals
+   - score side effects outside the live dispute cards
    - consent and trust-sharing flows
    - agency screening and application review flows
-2. For each workflow, decide whether the gap is:
+   - reviewer-facing history and next-step clarity after non-dispute decisions
+3. For each workflow, decide whether the gap is:
    - backend logic
    - frontend visibility
    - wording/status clarity
    - role/handoff continuity
-3. Fix gaps by extending the existing architecture, not by creating parallel flows
-4. Update:
+4. Treat the dispute and appeal re-review flow as the reference model for clear role handoffs
+5. Fix gaps by extending the existing architecture, not by creating parallel flows
+6. Update:
    - `docs/WORKFLOW_GAPS.md`
    - `docs/WORKFLOW_MAP.md`
    - `docs/WORKFLOW_DIAGRAMS.md`
@@ -116,5 +132,5 @@ Continue the Trust Ledger rebuild from the current repo state.
 
 Read README.md, AGENTS.md, docs/HANDOFF.md, docs/WORKFLOW_GAPS.md, docs/SPRINTS.md, docs/ROADMAP.md, docs/DECISIONS.md, docs/WORKFLOW_MAP.md, and docs/WORKFLOW_DIAGRAMS.md first.
 
-We are currently post-Sprint-20. The main next priority is a workflow continuity audit and fixing any implemented-but-confusing role handoffs according to the existing architecture.
+We are currently post-Sprint-20. The dispute and appeal handoff pass is complete, and the next priority is the broader workflow continuity audit across the remaining role surfaces according to the existing architecture.
 ```

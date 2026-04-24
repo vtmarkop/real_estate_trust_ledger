@@ -716,3 +716,33 @@ export var EL_PATCH_TRANSLATIONS = {
   "closed listings on record.": "κλειστές αγγελίες στο αρχείο.",
   "applied for": "έκανε αίτηση για"
 };
+
+Object.assign(EL_PATCH_TRANSLATIONS, {
+  "Appealed by": "Appealed by",
+  "Appealed at": "Appealed at",
+  "Requested at": "Requested at",
+  "Issue fresh verdict": "Issue fresh verdict",
+  "Appeal and send back for review": "Appeal and send back for review",
+  "This area surfaces anything already disputed, appealed, or ready for dispute right now, so you do not have to hunt through each tenancy to find the next handoff.":
+    "This area surfaces anything already disputed, appealed, or ready for dispute right now, so you do not have to hunt through each tenancy to find the next handoff.",
+  "Next step": "Next step",
+  "Case stage": "Case stage",
+  "Case notes": "Case notes",
+  "Reviewer handoff": "Reviewer handoff",
+  "Payment dispute is open": "Payment dispute is open",
+  "Appealed and back in review": "Appealed and back in review",
+  "Back in review": "Back in review",
+  "Waiting for first review": "Waiting for first review",
+  "Verdict issued": "Verdict issued",
+  "An appeal returned this case to Review Center. The previous verdict is no longer final until a reviewer issues a fresh verdict.":
+    "An appeal returned this case to Review Center. The previous verdict is no longer final until a reviewer issues a fresh verdict.",
+  "This case is waiting for the first reviewer verdict.":
+    "This case is waiting for the first reviewer verdict.",
+  "This case is with the reviewer queue right now.":
+    "This case is with the reviewer queue right now.",
+  "A reviewer has already issued a verdict. Either side can appeal if new context should reopen the case.":
+    "A reviewer has already issued a verdict. Either side can appeal if new context should reopen the case.",
+  "Reviewer verdict": "Reviewer verdict",
+  "Use this lane for first verdicts and appealed re-reviews. If a case comes back through an appeal, replace the earlier verdict with a fresh one here.":
+    "Use this lane for first verdicts and appealed re-reviews. If a case comes back through an appeal, replace the earlier verdict with a fresh one here."
+});

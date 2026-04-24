@@ -159,6 +159,19 @@ function isAgencyManagedProperty(form) {
   return (form && form.management_mode) === "agency_managed";
 }
 
+function getPropertyWorkspaceAccess(options) {
+  var propertyCount = Number((options && options.propertyCount) || 0);
+  var ownedPropertyCount = Number((options && options.ownedPropertyCount) || 0);
+  var canOperateAgency = Boolean(options && options.canOperateAgency);
+  var tenancyRole = String((options && options.tenancyRole) || "");
+  var canCreate = tenancyRole === "landlord" || canOperateAgency || ownedPropertyCount > 0;
+
+  return {
+    canCreate: canCreate,
+    canSee: propertyCount > 0 || canCreate
+  };
+}
+
 export function RecordsPage() {
   var session = useSession();
   var stateTuple = React.useState({
@@ -622,6 +635,32 @@ export function RecordsPage() {
     }
   }
 
+  var ownedPropertyCountForAccess = session.user
+    ? state.properties.filter(function countOwnedProperties(propertyRecord) {
+        return propertyRecord.created_by_user_id === session.user.id;
+      }).length
+    : 0;
+  var propertyWorkspaceAccessForHooks = getPropertyWorkspaceAccess({
+    propertyCount: state.properties.length,
+    ownedPropertyCount: ownedPropertyCountForAccess,
+    canOperateAgency: session.capabilities.canOperateAgency,
+    tenancyRole: tenancyForm.user_role
+  });
+
+  React.useEffect(function normalizeRecordLanes() {
+    if (!propertyWorkspaceAccessForHooks.canSee && activeRecordsSection === "properties") {
+      setActiveRecordsSection("tenancies");
+    }
+    if (!propertyWorkspaceAccessForHooks.canCreate && propertyWorkspace === "create") {
+      setPropertyWorkspace("manage");
+    }
+  }, [
+    activeRecordsSection,
+    propertyWorkspace,
+    propertyWorkspaceAccessForHooks.canCreate,
+    propertyWorkspaceAccessForHooks.canSee
+  ]);
+
   if (state.status === "loading") {
     return e("div", { className: "state-panel" }, [
       e("p", { className: "eyebrow", key: "eyebrow" }, "Rental Records"),
@@ -657,17 +696,34 @@ export function RecordsPage() {
   var totalArtifactCount = Object.values(state.evidenceByTenancy).reduce(function sumArtifacts(total, list) {
     return total + (Array.isArray(list) ? list.length : 0);
   }, 0);
+  var propertyWorkspaceAccess = getPropertyWorkspaceAccess({
+    propertyCount: state.properties.length,
+    ownedPropertyCount: reusableOwnedProperties.length,
+    canOperateAgency: session.capabilities.canOperateAgency,
+    tenancyRole: tenancyForm.user_role
+  });
+  var canCreatePropertyWorkspace = propertyWorkspaceAccess.canCreate;
+  var canSeePropertyWorkspace = propertyWorkspaceAccess.canSee;
+  var propertyWorkspaceTabs = canCreatePropertyWorkspace
+    ? [
+        { id: "create", label: "Create property", meta: "New property setup" },
+        { id: "manage", label: "Manage saved properties", meta: String(state.properties.length) + " records" }
+      ]
+    : [];
+  var effectivePropertyWorkspace = canCreatePropertyWorkspace ? propertyWorkspace : "manage";
   var recordsSectionTabs = [
     {
       id: "tenancies",
       label: "Tenancy records",
       meta: String(state.tenancies.length) + " active or past records"
     },
-    {
-      id: "properties",
-      label: "Properties & setup",
-      meta: String(state.properties.length) + " saved properties"
-    },
+    canSeePropertyWorkspace
+      ? {
+          id: "properties",
+          label: "Properties & setup",
+          meta: String(state.properties.length) + " saved properties"
+        }
+      : null,
     {
       id: "artifacts",
       label: "Artifacts",
@@ -678,7 +734,7 @@ export function RecordsPage() {
       label: "History & references",
       meta: String(state.historyImports.length + state.referenceRequests.length) + " import or reference items"
     }
-  ];
+  ].filter(Boolean);
   var recordsSectionCopyByTab = {
     tenancies:
       "Focus on tenancy records only. This area is now limited to setting up or validating the tenancy itself.",
@@ -718,11 +774,13 @@ export function RecordsPage() {
           value: String(state.tenancies.length),
           copy: "Active and historical tenancy records."
         }),
-        e(HeroStat, {
-          label: "Saved properties",
-          value: String(state.properties.length),
-          copy: String(reusableOwnedProperties.length) + " reusable by you for future tenancy setup."
-        }),
+        canSeePropertyWorkspace
+          ? e(HeroStat, {
+              label: "Saved properties",
+              value: String(state.properties.length),
+              copy: String(reusableOwnedProperties.length) + " reusable by you for future tenancy setup."
+            })
+          : null,
         e(HeroStat, {
           label: "Artifacts & references",
           value: String(totalArtifactCount + state.referenceRequests.length),
@@ -734,7 +792,10 @@ export function RecordsPage() {
     e("section", { className: "detail-panel section-switcher", key: "section-switcher" }, [
       e(SectionHeading, {
         title: "Work in one lane at a time",
-        copy: recordsSectionCopyByTab[activeRecordsSection],
+        copy:
+          activeRecordsSection === "properties" && !canCreatePropertyWorkspace
+            ? "Property setup is handled by the owner or agency operator. This lane only shows the property records already linked to your account."
+            : recordsSectionCopyByTab[activeRecordsSection],
         key: "heading"
       }),
       e(SegmentedTabs, {
@@ -976,24 +1037,26 @@ export function RecordsPage() {
           )
         ])
       ]),
-      e("article", { className: "detail-panel", key: "property-summary", id: "records-section-properties" }, [
+      canSeePropertyWorkspace
+        ? e("article", { className: "detail-panel", key: "property-summary", id: "records-section-properties" }, [
         e("h2", { className: "detail-title", key: "title" }, "Saved properties"),
         e(
           "p",
           { className: "empty-copy", key: "copy" },
-          "Landlords can save a property first, assign it to an agency or a prospective tenant, and then reuse it when a tenancy starts."
+          canCreatePropertyWorkspace
+            ? "Landlords can save a property first, assign it to an agency or a prospective tenant, and then reuse it when a tenancy starts."
+            : "These property records are linked to your account through live workflows, but property setup stays with the owner or agency operator."
         ),
-        e(SegmentedTabs, {
-          key: "property-workspace-tabs",
-          tabs: [
-            { id: "create", label: "Create property", meta: "New property setup" },
-            { id: "manage", label: "Manage saved properties", meta: String(state.properties.length) + " records" }
-          ],
-          activeTab: propertyWorkspace,
-          onChange: setPropertyWorkspace,
-          "aria-label": "Property workspace tabs"
-        }),
-        propertyWorkspace === "create"
+        canCreatePropertyWorkspace
+          ? e(SegmentedTabs, {
+              key: "property-workspace-tabs",
+              tabs: propertyWorkspaceTabs,
+              activeTab: effectivePropertyWorkspace,
+              onChange: setPropertyWorkspace,
+              "aria-label": "Property workspace tabs"
+            })
+          : null,
+        effectivePropertyWorkspace === "create"
           ? e("div", { className: "auth-form", key: "create-property-form" }, [
           e("div", { className: "form-grid", key: "create-grid" }, [
             e("label", { className: "field", key: "create-property-label" }, [
@@ -1155,7 +1218,7 @@ export function RecordsPage() {
           )
         ])
           : null,
-        propertyWorkspace === "manage" && state.properties.length
+        effectivePropertyWorkspace === "manage" && state.properties.length
           ? e(
               "div",
               { className: "list-stack", key: "list" },
@@ -1434,7 +1497,7 @@ export function RecordsPage() {
               })
             )
           : null,
-        propertyWorkspace === "manage" && !state.properties.length
+        effectivePropertyWorkspace === "manage" && !state.properties.length
           ? e(
               "p",
               { className: "empty-copy", key: "empty" },
@@ -1442,6 +1505,7 @@ export function RecordsPage() {
             )
           : null
       ])
+        : null
     ]),
     e("section", { className: "split-grid", key: "top", id: "records-section-history" }, [
       e("article", { className: "detail-panel", key: "imports" }, [

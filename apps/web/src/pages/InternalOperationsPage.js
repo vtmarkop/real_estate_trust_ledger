@@ -10,6 +10,10 @@ import {
   TimelineEntry
 } from "../components/PageChrome.js";
 import { SegmentedTabs } from "../components/SegmentedTabs.js";
+import {
+  buildDisputeLifecycle,
+  formatWorkflowLabel
+} from "../lib/disputeWorkflow.js";
 import { apiRequest } from "../lib/api.js";
 import { e } from "../lib/i18n.js";
 
@@ -836,7 +840,7 @@ export function InternalOperationsPage() {
     overview: "Start with the platform picture before acting on any queue or control.",
     controls: "Keep manual controls separate from review decisions so operators do not mix system actions with case work.",
     reviews: "Use this lane only for tenancy, evidence, and history review decisions.",
-    disputes: "Use this lane only for adjudication and verdict work.",
+    disputes: "Use this lane for first verdicts and appealed re-reviews. If a case comes back through an appeal, replace the earlier verdict with a fresh one here.",
     runtime: "Use the runtime lane when following automation, notifications, and worker execution.",
     audit: "Use audit when you need traceability, not operations."
   };
@@ -1534,13 +1538,21 @@ export function InternalOperationsPage() {
                   var verdictKey = "deposit:" + depositRecord.id;
                   var verdictForm =
                     disputeVerdictForms[verdictKey] || buildDisputeVerdictForm();
+                  var lifecycle = buildDisputeLifecycle({
+                    status: depositRecord.deposit_status,
+                    appealRequestedAt: depositRecord.appeal_requested_at,
+                    appealRequestedByName: depositRecord.appeal_requested_by_user_full_name,
+                    reviewRequestedAt: depositRecord.review_requested_at,
+                    reviewRequestedByName: depositRecord.review_requested_by_user_full_name,
+                    disputedByName: depositRecord.disputed_by_user_full_name
+                  });
                 return e("article", { className: "stack-card", key: depositRecord.id }, [
                     e("strong", { className: "stack-card-title", key: "title" }, "Deposit"),
                     e("div", { className: "status-row", key: "status" }, [
                       e(StatusBadge, {
-                        key: "deposit-status",
-                        tone: inferStatusTone(depositRecord.deposit_status),
-                        label: depositRecord.deposit_status
+                        key: "stage",
+                        tone: lifecycle.stageTone,
+                        label: lifecycle.stageLabel
                       })
                     ]),
                     e("div", { className: "fact-grid", key: "meta" }, [
@@ -1560,8 +1572,33 @@ export function InternalOperationsPage() {
                         label: "Withheld",
                         value: String(depositRecord.withheld_amount_minor),
                         tone: "warning"
-                      })
+                      }),
+                      lifecycle.requestedByValue
+                        ? e(FactPill, {
+                            key: "requested-by",
+                            label: lifecycle.requestedByLabel,
+                            value: lifecycle.requestedByValue
+                          })
+                        : null,
+                      lifecycle.requestedAtValue
+                        ? e(FactPill, {
+                            key: "requested-at",
+                            label: lifecycle.requestedAtLabel,
+                            value: lifecycle.requestedAtValue
+                          })
+                        : null
                     ]),
+                    lifecycle.stageSummary
+                      ? e(
+                          NoteBlock,
+                          {
+                            key: "handoff",
+                            tone: lifecycle.stageTone,
+                            label: "Reviewer handoff"
+                          },
+                          lifecycle.stageSummary
+                        )
+                      : null,
                     e(NoteBlock, {
                       key: "summary",
                       tone: "danger",
@@ -1663,7 +1700,7 @@ export function InternalOperationsPage() {
                         reviewAction.kind === "deposit-dispute" &&
                           reviewAction.id === depositRecord.id
                           ? "Saving..."
-                          : "Issue verdict"
+                          : lifecycle.verdictActionLabel
                       )
                     ])
                   ]);
@@ -1685,13 +1722,21 @@ export function InternalOperationsPage() {
                 var verdictKey = "maintenance:" + ticket.id;
                 var verdictForm =
                   disputeVerdictForms[verdictKey] || buildDisputeVerdictForm();
+                var lifecycle = buildDisputeLifecycle({
+                  status: ticket.ticket_status,
+                  appealRequestedAt: ticket.appeal_requested_at,
+                  appealRequestedByName: ticket.appeal_requested_by_user_full_name,
+                  reviewRequestedAt: ticket.review_requested_at,
+                  reviewRequestedByName: ticket.review_requested_by_user_full_name,
+                  disputedByName: ticket.disputed_by_user_full_name
+                });
                 return e("article", { className: "stack-card", key: ticket.id }, [
                   e("strong", { className: "stack-card-title", key: "title" }, ticket.title),
                   e("div", { className: "status-row", key: "status" }, [
                     e(StatusBadge, {
-                      key: "ticket-status",
-                      tone: inferStatusTone(ticket.ticket_status),
-                      label: ticket.ticket_status
+                      key: "stage",
+                      tone: lifecycle.stageTone,
+                      label: lifecycle.stageLabel
                     })
                   ]),
                   e("div", { className: "fact-grid", key: "meta" }, [
@@ -1699,8 +1744,33 @@ export function InternalOperationsPage() {
                       key: "reporter",
                       label: "Reported by",
                       value: ticket.created_by_user_full_name
-                    })
+                    }),
+                    lifecycle.requestedByValue
+                      ? e(FactPill, {
+                          key: "requested-by",
+                          label: lifecycle.requestedByLabel,
+                          value: lifecycle.requestedByValue
+                        })
+                      : null,
+                    lifecycle.requestedAtValue
+                      ? e(FactPill, {
+                          key: "requested-at",
+                          label: lifecycle.requestedAtLabel,
+                          value: lifecycle.requestedAtValue
+                        })
+                      : null
                   ]),
+                  lifecycle.stageSummary
+                    ? e(
+                        NoteBlock,
+                        {
+                          key: "handoff",
+                          tone: lifecycle.stageTone,
+                          label: "Reviewer handoff"
+                        },
+                        lifecycle.stageSummary
+                      )
+                    : null,
                   e(NoteBlock, {
                     key: "dispute-notes",
                     tone: "danger",
@@ -1804,7 +1874,7 @@ export function InternalOperationsPage() {
                       reviewAction.kind === "maintenance-dispute" &&
                         reviewAction.id === ticket.id
                         ? "Saving..."
-                        : "Issue verdict"
+                        : lifecycle.verdictActionLabel
                     )
                   ])
                 ]);
@@ -1826,13 +1896,25 @@ export function InternalOperationsPage() {
                 var verdictKey = "payment:" + payment.id;
                 var verdictForm =
                   disputeVerdictForms[verdictKey] || buildDisputeVerdictForm();
+                var lifecycle = buildDisputeLifecycle({
+                  status: payment.payment_status,
+                  appealRequestedAt: payment.appeal_requested_at,
+                  appealRequestedByName: payment.appeal_requested_by_user_full_name,
+                  reviewRequestedAt: payment.review_requested_at,
+                  reviewRequestedByName: payment.review_requested_by_user_full_name,
+                  disputedByName: payment.disputed_by_user_full_name
+                });
                 return e("article", { className: "stack-card", key: payment.id }, [
-                  e("strong", { className: "stack-card-title", key: "title" }, payment.payment_type),
+                  e(
+                    "strong",
+                    { className: "stack-card-title", key: "title" },
+                    formatWorkflowLabel(payment.payment_type)
+                  ),
                   e("div", { className: "status-row", key: "status" }, [
                     e(StatusBadge, {
-                      key: "payment-status",
-                      tone: inferStatusTone(payment.payment_status),
-                      label: payment.payment_status
+                      key: "stage",
+                      tone: lifecycle.stageTone,
+                      label: lifecycle.stageLabel
                     })
                   ]),
                   e("div", { className: "fact-grid", key: "meta" }, [
@@ -1840,8 +1922,33 @@ export function InternalOperationsPage() {
                       key: "route",
                       label: "Route",
                       value: payment.payer_user_full_name + " -> " + payment.payee_user_full_name
-                    })
+                    }),
+                    lifecycle.requestedByValue
+                      ? e(FactPill, {
+                          key: "requested-by",
+                          label: lifecycle.requestedByLabel,
+                          value: lifecycle.requestedByValue
+                        })
+                      : null,
+                    lifecycle.requestedAtValue
+                      ? e(FactPill, {
+                          key: "requested-at",
+                          label: lifecycle.requestedAtLabel,
+                          value: lifecycle.requestedAtValue
+                        })
+                      : null
                   ]),
+                  lifecycle.stageSummary
+                    ? e(
+                        NoteBlock,
+                        {
+                          key: "handoff",
+                          tone: lifecycle.stageTone,
+                          label: "Reviewer handoff"
+                        },
+                        lifecycle.stageSummary
+                      )
+                    : null,
                   e(NoteBlock, {
                     key: "dispute-notes",
                     tone: "danger",
@@ -1947,7 +2054,7 @@ export function InternalOperationsPage() {
                       reviewAction.kind === "payment-dispute" &&
                         reviewAction.id === payment.id
                         ? "Saving..."
-                        : "Issue verdict"
+                        : lifecycle.verdictActionLabel
                     )
                   ])
                 ]);

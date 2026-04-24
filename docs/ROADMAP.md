@@ -72,124 +72,52 @@ Post-pilot expansion: added a PWA-ready web shell, mobile-oriented shell polish,
 
 ## Post-Pilot Experience Track
 
-The original launch-critical roadmap is complete, and Sprint 17 has now closed the first frontend-parity/operator-clarity lane.
+The original launch-critical roadmap is complete through Sprint 16.
 
-The next roadmap lane is focused on operator experience, bilingual usability, visual polish, and frontend parity. This is intentionally additive: it should improve usability and brand perception without reopening the core trust, scoring, security, or automation architecture.
+This file stays summary-only. Detailed sprint history and checkpoint notes belong in `docs/SPRINTS.md`.
+
+The current roadmap lane is intentionally additive: improve operator clarity, bilingual usability, visual polish, and release readiness without reopening the core trust, scoring, security, or automation architecture.
 
 ### Sprint 17
 
-Frontend parity and information architecture:
-
-- completed record-creation parity for tenancy creation by counterparty email,
-- completed estate portfolio helpers with custom tags and fast filtering,
-- completed agency team-access management from the web app with email-based membership adds and role/access updates,
-- completed internal operator parity for score refresh controls, follow-up creation, automation execution, and score-batch visibility,
-- completed a clearer dispute desk in the operational workspace so disputable items and open disputes are visible at a glance,
-- upgraded private evidence storage from a local-only assumption to a pluggable local-private or S3-compatible/MinIO-ready lane while preserving signed API-controlled access,
-- laid the structural foundation for Sprint 18 compact-mode work by improving information architecture before the visual redesign.
+Frontend parity and information architecture for records, agency, internal operations, dispute visibility, and evidence-backed operator flows.
 
 ### Post-Sprint-17 Parity Remediation Checkpoint
 
-Archive-vs-rebuild audit and parity hardening:
-
-- verified that the important archive MVP workflows are represented in the rebuild, with intentional replacement of the old judge model by the internal reviewer/admin model,
-- completed document-backed operational uploads for payments, deposits, and maintenance flows,
-- completed artifact reopening from operational records through signed access URLs,
-- completed single-session revoke in the account workspace,
-- completed internal cleanup controls for expired consent reminders and stale follow-up tasks,
-- added written parity documentation before moving into Sprint 18 visual/design work.
+Archive-vs-rebuild parity audit, operational upload parity, artifact reopen flows, single-session revoke, and internal cleanup controls.
 
 ### Sprint 18: Bilingual Frontend Localization
 
-Bilingual frontend localization:
-
-- add a reusable frontend language layer instead of one-off translated screens,
-- ship a visible English/Greek switcher that works in both public and authenticated surfaces,
-- translate the rebuilt frontend text surface into Greek while preserving English as a supported language,
-- localize common frontend error presentation and locale-aware number formatting before the visual redesign begins.
+Reusable English/Greek frontend localization, live language switching, localized error presentation, and locale-aware formatting.
 
 ### Pre-Sprint-19 Documentation And Consistency Checkpoint
 
-Documentation and consistency hardening:
-
-- add a full technical codebase reference covering models, schemas, services, routes, worker runtime, frontend pages, and seeded workflows,
-- correct documentation inconsistencies uncovered during the scan,
-- align runtime stage/status markers with the actual rebuild checkpoint,
-- make the next visual sprint easier to enter without rediscovering the current architecture from scratch.
+Codebase reference, documentation cleanup, and checkpoint alignment before the visual redesign track.
 
 ### Post-Sprint-18 Workflow Simplification Checkpoint
 
-Workflow and separation-of-concerns hardening:
-
-- split the densest frontend workspaces into focused lanes so users work in one operational concern at a time,
-- finish the agency and internal workspace separation pattern started in records and operations,
-- add a dedicated workflow map that traces the main business flows from backend models/services/routes into frontend pages and sections,
-- reduce cross-lane cognitive overload before starting visual redesign work.
+Focused workspace lanes, stronger separation of concerns, and a workflow map that traces backend logic into frontend use.
 
 ### Post-Sprint-18 Workflow Diagram Checkpoint
 
-Visual workflow traceability:
-
-- add Mermaid diagrams for the main implemented product workflows instead of relying on prose alone,
-- make role handoffs, dispute escalation, and review responsibilities easier to understand at a glance,
-- keep the diagrams aligned with the current rebuild rather than the original archive assumptions.
+Mermaid diagrams for the implemented workflows so role handoffs and review paths are visible at a glance.
 
 ### Sprint 19: Compact Workspace And Cinematic Visual System
 
-Compact workspace and cinematic design system:
-
-- introduce density tokens and a compact view option for operational pages,
-- redesign the color system around deep neutrals, controlled red accents, stronger contrast, and media-like depth,
-- add typography, spacing, elevation, and hover-state rules that feel more premium and modern,
-- take inspiration from Netflix's cinematic clarity and confident contrast without copying Netflix branding or product patterns literally.
-
-Completed checkpoint notes:
-
-- the shell now exposes a real compact/comfortable density toggle,
-- spacing is now driven by shared density tokens rather than fixed values alone,
-- the visual system now uses a darker cinematic palette with clearer panel hierarchy and stronger active states,
-- the next sprint can focus on page-by-page conversion instead of inventing the base style system.
+Compact mode, density tokens, and a cinematic visual system with stronger hierarchy and heavier operational clarity.
 
 ### Sprint 20: Page-by-page Visual Conversion
 
-Page-by-page visual conversion:
-
-- apply the new compact/cinematic design system to home, trust, records, operations, agency, and internal pages,
-- improve card hierarchy, filters, tables, and action placement for faster scanning,
-- add denser list and queue treatments for agencies and reviewers,
-- preserve role-based clarity while making the product feel more polished and cohesive.
-
-Completed checkpoint notes:
-
-- user-facing pages now separate discovery, sharing, history, and security activity more cleanly through focused section tabs,
-- operator-heavy pages now expose richer top-level summaries so agencies and reviewers can scan live workload faster,
-- the cinematic shell is now reflected in the actual page compositions instead of only in shared design tokens,
-- the language-switch layer was refactored after the visual pass so the live English/Greek toggle updates correctly during render and covers much more of the visible workspace copy,
-- a surgical UI-semantics pass then differentiated status badges, fact pills, notes, and timeline-style activity across the remaining dense pages so operational cards are more self-explanatory at a glance.
+Page-by-page application of the visual system, richer summaries, better scanability, broader localization coverage, and clearer UI semantics.
 
 ### Post-Sprint-20 Cross-Device Continuity Checkpoint
 
-Cross-device continuity and durable handoff system:
-
-- add a repo-level operating guide for future agent threads,
-- add a live handoff file that records the exact current checkpoint and next actions,
-- add a workflow-gap tracker for incomplete or confusing real-world flows,
-- add a workstation sync guide so daily home/work machine transitions do not depend on chat memory alone.
+Repo-resident handoff, workflow-gap tracking, and workstation sync guidance for cross-device continuity.
 
 ### Post-Sprint-20 GitHub Bootstrap Checkpoint
 
-Repository publication and machine-to-machine bootstrap hardening:
-
-- prepare the repo for a first private GitHub push under the selected project name,
-- exclude local-only databases and artifact storage from version control,
-- add a dedicated GitHub bootstrap guide so the repository can be reconnected cleanly on any new machine,
-- fold the full project/chat handoff routine into repo docs so the workflow is repeatable by either a human or a future AI thread.
+Private GitHub publication and machine-to-machine bootstrap hardening for reliable repo recovery on a new workstation.
 
 ### Sprint 21: Motion, Accessibility, And Release Polish
 
-Motion, accessibility, and release polish:
-
-- add intentional transitions and state changes instead of abrupt interface jumps,
-- verify accessibility contrast, focus treatment, keyboard behavior, and responsive behavior,
-- document the design system and compact mode rules,
-- close with a visually upgraded, production-safe frontend release candidate.
+Motion, accessibility, responsive behavior, design-system documentation, and release-level frontend polish.

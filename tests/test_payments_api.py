@@ -422,6 +422,15 @@ class PaymentsApiTests(unittest.TestCase):
         self.assertEqual(appeal.status_code, 200, appeal.text)
         self.assertEqual(appeal.json()["payment_status"], "under_review")
 
+        blocked_counterparty_override = landlord_client.post(
+            f"/api/v1/payments/{payment_id}/decision",
+            json={
+                "payment_status": "confirmed",
+                "counterparty_notes": "Counterparty should not be able to bypass reviewer re-review."
+            },
+        )
+        self.assertEqual(blocked_counterparty_override.status_code, 409, blocked_counterparty_override.text)
+
         final_verdict = reviewer_client.post(
             f"/api/v1/internal/disputes/payments/{payment_id}/verdict",
             json={

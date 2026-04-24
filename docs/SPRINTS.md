@@ -8,6 +8,8 @@
 - Post-Sprint-18 workflow diagram checkpoint: complete
 - Post-Sprint-20 cross-device continuity checkpoint: complete
 - Post-Sprint-20 GitHub bootstrap checkpoint: complete
+- Post-Sprint-20 dispute continuity checkpoint: complete
+- Post-Sprint-20 archive-alignment UX reset checkpoint: in progress
 - Next planned delivery lane: Sprint 21 frontend experience track for motion, accessibility, and release-level frontend refinement
 - Sprint 17 outcome: the rebuilt app now has substantially fuller frontend parity for core operator and review actions, clearer dispute handling, visible evidence upload/storage behavior, and better day-to-day agency portfolio management
 - Post-Sprint-17 remediation outcome: archive-parity audit completed, operational document uploads now reach payments/deposits/maintenance in the web app, single-session revoke is available, internal automation cleanup actions are surfaced, and regression coverage was expanded around operational artifact links
@@ -19,6 +21,8 @@
 - Sprint 20 outcome: the rebuilt frontend now applies the cinematic system across the main pages with richer hero summaries, clearer section framing, additional lane separation on trust, marketplace, and security surfaces, a completed localization refactor that fixes the live language switch and materially expands English/Greek coverage on the Sprint 20 pages, and a surgical UI-semantics pass that distinguishes statuses, facts, notes, and timeline activity far more clearly across the heavier operational cards
 - Post-Sprint-20 cross-device continuity checkpoint outcome: the repo now includes a durable handoff system with repo-wide agent instructions, a live handoff file, a workflow-gap tracker, and a daily workstation sync guide so work can continue safely across devices and new Codex threads
 - Post-Sprint-20 GitHub bootstrap checkpoint outcome: the repo is now prepared for a first private GitHub publish as `real_estate_trust_ledger`, with local-only databases and artifact storage excluded from version control and the full first-push plus home/work sync procedure documented in-project
+- Post-Sprint-20 dispute continuity checkpoint outcome: payment, deposit, and maintenance dispute flows now surface explicit appeal and re-review handoffs in both the user dispute desk and `Review Center > Disputes`, and the payment counterparty decision path is blocked once a case has moved into reviewer flow
+- Post-Sprint-20 archive-alignment UX reset status: the reset is underway on branch `codex/archive-ux-reset`, with the first slice restoring property targeting and a selected-property operational history timeline in `Rent & Issues` while preserving the rebuilt dispute/reviewer architecture
 - Remaining planned launch track: none
 - Remaining planned post-pilot experience track: Sprint 21
 

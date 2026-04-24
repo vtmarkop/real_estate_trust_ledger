@@ -27,6 +27,8 @@ The cross-device continuity checkpoint is now also complete. The repo now carrie
 
 The GitHub bootstrap checkpoint is now also complete. The repo is published to the private GitHub repository `real_estate_trust_ledger`, with local-only runtime data excluded and the full home/work handoff routine documented in-project.
 
+The first post-Sprint-20 workflow continuity checkpoint is now also complete for dispute and appeal handoffs. Payment, deposit, and maintenance cases now surface clearer re-review states in both personal and reviewer lanes, and payment disputes no longer allow a counterparty override once reviewer flow has started.
+
 The original launch-critical roadmap remains complete through Sprint 16. The current post-pilot track is now:
 
 - Sprint 17: frontend parity and information architecture

@@ -420,6 +420,15 @@ def decide_payment_record(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Only confirmed or rejected decisions are supported here.",
         )
+    if payment_record.payment_status in {
+        PaymentRecordStatus.DISPUTED,
+        PaymentRecordStatus.UNDER_REVIEW,
+        PaymentRecordStatus.VERDICT_ISSUED,
+    }:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Payment disputes already in review must stay in the reviewer flow.",
+        )
     if payment_record.payment_status == payload.payment_status:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
