@@ -5,7 +5,7 @@ This file is the current resume point for any new device, new Codex thread, or i
 ## Current Checkpoint
 
 - Program state: completed through Sprint 20
-- Latest non-sprint checkpoint: archive-alignment UX reset in progress, with selected-property operations, compact payment/issue targeting, daily/history separation, create-vs-existing action separation, role-wide history lane separation, backend-backed explicit account workspace-role entitlements, account role management, a local account-only reset path, tenancy role/counterparty clarity, and score-role clarity completed
+- Latest non-sprint checkpoint: archive-alignment UX reset in progress, with selected-property operations, compact payment/issue targeting, daily/history separation, create-vs-existing action separation, role-wide history lane separation, backend-backed explicit account workspace-role entitlements, sidebar-only role switching after login, account role management, a local account-only reset path, tenancy role/counterparty clarity, and score-role clarity completed
 - Next planned sprint: Sprint 21
 - Recommended immediate focus: visually review the four clean local accounts role by role, confirm the tenant/admin and tenant/landlord mixed accounts only expose their assigned workspaces at a time, then continue the broader workflow continuity audit across the remaining role surfaces
 - Repository bootstrap state: published to GitHub as `real_estate_trust_ledger` and ready to clone on a new machine
@@ -54,10 +54,10 @@ The newest UX-reset checkpoint added:
 - the fourth object-first operations slice, so `Create new` payment work and `Report new` maintenance work no longer render existing saved record details underneath the blank forms
 - the fifth separation pass, so operations action cards no longer show read-only proof/notes/verdict history inline, and agency saved trust checks now live in `Screening history`
 - tenancy metadata in `Rental Records` and `Rent & Issues` now shows `Your role` plus the relevant tenant/landlord counterparty instead of the low-value `Parties: Tenant and Landlord` pill
-- active workspace-role scoping now starts at sign-in, is switchable from the shell, and hides role-irrelevant navigation, direct routes, score dimensions, tenancy records, property setup, and operations records in the main tenant/landlord workspaces
+- active workspace-role scoping now happens after authentication from the shell, not from a pre-login dropdown, and hides role-irrelevant navigation, direct routes, score dimensions, tenancy records, property setup, and operations records in the main tenant/landlord workspaces
 - follow-up runtime fix bound the `My Trust` page to the session hook so role-scoped trust score rendering no longer crashes with `session is not defined`
 - score presentation in `Home` and `My Trust` now clarifies that landlord-side score is the signed-in user's own landlord/property-owner dimension, not the score of a tenant's current landlord
-- explicit account workspace-role entitlements now live on `User.workspace_roles`, are returned from `/auth/me`, drive the sign-in and shell role menus, and are editable from `Review Center > Roles` by platform admins
+- explicit account workspace-role entitlements now live on `User.workspace_roles`, are returned from `/auth/me`, drive the shell role menu, and are editable from `Review Center > Roles` by platform admins
 - tenant, landlord, and agency backend routes now check the matching workspace entitlement in addition to existing tenancy/property/membership permissions, so a visible role and a record permission are separate requirements
 - a destructive local reset script now wipes local data and creates only the four requested accounts:
   - `vasilis.markopoulos@accounts.trustledger.app` / `VasilisTenantAdmin123!` with tenant + admin/internal roles
@@ -71,6 +71,8 @@ The newest UX-reset checkpoint added:
 The rebuilt application is functionally broad and much more complete than the original MVP, but the current product risk is no longer missing core architecture. The main risk is workflow continuity and user clarity across role handoffs.
 
 Role visibility is now intentionally account-owned: an account can be tenant, landlord, agent, admin/internal, or a controlled combination, and the UI only offers those assigned roles. This is separate from record access. A user still needs the matching tenancy, property, organization membership, or internal permission before the backend allows actual work.
+
+Login is intentionally plain email/password now. The pre-auth role dropdown was removed because it asked users to make a workspace decision before the app knew which roles the account really had. After `/auth/me`, the shell opens the last valid role for that browser or falls back to the first assigned role, then mixed-role users can switch from the sidebar.
 
 That means the highest-value continuation work is not "add random new capability." It is:
 
@@ -165,5 +167,5 @@ Continue the Trust Ledger rebuild from the current repo state.
 
 Read README.md, AGENTS.md, docs/HANDOFF.md, docs/WORKFLOW_GAPS.md, docs/SPRINTS.md, docs/ROADMAP.md, docs/DECISIONS.md, docs/WORKFLOW_MAP.md, and docs/WORKFLOW_DIAGRAMS.md first.
 
-We are currently on branch codex/archive-ux-reset, post-Sprint-20. The dispute and appeal handoff pass is complete, and the active checkpoint is the archive-alignment UX reset with selected-property targeting, Daily work versus History separation, create-vs-existing payment/issue modes, selected payment/issue detail focus, role-wide history/log lane separation, explicit account workspace-role entitlements, account role management, local account-only reset support, tenancy role/counterparty clarity, and score-role clarity complete.
+We are currently on branch codex/archive-ux-reset, post-Sprint-20. The dispute and appeal handoff pass is complete, and the active checkpoint is the archive-alignment UX reset with selected-property targeting, Daily work versus History separation, create-vs-existing payment/issue modes, selected payment/issue detail focus, role-wide history/log lane separation, explicit account workspace-role entitlements, sidebar-only role switching after login, account role management, local account-only reset support, tenancy role/counterparty clarity, and score-role clarity complete.
 ```

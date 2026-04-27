@@ -1756,7 +1756,8 @@ Purpose:
 
 Purpose:
 
-- login, registration, and initial workspace role selection.
+- login and registration.
+- Workspace role selection happens after authentication in the signed-in shell, where the app can normalize against `user.workspace_roles`.
 
 #### `pages/WorkspaceHomePage.js`
 

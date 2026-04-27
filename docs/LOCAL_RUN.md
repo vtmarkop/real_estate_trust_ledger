@@ -158,6 +158,8 @@ These accounts exist after `dev_reset_minimal_users.py`:
 
 This reset intentionally creates no other data. The agent role can be assigned to an account before that account is attached to an agency organization; agency tools stay empty until membership data exists.
 
+Login is email/password only. Mixed-role accounts, such as Vasilis and Froso, switch assigned roles from the signed-in sidebar after authentication.
+
 Pre-seeded trust-sharing values:
 
 - share token: `demo-tenant-share-token`

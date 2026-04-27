@@ -755,16 +755,16 @@ The operations workspace now includes a dedicated dispute desk that highlights:
 
 Reason: dispute capability existed in the backend and tenancy detail flows, but it was too easy to miss. Clarifying the workflow mattered more than styling it.
 
-## D097: Login Role Selection Is Workspace Scoping, Not Authorization
+## D097: Workspace Role Selection Is Shell Scoping, Not Authorization
 
-The web app now lets a signed-in user choose an active workspace role:
+The web app now lets a signed-in user choose an active workspace role from the shell:
 
 - tenant,
 - landlord,
 - agency,
 - internal/admin.
 
-The selected role controls which menus, routes, and role-relevant frontend records are shown. It does not grant permissions by itself.
+The selected role controls which menus, routes, and role-relevant frontend records are shown. It does not grant permissions by itself. The login form stays email/password only because pre-auth role choice is confusing and cannot know the account's actual entitlements until `/auth/me` returns.
 
 Reason: this gives users strong separation of concerns without violating D007. Role selection narrows the workspace the user is currently operating in; record-level authorization still comes from the backend checks documented in D098.
 
@@ -777,6 +777,6 @@ The roles a user can open in the shell are now stored as account-level workspace
 - `agency`,
 - `internal`.
 
-These entitlements decide which workspace roles appear at sign-in and in the shell. They can be changed from the admin workspace, and at least one workspace role must remain on every account. The `internal` entitlement is synced with the platform admin system role so internal routes remain protected by existing backend RBAC. Agency actions still require both the `agency` entitlement and the relevant agency organization membership. Tenant and landlord actions still require the entitlement plus the relevant tenancy/property participation.
+These entitlements decide which workspace roles appear in the signed-in shell. They can be changed from the admin workspace, and at least one workspace role must remain on every account. The `internal` entitlement is synced with the platform admin system role so internal routes remain protected by existing backend RBAC. Agency actions still require both the `agency` entitlement and the relevant agency organization membership. Tenant and landlord actions still require the entitlement plus the relevant tenancy/property participation.
 
 Reason: the old model had only one global `system_role` plus organization memberships, which could not cleanly represent mixed accounts such as tenant/admin or standalone agent visibility. Explicit account entitlements make role visibility independent and editable without weakening record-level authorization.

@@ -110,14 +110,15 @@ This file should stay short, practical, and current. Long explanation belongs in
 ### Active Workspace Role Scoping
 
 - Expected behavior:
-  - users should choose the role they are working as and see only the menus, routes, score surfaces, tenancy records, property setup, and operational records relevant to that active role
-  - the roles offered at sign-in should come from explicit account entitlements, not from broad inference
+  - users should sign in with email/password first, then work from only one assigned role at a time
+  - mixed-role users should switch roles from the signed-in shell, not from a confusing pre-auth dropdown
   - role selection should narrow the workspace but should not bypass backend record permissions
 - Actual behavior:
-  - sign-in now includes an intended workspace role
+  - login no longer includes a workspace-role dropdown
   - `User.workspace_roles` stores explicit tenant, landlord, agent, and admin/internal workspace entitlements
   - the admin workspace includes account role management so roles can be added or removed without creating duplicate accounts
-  - the authenticated shell persists and switches the active workspace role only among roles assigned to the account
+  - after `/auth/me`, the authenticated shell opens the last valid role saved in this browser or falls back to the first assigned role
+  - the authenticated shell switches the active workspace role only among roles assigned to the account
   - tenant mode shows tenant trust, listings, tenant records, and tenant-side operations
   - landlord mode shows landlord trust, landlord property/tenant records, and landlord-side operations
   - agency mode shows agency tools without personal rental lanes

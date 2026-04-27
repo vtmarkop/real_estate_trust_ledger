@@ -42,6 +42,7 @@ flowchart TD
 ### What this reflects
 
 - Account role visibility is explicit: tenant, landlord, agency, and internal/admin roles come from `User.workspace_roles`.
+- Login is email/password only; the active role is resolved after authentication and can be changed from the sidebar.
 - Personal users only see tenant or landlord modes when those entitlements are assigned.
 - Agency mode can be assigned independently, but backend agency work still requires active agency organization membership.
 - Internal/admin mode is separate from agency access and is synced with backend platform-admin protection.

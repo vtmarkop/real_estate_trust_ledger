@@ -252,13 +252,13 @@ For each slice of this reset:
   - `apps/web/tests/navigation.test.mjs`
   - `tests/test_web_scaffold.py`
 - What changed:
-  - sign-in now lets the user request the workspace role to open
   - the shell persists and switches the active workspace role among roles available to the account
+  - this slice originally experimented with requesting a workspace role at sign-in, but that pre-login selector was later removed in Slice 9
   - navigation and direct route guards now honor the active role
   - tenant mode hides landlord/agency/reviewer lanes and shows tenant-side records, listings, scores, and operations
   - landlord mode hides listings and tenant-only views, shows landlord-side records, property setup, scores, and operations
-  - agency mode shows agency tools without personal rental lanes
-  - reviewer mode shows review center without personal rental lanes
+  - agent mode shows agency tools without personal rental lanes
+  - admin/internal mode shows review center without personal rental lanes
   - `Rental Records`, `Rent & Issues`, `Home`, and `My Trust` now scope visible frontend data to the active role
 - Guardrail:
   - this is UI/workspace scoping, not authorization; backend RBAC, organization membership, and record-participation checks remain authoritative
@@ -313,3 +313,25 @@ For each slice of this reset:
 - Next likely slice:
   - visually review the clean four-account role matrix in the browser
   - continue workflow continuity audit from the role-specific surfaces that still feel too dense or too implicit
+
+### 2026-04-27 - Slice 9: Remove pre-login role dropdown
+
+- Problem:
+  - the login form asked users to pick a workspace role before authentication
+  - this was counter-intuitive because the app cannot know the account's true entitlements until after `/auth/me`
+  - the sidebar already provides a better role switch for mixed-role accounts
+- Rebuilt files changed:
+  - `apps/web/src/pages/AuthPage.js`
+  - `tests/test_web_scaffold.py`
+  - continuity and operator docs
+- What changed:
+  - login and registration now stay focused on identity only
+  - the app opens the last valid workspace role saved in the browser, or the first assigned role if the saved one is not available to the signed-in account
+  - mixed-role users switch roles from the signed-in sidebar
+  - docs now describe role switching as a post-login shell behavior and keep the current minimal-reset credentials visible
+- Verification:
+  - `node --check apps\web\src\pages\AuthPage.js`
+  - `.\.venv\Scripts\python -m unittest tests.test_repo_layout tests.test_web_scaffold`
+  - `node --test apps\web\tests\navigation.test.mjs`
+  - `npm test`
+  - `npm run build`

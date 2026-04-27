@@ -75,7 +75,8 @@ This matters because it gives us clearer separation of concerns both in the UI a
 
 Current UX-reset note:
 
-- users now choose an active workspace role at sign-in or from the shell; role availability comes from explicit account workspace-role entitlements, and the active role scopes visible menus, direct routes, score dimensions, tenancy records, property setup, and operational records without replacing backend authorization
+- users now sign in first, then the shell opens the last valid role for the browser or the first assigned account role; mixed-role users switch roles from the sidebar, not from a pre-login dropdown
+- role availability comes from explicit account workspace-role entitlements, and the active role scopes visible menus, direct routes, score dimensions, tenancy records, property setup, and operational records without replacing backend authorization
 - the non-dispute `Rent & Issues` lanes now begin with property targeting, so normal tenant/landlord work can stay inside one selected tenancy context instead of requiring cross-property scrolling
 - tenancy metadata in `Rental Records` and `Rent & Issues` now identifies the signed-in user's role and the counterparty instead of repeating generic tenant/landlord labels
 - the selected property now separates `Daily work` from read-only `History`, so forms/actions and timeline browsing are no longer mixed together
@@ -141,7 +142,7 @@ Important architectural difference from the archive MVP:
 1. User signs in.
 2. Backend creates an opaque session.
 3. Frontend loads `/auth/me` and `/organizations/mine`.
-4. The selected workspace role is normalized against `user.workspace_roles`.
+4. The saved browser workspace role is normalized against `user.workspace_roles`.
 5. Navigation is built from the active role plus backend-derived capabilities.
 6. User can later switch active role from the shell or revoke an older session from `Account`.
 7. A platform admin can add or remove account workspace-role entitlements from `Review Center > Roles`.

@@ -6,14 +6,14 @@ The rebuilt frontend now supports both English and Greek. Use the floating `EN` 
 
 The rebuilt frontend also now supports `Comfort` and `Compact` density modes. Use the density control in the top-right area of the signed-in shell when you want heavier workspaces like `Agency Tools` or `Review Center` to show more information with less spacing.
 
-The signed-in shell now also supports an active role mode. Choose a role at sign-in, or switch it later from the sidebar:
+The signed-in shell now also supports an active role mode. Sign in with email and password first, then switch assigned roles from the sidebar when your account has more than one role:
 
 - `Tenant` shows tenant trust, listings, tenant records, and tenant-side rent/issue work.
 - `Landlord` shows landlord trust, landlord property/tenant records, and landlord-side rent/issue work.
 - `Agent` shows agency tools without personal rental lanes.
 - `Admin` shows review-center tools without personal rental lanes.
 
-The role choices come from explicit account workspace-role entitlements. An admin can add or remove those entitlements from `Review Center > Roles`. This role mode is a workspace filter, not a permission grant: the backend still checks tenancy participation, property ownership, agency organization membership, and internal privileges before allowing real work.
+The role choices come from explicit account workspace-role entitlements. Login does not ask for a role before authentication; the app opens the last valid role for this browser, or the first assigned role if the saved role no longer belongs to the account. An admin can add or remove those entitlements from `Review Center > Roles`. This role mode is a workspace filter, not a permission grant: the backend still checks tenancy participation, property ownership, agency organization membership, and internal privileges before allowing real work.
 
 Most workspaces now also use focused section tabs inside the page itself. Good examples are:
 
