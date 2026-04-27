@@ -460,7 +460,7 @@ Current account-only reset accounts, created by `apps/api/dev_reset_minimal_user
 
 That reset intentionally has no properties, tenancies, organizations, or history records. Login is email/password only. Mixed-role accounts, such as Vasilis and Froso, switch assigned roles from the signed-in sidebar after authentication.
 
-Full seeded demo accounts, available only after running `apps/api/dev_seed.py`:
+Legacy/rich workflow demo accounts, not present after the current account-only reset and available only after running `apps/api/dev_seed.py`:
 
 - `Tenant`: `tenant@demo.trustledger.app` / `DemoTenant123!`
 - `Landlord`: `landlord@demo.trustledger.app` / `DemoLandlord123!`

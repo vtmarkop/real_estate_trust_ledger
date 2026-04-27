@@ -41,18 +41,11 @@ Pop-Location
 
 ## Prepare The Database
 
-Run migrations and seed the demo dataset:
+Choose one local data mode.
 
-```powershell
-Push-Location apps\api
-..\..\.venv\Scripts\python -m alembic upgrade head
-..\..\.venv\Scripts\python dev_seed.py
-Pop-Location
-```
+### Simple Account-Only Reset
 
-The seed is idempotent, so you can run `dev_seed.py` again without duplicating the main demo records.
-
-If you need the clean account-only state requested for role testing, run the destructive reset instead:
+Use this when you want the current clean role-testing state with only the four requested accounts and no demo records:
 
 ```powershell
 Push-Location apps\api
@@ -61,7 +54,20 @@ Push-Location apps\api
 Pop-Location
 ```
 
-That reset wipes local model data and local private artifacts, then creates only the four requested users. It does not create organizations, properties, tenancies, trust history, operations data, or demo artifacts.
+This is destructive for local data. It wipes local model data and local private artifacts, then creates only the four requested users. It does not create organizations, properties, tenancies, trust history, operations data, or demo artifacts.
+
+### Full Seeded Workflow Demo
+
+Use this only when you want a rich sample world with demo properties, tenancies, payments, disputes, agency data, evidence, and trust-sharing examples:
+
+```powershell
+Push-Location apps\api
+..\..\.venv\Scripts\python -m alembic upgrade head
+..\..\.venv\Scripts\python dev_seed.py
+Pop-Location
+```
+
+The full seed is idempotent, so you can run `dev_seed.py` again without duplicating the main demo records.
 
 ## Start The API
 
@@ -152,7 +158,7 @@ This reset intentionally creates no other data. The agent role can be assigned t
 
 Login is email/password only. Mixed-role accounts, such as Vasilis and Froso, switch assigned roles from the signed-in sidebar after authentication.
 
-Full seeded demo accounts, available only after running `dev_seed.py`:
+Legacy/rich workflow demo accounts, not present after the current account-only reset and available only after running `dev_seed.py`:
 
 - `Tenant`: `tenant@demo.trustledger.app` / `DemoTenant123!`
 - `Landlord`: `landlord@demo.trustledger.app` / `DemoLandlord123!`

@@ -74,6 +74,8 @@ Role visibility is now intentionally account-owned: an account can be tenant, la
 
 Login is intentionally plain email/password now. The pre-auth role dropdown was removed because it asked users to make a workspace decision before the app knew which roles the account really had. After `/auth/me`, the shell opens the last valid role for that browser or falls back to the first assigned role, then mixed-role users can switch from the sidebar.
 
+There are two local data modes documented in `docs/LOCAL_RUN.md` and `docs/WORKSPACE_GUIDE.md`: the current simple account-only reset via `dev_reset_minimal_users.py`, and the legacy/rich workflow demo seed via `dev_seed.py`. The rich demo accounts are not present after the account-only reset.
+
 That means the highest-value continuation work is not "add random new capability." It is:
 
 - verify every important workflow end to end
