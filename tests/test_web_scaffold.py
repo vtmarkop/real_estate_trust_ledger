@@ -160,6 +160,8 @@ class WebScaffoldTests(unittest.TestCase):
         self.assertIn('/maintenance-tickets/" + ticket.id + "/dispute', operations_source)
         self.assertIn('Dispute desk', operations_source)
         self.assertIn('/trust-scores/mine', trust_source)
+        self.assertIn('import { useSession } from "../app/session.js"', trust_source)
+        self.assertIn('var session = useSession();', trust_source)
         self.assertIn('/trust-scores/mine/history', trust_source)
         self.assertIn('/trust-events/mine', trust_source)
         self.assertIn('/organizations/directory/agencies', trust_source)

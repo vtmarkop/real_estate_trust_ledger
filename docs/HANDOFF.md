@@ -55,6 +55,7 @@ The newest UX-reset checkpoint added:
 - the fifth separation pass, so operations action cards no longer show read-only proof/notes/verdict history inline, and agency saved trust checks now live in `Screening history`
 - tenancy metadata in `Rental Records` and `Rent & Issues` now shows `Your role` plus the relevant tenant/landlord counterparty instead of the low-value `Parties: Tenant and Landlord` pill
 - active workspace-role scoping now starts at sign-in, is switchable from the shell, and hides role-irrelevant navigation, direct routes, score dimensions, tenancy records, property setup, and operations records in the main tenant/landlord workspaces
+- follow-up runtime fix bound the `My Trust` page to the session hook so role-scoped trust score rendering no longer crashes with `session is not defined`
 - score presentation in `Home` and `My Trust` now clarifies that landlord-side score is the signed-in user's own landlord/property-owner dimension, not the score of a tenant's current landlord
 - a pushed branch checkpoint on `origin/codex/archive-ux-reset` so home/work continuation can resume from the same branch state
 

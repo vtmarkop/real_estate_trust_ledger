@@ -1,5 +1,6 @@
 import React from "react";
 
+import { useSession } from "../app/session.js";
 import { SegmentedTabs } from "../components/SegmentedTabs.js";
 import {
   FactPill,
@@ -84,6 +85,7 @@ function updateNamedField(setter) {
 }
 
 export function TrustProfilePage() {
+  var session = useSession();
   var stateTuple = React.useState({
     status: "loading",
     summary: null,

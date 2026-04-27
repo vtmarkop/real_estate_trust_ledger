@@ -266,3 +266,20 @@ For each slice of this reset:
   - `node --check` on all changed frontend files
   - `npm test`
   - `npm run build`
+
+### 2026-04-27 - Slice 7 follow-up: Trust profile session binding
+
+- Problem:
+  - `My Trust` crashed at runtime with `session is not defined` after active workspace-role scoping because `TrustProfilePage` read the active role without binding the session hook
+- Rebuilt files changed:
+  - `apps/web/src/pages/TrustProfilePage.js`
+  - `tests/test_web_scaffold.py`
+- What changed:
+  - `TrustProfilePage` now imports and calls `useSession()` before using `session.activeWorkspaceRole`
+  - the web scaffold test now guards that the trust page keeps the session hook binding
+- Verification:
+  - `node --check apps/web/src/pages/TrustProfilePage.js`
+  - `.\.venv\Scripts\python -m unittest tests.test_repo_layout tests.test_web_scaffold`
+  - `npm test`
+  - `npm run build`
+  - `git diff --check`
