@@ -449,24 +449,24 @@ Friendly explanation:
 5. Approve or reject with review notes.
 6. Refresh the page to confirm the item left the queue.
 
-## Demo Accounts
+## Local Accounts
 
-These are the current seeded demo accounts for local use:
-
-- `Tenant`: `tenant@demo.trustledger.app` / `DemoTenant123!`
-- `Landlord`: `landlord@demo.trustledger.app` / `DemoLandlord123!`
-- `Agency Owner`: `owner@demo-agency.app` / `DemoAgency123!`
-- `Internal Reviewer`: `reviewer@demo.trustledger.app` / `DemoReviewer123!`
-- `Platform Admin`: `admin@demo.trustledger.app` / `DemoAdmin123!`
-
-After the account-only reset, the local accounts are:
+Current account-only reset accounts, created by `apps/api/dev_reset_minimal_users.py`:
 
 - `Tenant + Admin`: `vasilis.markopoulos@accounts.trustledger.app` / `VasilisTenantAdmin123!`
 - `Landlord`: `lila.tsoutsoura@accounts.trustledger.app` / `LilaLandlord123!`
 - `Agent`: `theodore.tsoutsouras@accounts.trustledger.app` / `TheodoreAgent123!`
 - `Tenant + Landlord`: `froso.evangeliadou@accounts.trustledger.app` / `FrosoTenantLandlord123!`
 
-That reset intentionally has no properties, tenancies, organizations, or history records.
+That reset intentionally has no properties, tenancies, organizations, or history records. Login is email/password only. Mixed-role accounts, such as Vasilis and Froso, switch assigned roles from the signed-in sidebar after authentication.
+
+Full seeded demo accounts, available only after running `apps/api/dev_seed.py`:
+
+- `Tenant`: `tenant@demo.trustledger.app` / `DemoTenant123!`
+- `Landlord`: `landlord@demo.trustledger.app` / `DemoLandlord123!`
+- `Agency Owner`: `owner@demo-agency.app` / `DemoAgency123!`
+- `Internal Reviewer`: `reviewer@demo.trustledger.app` / `DemoReviewer123!`
+- `Platform Admin`: `admin@demo.trustledger.app` / `DemoAdmin123!`
 
 Seeded sharing values:
 

@@ -139,17 +139,9 @@ Example:
 
 If you switch storage backend settings, restart the API before testing uploads again.
 
-## Demo Accounts
+## Local Accounts
 
-- `Tenant`: `tenant@demo.trustledger.app` / `DemoTenant123!`
-- `Landlord`: `landlord@demo.trustledger.app` / `DemoLandlord123!`
-- `Agency Owner`: `owner@demo-agency.app` / `DemoAgency123!`
-- `Internal Reviewer`: `reviewer@demo.trustledger.app` / `DemoReviewer123!`
-- `Platform Admin`: `admin@demo.trustledger.app` / `DemoAdmin123!`
-
-## Minimal Role-Test Accounts
-
-These accounts exist after `dev_reset_minimal_users.py`:
+Current account-only reset accounts, created by `dev_reset_minimal_users.py`:
 
 - `Tenant + Admin`: `vasilis.markopoulos@accounts.trustledger.app` / `VasilisTenantAdmin123!`
 - `Landlord`: `lila.tsoutsoura@accounts.trustledger.app` / `LilaLandlord123!`
@@ -159,6 +151,14 @@ These accounts exist after `dev_reset_minimal_users.py`:
 This reset intentionally creates no other data. The agent role can be assigned to an account before that account is attached to an agency organization; agency tools stay empty until membership data exists.
 
 Login is email/password only. Mixed-role accounts, such as Vasilis and Froso, switch assigned roles from the signed-in sidebar after authentication.
+
+Full seeded demo accounts, available only after running `dev_seed.py`:
+
+- `Tenant`: `tenant@demo.trustledger.app` / `DemoTenant123!`
+- `Landlord`: `landlord@demo.trustledger.app` / `DemoLandlord123!`
+- `Agency Owner`: `owner@demo-agency.app` / `DemoAgency123!`
+- `Internal Reviewer`: `reviewer@demo.trustledger.app` / `DemoReviewer123!`
+- `Platform Admin`: `admin@demo.trustledger.app` / `DemoAdmin123!`
 
 Pre-seeded trust-sharing values:
 

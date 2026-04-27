@@ -59,7 +59,7 @@ The newest UX-reset checkpoint added:
 - score presentation in `Home` and `My Trust` now clarifies that landlord-side score is the signed-in user's own landlord/property-owner dimension, not the score of a tenant's current landlord
 - explicit account workspace-role entitlements now live on `User.workspace_roles`, are returned from `/auth/me`, drive the shell role menu, and are editable from `Review Center > Roles` by platform admins
 - tenant, landlord, and agency backend routes now check the matching workspace entitlement in addition to existing tenancy/property/membership permissions, so a visible role and a record permission are separate requirements
-- a destructive local reset script now wipes local data and creates only the four requested accounts:
+- the current local database was reset with the destructive account-only script; it wipes local data and creates only the four requested accounts:
   - `vasilis.markopoulos@accounts.trustledger.app` / `VasilisTenantAdmin123!` with tenant + admin/internal roles
   - `lila.tsoutsoura@accounts.trustledger.app` / `LilaLandlord123!` with landlord role
   - `theodore.tsoutsouras@accounts.trustledger.app` / `TheodoreAgent123!` with agent role and no agency organization yet
