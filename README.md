@@ -29,7 +29,7 @@ The GitHub bootstrap checkpoint is now also complete. The repo is published to t
 
 The first post-Sprint-20 workflow continuity checkpoint is now also complete for dispute and appeal handoffs. Payment, deposit, and maintenance cases now surface clearer re-review states in both personal and reviewer lanes, and payment disputes no longer allow a counterparty override once reviewer flow has started.
 
-The post-Sprint-20 archive-alignment UX reset is in progress on `codex/archive-ux-reset`. `Rent & Issues` now follows a stricter object-first pattern: choose one property, keep `Daily work` actions separate from read-only `History`, split create-new work from existing saved records, and use compact payment or maintenance dropdowns to focus one record at a time.
+The post-Sprint-20 archive-alignment UX reset is in progress on `codex/archive-ux-reset`. `Rent & Issues` now follows a stricter object-first pattern: choose one property, keep `Daily work` actions separate from read-only `History`, split create-new work from existing saved records, and use compact payment or maintenance dropdowns to focus one record at a time. The reset now also treats saved history/log surfaces as their own lanes across roles, including agency screening history.
 
 The original launch-critical roadmap remains complete through Sprint 16. The current post-pilot track is now:
 

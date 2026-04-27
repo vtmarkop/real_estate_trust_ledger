@@ -61,6 +61,7 @@ This file should stay short, practical, and current. Long explanation belongs in
   - the second UX-reset slice now adds compact payment and issue dropdowns inside the selected property flow
   - the third UX-reset slice separates selected-property `Daily work` from read-only `History`, so action forms are no longer mixed into timeline browsing
   - the fourth UX-reset slice separates `Create new` payment work and `Report new` maintenance work from existing saved record detail/actions, so past items no longer appear underneath blank creation forms
+  - the fifth UX-reset slice removes read-only proof, notes, dispute, verdict, and evidence history from operation action cards; those details now live in the selected lane's `History` view
   - payment and maintenance detail actions now render one focused record at a time under `Daily work`, closer to the archive's details-modal pattern without weakening rebuilt API rules
   - the page still needs live visual review to confirm the form density feels simple enough for normal tenant/landlord use
 - Backend status: complete
@@ -70,6 +71,24 @@ This file should stay short, practical, and current. Long explanation belongs in
   - keep normal user work inside one selected property at a time
   - visually review the selected property, `Daily work`, `History`, create-vs-existing payment modes, create-vs-existing maintenance modes, payment menu, and issue menu with seeded demo accounts
   - reduce any remaining form density if the live flow still feels heavier than the archive interaction model
+
+### Role-Wide History Lane Separation
+
+- Expected behavior:
+  - action surfaces should show current state and available next actions only
+  - read-only history, saved logs, previous notes, evidence files, and audit-style events should live in explicit history/log lanes
+  - this rule should hold for tenants, landlords, agencies, and internal operators
+- Actual behavior:
+  - personal trust history, account security events, internal audit logs, and worker-run history were already separated into their own lanes
+  - operations proof/notes/verdict details have now been moved out of action cards and into selected-property `History`
+  - agency saved trust checks have moved out of the screening action lane into a dedicated `Screening history` lane
+  - remaining audit work should check for smaller wording or metric cards that imply history without giving it a clear lane
+- Backend status: complete
+- Frontend status: materially improved, pending live visual review across role accounts
+- Classification: `complete_but_hard_to_understand`
+- Next fix:
+  - visually review tenant, landlord, agency, and reviewer demo accounts for any remaining inline read-only history blocks
+  - keep current actions and read-only history separated in future UI changes
 
 ### Tenant-Side Versus Landlord-Side Score Meaning
 

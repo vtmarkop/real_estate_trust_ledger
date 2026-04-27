@@ -126,7 +126,7 @@ Continue the Trust Ledger rebuild from the current repo state.
 
 Read README.md, AGENTS.md, docs/HANDOFF.md, docs/WORKFLOW_GAPS.md, docs/SPRINTS.md, docs/ROADMAP.md, docs/DECISIONS.md, docs/WORKFLOW_MAP.md, and docs/WORKFLOW_DIAGRAMS.md first.
 
-Treat the repository as the primary continuity source. We are currently on branch codex/archive-ux-reset, post-Sprint-20, and the current checkpoint is the archive-alignment UX reset with property targeting, Daily work versus History separation, create-vs-existing payment/issue modes, selected payment/issue detail focus, and score-role clarity complete.
+Treat the repository as the primary continuity source. We are currently on branch codex/archive-ux-reset, post-Sprint-20, and the current checkpoint is the archive-alignment UX reset with property targeting, Daily work versus History separation, create-vs-existing payment/issue modes, selected payment/issue detail focus, role-wide history/log lane separation, and score-role clarity complete.
 ```
 
 ## Daily Chat Handoff Procedure

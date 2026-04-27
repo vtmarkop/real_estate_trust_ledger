@@ -51,6 +51,7 @@ The dense pages are now intentionally split into tabs or lanes:
   - `Publishing`
   - `Portfolio`
   - `Screening`
+  - `Screening history`
   - `Team access`
   - `Pipeline`
 - `Review Center`
@@ -68,7 +69,8 @@ Current UX-reset note:
 - the non-dispute `Rent & Issues` lanes now begin with property targeting, so normal tenant/landlord work can stay inside one selected tenancy context instead of requiring cross-property scrolling
 - the selected property now separates `Daily work` from read-only `History`, so forms/actions and timeline browsing are no longer mixed together
 - inside `Daily work`, `Payments` and `Maintenance` first split create-new work from existing saved records, then use compact record dropdowns so only one payment or issue detail/action pane is expanded at a time
-- inside `History`, the selected property shows the read-only timeline for the active operational lane, built from existing payment, deposit, or maintenance workflow timestamps
+- inside `History`, the selected property shows the read-only timeline and saved proof/notes/verdict details for the active operational lane, built from existing payment, deposit, or maintenance workflow timestamps
+- agency `Screening` is now action-only, while saved trust checks live in `Screening history`
 
 ## Role Model
 
@@ -392,7 +394,7 @@ Important architectural difference from the archive MVP:
 ### Frontend
 
 - `TrustProfilePage.js`
-- `AgencyWorkbenchPage.js` in `Screening`
+- `AgencyWorkbenchPage.js` in `Screening` for actions and `Screening history` for saved trust-check records
 
 ### Typical flow
 
@@ -484,7 +486,7 @@ Important architectural difference from the archive MVP:
 4. Payee confirms or rejects inside the selected payment detail.
 5. If rejected, the other party may dispute and send the case into reviewer flow.
 6. Once a payment is disputed or re-opened for review, the normal payee decision path is blocked.
-7. User switches to `History` when they want the read-only payment/deposit/maintenance timeline for the selected property.
+7. User switches to `History` when they want proof files, old notes, prior decisions, or the read-only payment/deposit/maintenance timeline for the selected property.
 8. Reviewer issues verdict if needed.
 9. Either side may appeal, which returns the case to `UNDER_REVIEW` for a fresh verdict.
 10. Score impact is recalculated through the central scoring service.
@@ -562,7 +564,7 @@ Important architectural difference from the archive MVP:
 2. User keeps `Daily work` active, then chooses either `Report new` for a blank issue form or `Existing issues` for the issue menu.
 3. Tenant reports a problem with evidence.
 4. Landlord acknowledges and resolves with response evidence inside the selected issue detail.
-5. User switches to `History` when they want the read-only payment/deposit/maintenance timeline for the selected property.
+5. User switches to `History` when they want issue evidence, resolution notes, prior decisions, or the read-only payment/deposit/maintenance timeline for the selected property.
 6. If disputed, reviewer decides.
 7. Either party can appeal, which returns the case to `UNDER_REVIEW`.
 8. The reopened case stays in reviewer flow until a fresh verdict is issued.

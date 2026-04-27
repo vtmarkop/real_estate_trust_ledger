@@ -185,3 +185,31 @@ For each slice of this reset:
   - `npm run build`
 - Next likely slice:
   - visually review with the seeded `Hillside Studio` and `Harbor Flat` examples to confirm creation, existing-record actions, and history now feel like separate modes
+
+### 2026-04-27 - Slice 5: Role-wide history lane separation
+
+- Problem:
+  - even after `Daily work` and create-vs-existing separation, operation action cards still showed read-only proof summaries, old notes, dispute notes, verdict summaries, and evidence links inline
+  - agency screening also mixed the trust-check action form with saved trust-check history
+- Archive reference:
+  - the original pattern treated history/timeline as a separate reading mode rather than placing old context under action controls
+- Rebuilt files changed:
+  - `apps/web/src/pages/OperationsPage.js`
+  - `apps/web/src/pages/AgencyWorkbenchPage.js`
+- What stayed preserved from the rebuild:
+  - all existing payment, deposit, maintenance, dispute, appeal, trust-check, and artifact APIs
+  - active action controls and current status badges
+  - dedicated `My Trust`, `Account`, `Review Center > Audit`, and runtime history lanes that already existed
+- What changed:
+  - operation action cards now show current state and next actions only
+  - proof files, old notes, dispute notes, verdict summaries, appeal notes, reported evidence, and resolution evidence are shown from the selected property's `History` view
+  - `Dispute desk` points users to `History` for old notes/evidence instead of repeating case history inline
+  - agency `Screening` is now action-only, and saved trust checks moved to `Screening history`
+- Verification:
+  - `node --check apps/web/src/pages/OperationsPage.js`
+  - `node --check apps/web/src/pages/AgencyWorkbenchPage.js`
+  - `.\.venv\Scripts\python -m unittest tests.test_repo_layout tests.test_web_scaffold`
+  - `npm test`
+  - `npm run build`
+- Next likely slice:
+  - visually review tenant, landlord, agency, and reviewer demo accounts for any smaller inline read-only history blocks that should move into explicit history/log lanes

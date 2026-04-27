@@ -301,6 +301,7 @@ Friendly explanation:
 - First choose one property. Then use `Daily work` for actions and `History` for the read-only timeline of what already happened.
 - In `Payments`, use `Create new` only for a blank new payment form, or `Existing records` to open the payment dropdown and act on a saved payment.
 - In `Maintenance`, use `Report new` only for a blank new issue form, or `Existing issues` to open the issue dropdown and act on a saved issue.
+- Use `History` for saved proof files, old notes, dispute context, verdict details, and timelines. Those details are intentionally not repeated inside action cards.
 - If something goes wrong, use the `Dispute desk` at the top of the page. It gathers open disputes and items that can be disputed right now, so you do not have to search through every record one by one.
 
 ### Agency Tools
@@ -322,6 +323,7 @@ What you can do:
 - validate a share token and access code,
 - preview a shared profile,
 - save a trust check,
+- review saved trust checks in `Screening history`,
 - review business snapshot metrics.
 
 When to use it:

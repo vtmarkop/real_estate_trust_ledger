@@ -924,6 +924,11 @@ export function AgencyWorkbenchPage() {
       meta: "Trust checks and shared profile access"
     },
     {
+      id: "screening-history",
+      label: "Screening history",
+      meta: String(state.trustChecks.length) + " saved checks"
+    },
+    {
       id: "team",
       label: "Team access",
       meta: String(state.memberships.length) + " memberships"
@@ -939,6 +944,7 @@ export function AgencyWorkbenchPage() {
     publishing: "Keep property creation and listing publication together so publishing work stays separate from review work.",
     portfolio: "Use this lane only for estate search, tagging, and portfolio maintenance.",
     screening: "Run trust checks here without mixing screening into team or publishing flows.",
+    "screening-history": "Use this lane only for saved trust-check history and audit context.",
     team: "Manage teammates and permissions here without touching listings or applicants.",
     pipeline: "Use the pipeline lane when you want to process listings and applications together."
   };
@@ -1347,7 +1353,7 @@ export function AgencyWorkbenchPage() {
         e(
           "p",
           { className: "empty-copy", key: "copy" },
-          "Use a share token and access code to confirm access, preview a profile, or save a trust check to your agency history."
+          "Use a share token and access code to confirm access, preview a profile, or save a trust check. Saved checks live in Screening history."
         ),
         e("div", { className: "auth-form", key: "form" }, [
           e("label", { className: "field", key: "share_token" }, [
@@ -1448,8 +1454,9 @@ export function AgencyWorkbenchPage() {
               ])
             : null
         ])
-      ]),
-      e("article", { className: "detail-panel", key: "recent-trust-checks" }, [
+      ])
+    ]) : null,
+    agencySection === "screening-history" ? e("section", { className: "detail-panel", key: "recent-trust-checks" }, [
         e("h2", { className: "detail-title", key: "title" }, "Recent trust checks"),
         state.trustChecks.length
           ? e(
@@ -1471,7 +1478,6 @@ export function AgencyWorkbenchPage() {
               { className: "empty-copy", key: "empty" },
               "No agency trust checks have been created for this organization yet."
             )
-      ])
     ]) : null,
     agencySection === "overview"
       ? e("section", { className: "metric-grid", key: "metrics" }, [

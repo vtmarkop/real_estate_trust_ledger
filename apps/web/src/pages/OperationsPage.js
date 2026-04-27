@@ -491,6 +491,220 @@ function buildTenancyActivityEntries(tenancy, payments, depositRecord, maintenan
   return sortTimelineEntries(entries);
 }
 
+function renderArtifactHistoryBlock(args) {
+  if (!args.artifactName && !args.storedArtifactId) {
+    return null;
+  }
+  return e("div", { className: "list-stack", key: args.key }, [
+    args.artifactName
+      ? e(
+          NoteBlock,
+          { key: "note", label: args.label, tone: args.tone || "accent" },
+          args.prefix +
+            ": " +
+            args.artifactName +
+            (formatArtifactMeta(args.contentType, args.sizeBytes)
+              ? " | " + formatArtifactMeta(args.contentType, args.sizeBytes)
+              : "")
+        )
+      : null,
+    args.storedArtifactId
+      ? e(
+          "button",
+          {
+            type: "button",
+            className: "button button-small",
+            onClick: function onClick() {
+              args.openStoredArtifact(args.storedArtifactId);
+            },
+            key: "open"
+          },
+          args.buttonLabel
+        )
+      : null
+  ]);
+}
+
+function renderPaymentHistoryDetails(payment, openStoredArtifact) {
+  if (!payment) {
+    return null;
+  }
+  var detailItems = [
+    renderArtifactHistoryBlock({
+      key: "proof-artifact",
+      label: "Proof file",
+      prefix: "Proof",
+      artifactName: payment.proof_artifact_name,
+      contentType: payment.proof_artifact_content_type,
+      sizeBytes: payment.proof_artifact_size_bytes,
+      storedArtifactId: payment.proof_stored_artifact_id,
+      buttonLabel: "Open proof file",
+      openStoredArtifact: openStoredArtifact,
+      tone: "accent"
+    }),
+    payment.proof_summary
+      ? e(NoteBlock, { key: "proof-summary", label: "Proof summary", tone: "accent" }, payment.proof_summary)
+      : null,
+    renderArtifactHistoryBlock({
+      key: "counterparty-artifact",
+      label: "Counterparty evidence",
+      prefix: "Counterparty evidence",
+      artifactName: payment.counterparty_artifact_name,
+      contentType: payment.counterparty_artifact_content_type,
+      sizeBytes: payment.counterparty_artifact_size_bytes,
+      storedArtifactId: payment.counterparty_stored_artifact_id,
+      buttonLabel: "Open counterparty evidence",
+      openStoredArtifact: openStoredArtifact,
+      tone: "warning"
+    }),
+    payment.counterparty_notes
+      ? e(NoteBlock, { key: "counterparty-notes", label: "Counterparty notes", tone: "warning" }, payment.counterparty_notes)
+      : null,
+    payment.dispute_notes
+      ? e(NoteBlock, { key: "dispute-notes", label: "Dispute notes", tone: "danger" }, payment.dispute_notes)
+      : null,
+    payment.verdict_summary
+      ? e(
+          NoteBlock,
+          { key: "verdict-summary", label: "Verdict", tone: "danger" },
+          formatVerdictSummary({
+            verdictSummary: payment.verdict_summary,
+            verdictOutcome: payment.verdict_outcome,
+            tenantScoreDelta: payment.verdict_tenant_score_delta,
+            landlordScoreDelta: payment.verdict_landlord_score_delta
+          })
+        )
+      : null,
+    payment.appeal_notes
+      ? e(NoteBlock, { key: "appeal-notes", label: "Appeal notes", tone: "danger" }, payment.appeal_notes)
+      : null
+  ].filter(Boolean);
+
+  return e("article", { className: "stack-card", key: "payment-history-detail" }, [
+    e("strong", { className: "stack-card-title", key: "title" }, "Selected payment history details"),
+    detailItems.length
+      ? e("div", { className: "list-stack", key: "items" }, detailItems)
+      : e("p", { className: "empty-copy", key: "empty" }, "No saved proof, notes, dispute, or verdict details exist for the selected payment yet.")
+  ]);
+}
+
+function renderDepositHistoryDetails(depositRecord, openStoredArtifact) {
+  if (!depositRecord) {
+    return null;
+  }
+  var detailItems = [
+    renderArtifactHistoryBlock({
+      key: "settlement-artifact",
+      label: "Settlement proof",
+      prefix: "Settlement proof",
+      artifactName: depositRecord.settlement_artifact_name,
+      contentType: depositRecord.settlement_artifact_content_type,
+      sizeBytes: depositRecord.settlement_artifact_size_bytes,
+      storedArtifactId: depositRecord.settlement_stored_artifact_id,
+      buttonLabel: "Open settlement proof",
+      openStoredArtifact: openStoredArtifact,
+      tone: "accent"
+    }),
+    depositRecord.settlement_summary
+      ? e(NoteBlock, { key: "settlement-summary", label: "Settlement summary", tone: "accent" }, depositRecord.settlement_summary)
+      : null,
+    depositRecord.settlement_notes
+      ? e(NoteBlock, { key: "settlement-notes", label: "Settlement notes", tone: "accent" }, depositRecord.settlement_notes)
+      : null,
+    depositRecord.dispute_notes
+      ? e(NoteBlock, { key: "deposit-dispute-notes", label: "Dispute notes", tone: "danger" }, depositRecord.dispute_notes)
+      : null,
+    depositRecord.verdict_summary
+      ? e(
+          NoteBlock,
+          { key: "deposit-verdict-summary", label: "Verdict", tone: "danger" },
+          formatVerdictSummary({
+            verdictSummary: depositRecord.verdict_summary,
+            verdictOutcome: depositRecord.verdict_outcome,
+            tenantScoreDelta: depositRecord.verdict_tenant_score_delta,
+            landlordScoreDelta: depositRecord.verdict_landlord_score_delta
+          })
+        )
+      : null,
+    depositRecord.appeal_notes
+      ? e(NoteBlock, { key: "deposit-appeal-notes", label: "Appeal notes", tone: "danger" }, depositRecord.appeal_notes)
+      : null
+  ].filter(Boolean);
+
+  return e("article", { className: "stack-card", key: "deposit-history-detail" }, [
+    e("strong", { className: "stack-card-title", key: "title" }, "Deposit history details"),
+    detailItems.length
+      ? e("div", { className: "list-stack", key: "items" }, detailItems)
+      : e("p", { className: "empty-copy", key: "empty" }, "No settlement, dispute, verdict, or appeal history exists for this deposit yet.")
+  ]);
+}
+
+function renderMaintenanceHistoryDetails(ticket, openStoredArtifact) {
+  if (!ticket) {
+    return null;
+  }
+  var detailItems = [
+    ticket.description
+      ? e(NoteBlock, { key: "description", label: "Reported issue", tone: "accent" }, ticket.description)
+      : null,
+    renderArtifactHistoryBlock({
+      key: "reported-artifact",
+      label: "Reported evidence",
+      prefix: "Reported with",
+      artifactName: ticket.reported_artifact_name,
+      contentType: ticket.reported_artifact_content_type,
+      sizeBytes: ticket.reported_artifact_size_bytes,
+      storedArtifactId: ticket.reported_stored_artifact_id,
+      buttonLabel: "Open reported evidence",
+      openStoredArtifact: openStoredArtifact,
+      tone: "accent"
+    }),
+    ticket.resolution_summary
+      ? e(NoteBlock, { key: "resolution-summary", label: "Resolution", tone: "success" }, ticket.resolution_summary)
+      : null,
+    ticket.landlord_response_notes
+      ? e(NoteBlock, { key: "landlord-response", label: "Landlord response notes", tone: "success" }, ticket.landlord_response_notes)
+      : null,
+    renderArtifactHistoryBlock({
+      key: "resolution-artifact",
+      label: "Resolution file",
+      prefix: "Resolution file",
+      artifactName: ticket.resolution_artifact_name,
+      contentType: ticket.resolution_artifact_content_type,
+      sizeBytes: ticket.resolution_artifact_size_bytes,
+      storedArtifactId: ticket.resolution_stored_artifact_id,
+      buttonLabel: "Open resolution file",
+      openStoredArtifact: openStoredArtifact,
+      tone: "success"
+    }),
+    ticket.dispute_notes
+      ? e(NoteBlock, { key: "maintenance-dispute-notes", label: "Dispute notes", tone: "danger" }, ticket.dispute_notes)
+      : null,
+    ticket.verdict_summary
+      ? e(
+          NoteBlock,
+          { key: "verdict-summary", label: "Verdict", tone: "danger" },
+          formatVerdictSummary({
+            verdictSummary: ticket.verdict_summary,
+            verdictOutcome: ticket.verdict_outcome,
+            tenantScoreDelta: ticket.verdict_tenant_score_delta,
+            landlordScoreDelta: ticket.verdict_landlord_score_delta
+          })
+        )
+      : null,
+    ticket.appeal_notes
+      ? e(NoteBlock, { key: "appeal-notes", label: "Appeal notes", tone: "danger" }, ticket.appeal_notes)
+      : null
+  ].filter(Boolean);
+
+  return e("article", { className: "stack-card", key: "maintenance-history-detail" }, [
+    e("strong", { className: "stack-card-title", key: "title" }, "Selected issue history details"),
+    detailItems.length
+      ? e("div", { className: "list-stack", key: "items" }, detailItems)
+      : e("p", { className: "empty-copy", key: "empty" }, "No saved notes, evidence, resolution, dispute, or verdict details exist for the selected issue yet.")
+  ]);
+}
+
 export function OperationsPage() {
   var session = useSession();
   var stateTuple = React.useState({
@@ -1160,7 +1374,7 @@ export function OperationsPage() {
       e(
         "p",
         { className: "empty-copy", key: "copy" },
-        "This area surfaces anything already disputed, appealed, or ready for dispute right now, so you do not have to hunt through each tenancy to find the next handoff."
+        "This area only surfaces active dispute work. Historical notes, evidence, and prior decisions stay in the selected property's History view."
       ),
       e("div", { className: "fact-grid", key: "counts" }, [
         e(FactPill, { key: "deposit-open", label: "Open deposit disputes", value: String(openDepositDisputes.length), tone: "danger" }),
@@ -1203,7 +1417,6 @@ export function OperationsPage() {
                       value: item.payment.payer_user_full_name + " to " + item.payment.payee_user_full_name
                     })
                   ]),
-                  e(NoteBlock, { key: "notes", tone: "danger", label: "Counterparty notes" }, item.payment.counterparty_notes || "Rejected without extra notes."),
                   e("input", {
                     className: "field-input",
                     value: paymentDisputeForm.dispute_notes,
@@ -1318,7 +1531,6 @@ export function OperationsPage() {
                   e(StatusBadge, { key: "ticket", tone: "accent", label: item.ticket.title }),
                   e(StatusBadge, { key: "resolved", tone: "success", label: "Resolved by landlord" })
                 ]),
-                e(NoteBlock, { key: "summary", tone: "accent", label: "Resolution summary" }, item.ticket.resolution_summary || "No resolution summary recorded."),
                 e("input", {
                   className: "field-input",
                   value: maintenanceDisputeForm.dispute_notes,
@@ -1389,24 +1601,6 @@ export function OperationsPage() {
                     label: formatWorkflowLabel(item.payment.payment_type)
                   })
                 ]),
-                lifecycle.requestedByValue || lifecycle.requestedAtValue
-                  ? e("div", { className: "fact-grid", key: "meta" }, [
-                      lifecycle.requestedByValue
-                        ? e(FactPill, {
-                            key: "requested-by",
-                            label: lifecycle.requestedByLabel,
-                            value: lifecycle.requestedByValue
-                          })
-                        : null,
-                      lifecycle.requestedAtValue
-                        ? e(FactPill, {
-                            key: "requested-at",
-                            label: lifecycle.requestedAtLabel,
-                            value: lifecycle.requestedAtValue
-                          })
-                        : null
-                    ])
-                  : null,
                 lifecycle.stageSummary
                   ? e(
                       NoteBlock,
@@ -1414,11 +1608,7 @@ export function OperationsPage() {
                       lifecycle.stageSummary
                     )
                   : null,
-                e(
-                  NoteBlock,
-                  { key: "case-notes", tone: "danger", label: "Case notes" },
-                  item.payment.dispute_notes || item.payment.appeal_notes || "No dispute notes were recorded."
-                )
+                e(NoteBlock, { key: "history-pointer", tone: "accent", label: "History" }, "Open this property's Payments history for proof, notes, and prior decisions.")
               ]);
             }),
             openDepositDisputes.map(function renderDepositDispute(item) {
@@ -1439,24 +1629,6 @@ export function OperationsPage() {
                     label: lifecycle.stageLabel
                   })
                 ]),
-                lifecycle.requestedByValue || lifecycle.requestedAtValue
-                  ? e("div", { className: "fact-grid", key: "meta" }, [
-                      lifecycle.requestedByValue
-                        ? e(FactPill, {
-                            key: "requested-by",
-                            label: lifecycle.requestedByLabel,
-                            value: lifecycle.requestedByValue
-                          })
-                        : null,
-                      lifecycle.requestedAtValue
-                        ? e(FactPill, {
-                            key: "requested-at",
-                            label: lifecycle.requestedAtLabel,
-                            value: lifecycle.requestedAtValue
-                          })
-                        : null
-                    ])
-                  : null,
                 lifecycle.stageSummary
                   ? e(
                       NoteBlock,
@@ -1464,11 +1636,7 @@ export function OperationsPage() {
                       lifecycle.stageSummary
                     )
                   : null,
-                e(
-                  NoteBlock,
-                  { key: "meta", tone: "danger", label: "Case notes" },
-                  item.depositRecord.dispute_notes || item.depositRecord.appeal_notes || "No dispute notes were recorded."
-                )
+                e(NoteBlock, { key: "history-pointer", tone: "accent", label: "History" }, "Open this property's Deposit history for settlement notes, dispute notes, and prior decisions.")
               ]);
             }),
             openMaintenanceDisputes.map(function renderMaintenanceDispute(item) {
@@ -1489,24 +1657,6 @@ export function OperationsPage() {
                     label: lifecycle.stageLabel
                   })
                 ]),
-                lifecycle.requestedByValue || lifecycle.requestedAtValue
-                  ? e("div", { className: "fact-grid", key: "timing" }, [
-                      lifecycle.requestedByValue
-                        ? e(FactPill, {
-                            key: "requested-by",
-                            label: lifecycle.requestedByLabel,
-                            value: lifecycle.requestedByValue
-                          })
-                        : null,
-                      lifecycle.requestedAtValue
-                        ? e(FactPill, {
-                            key: "requested-at",
-                            label: lifecycle.requestedAtLabel,
-                            value: lifecycle.requestedAtValue
-                          })
-                        : null
-                    ])
-                  : null,
                 lifecycle.stageSummary
                   ? e(
                       NoteBlock,
@@ -1514,11 +1664,7 @@ export function OperationsPage() {
                       lifecycle.stageSummary
                     )
                   : null,
-                e(NoteBlock, {
-                  key: "meta",
-                  tone: "danger",
-                  label: "Case notes"
-                }, item.ticket.dispute_notes || item.ticket.appeal_notes || "No dispute notes were recorded.")
+                e(NoteBlock, { key: "history-pointer", tone: "accent", label: "History" }, "Open this property's Maintenance history for issue notes, evidence, and prior decisions.")
               ]);
             })
           ])
@@ -1648,9 +1794,18 @@ export function OperationsPage() {
                           { className: "empty-copy", key: "empty" },
                           "No " +
                             historyLaneLabel.toLowerCase() +
-                            " history has been recorded for this property yet."
+                          " history has been recorded for this property yet."
                         )
                   ])
+                : null,
+              propertyContextView === "history" && operationsFocus === "payments"
+                ? renderPaymentHistoryDetails(selectedPayment, openStoredArtifact)
+                : null,
+              propertyContextView === "history" && operationsFocus === "deposit"
+                ? renderDepositHistoryDetails(depositRecord, openStoredArtifact)
+                : null,
+              propertyContextView === "history" && operationsFocus === "maintenance"
+                ? renderMaintenanceHistoryDetails(selectedMaintenanceTicket, openStoredArtifact)
                 : null,
               propertyContextView === "daily" ? e("div", { className: "split-grid", key: "top" }, [
                 operationsFocus === "payments" ? e("article", { className: "stack-card", key: "payments" }, [
@@ -1884,24 +2039,6 @@ export function OperationsPage() {
                                   paymentLifecycle.stageSummary
                                 )
                               : null,
-                            paymentLifecycle.requestedByValue || paymentLifecycle.requestedAtValue
-                              ? e("div", { className: "fact-grid", key: "payment-review-meta" }, [
-                                  paymentLifecycle.requestedByValue
-                                    ? e(FactPill, {
-                                        key: "requested-by",
-                                        label: paymentLifecycle.requestedByLabel,
-                                        value: paymentLifecycle.requestedByValue
-                                      })
-                                    : null,
-                                  paymentLifecycle.requestedAtValue
-                                    ? e(FactPill, {
-                                        key: "requested-at",
-                                        label: paymentLifecycle.requestedAtLabel,
-                                        value: paymentLifecycle.requestedAtValue
-                                      })
-                                    : null
-                                ])
-                              : null,
                             e("div", { className: "fact-grid", key: "facts" }, [
                               e(FactPill, {
                                 key: "amount",
@@ -1915,110 +2052,6 @@ export function OperationsPage() {
                                 value: payment.payer_user_full_name + " to " + payment.payee_user_full_name
                               })
                             ]),
-                            payment.proof_artifact_name
-                              ? e(
-                                  NoteBlock,
-                                  { key: "proof-name", label: "Proof file", tone: "accent" },
-                                  "Proof: " +
-                                    payment.proof_artifact_name +
-                                    (formatArtifactMeta(
-                                      payment.proof_artifact_content_type,
-                                      payment.proof_artifact_size_bytes
-                                    )
-                                      ? " | " +
-                                        formatArtifactMeta(
-                                          payment.proof_artifact_content_type,
-                                          payment.proof_artifact_size_bytes
-                                        )
-                                      : "")
-                                )
-                              : null,
-                            payment.proof_summary
-                              ? e(
-                                  NoteBlock,
-                                  { key: "proof-summary", label: "Proof summary", tone: "accent" },
-                                  payment.proof_summary
-                                )
-                              : null,
-                            payment.proof_stored_artifact_id
-                              ? e(
-                                  "button",
-                                  {
-                                    type: "button",
-                                    className: "button button-small",
-                                    onClick: function onClick() {
-                                      openStoredArtifact(payment.proof_stored_artifact_id);
-                                    },
-                                    key: "open-proof"
-                                  },
-                                  "Open proof file"
-                                )
-                              : null,
-                            payment.counterparty_artifact_name
-                              ? e(
-                                  NoteBlock,
-                                  { key: "counterparty-file", label: "Counterparty evidence", tone: "warning" },
-                                  "Counterparty evidence: " +
-                                    payment.counterparty_artifact_name +
-                                    (formatArtifactMeta(
-                                      payment.counterparty_artifact_content_type,
-                                      payment.counterparty_artifact_size_bytes
-                                    )
-                                      ? " | " +
-                                        formatArtifactMeta(
-                                          payment.counterparty_artifact_content_type,
-                                          payment.counterparty_artifact_size_bytes
-                                        )
-                                      : "")
-                                )
-                              : null,
-                            payment.counterparty_stored_artifact_id
-                              ? e(
-                                  "button",
-                                  {
-                                    type: "button",
-                                    className: "button button-small",
-                                    onClick: function onClick() {
-                                      openStoredArtifact(payment.counterparty_stored_artifact_id);
-                                    },
-                                    key: "open-counterparty-proof"
-                                  },
-                                  "Open counterparty evidence"
-                                )
-                              : null,
-                            payment.counterparty_notes
-                              ? e(
-                                  NoteBlock,
-                                  { key: "counterparty-notes", label: "Counterparty notes", tone: "warning" },
-                                  payment.counterparty_notes
-                                )
-                              : null,
-                            payment.dispute_notes
-                              ? e(
-                                  NoteBlock,
-                                  { key: "dispute-notes", label: "Dispute notes", tone: "danger" },
-                                  payment.dispute_notes
-                                )
-                              : null,
-                            payment.verdict_summary
-                              ? e(
-                                  NoteBlock,
-                                  { key: "verdict-summary", label: "Verdict", tone: "danger" },
-                                  formatVerdictSummary({
-                                    verdictSummary: payment.verdict_summary,
-                                    verdictOutcome: payment.verdict_outcome,
-                                    tenantScoreDelta: payment.verdict_tenant_score_delta,
-                                    landlordScoreDelta: payment.verdict_landlord_score_delta
-                                  })
-                                )
-                              : null,
-                            payment.appeal_notes
-                              ? e(
-                                  NoteBlock,
-                                  { key: "appeal-notes", label: "Appeal notes", tone: "danger" },
-                                  payment.appeal_notes
-                                )
-                              : null,
                             session.user.id === payment.payer_user_id && payment.payment_status !== "confirmed"
                             && ["disputed", "under_review", "verdict_issued"].indexOf(payment.payment_status) === -1
                               ? e("div", { className: "form-grid", key: "proof" }, [
@@ -2336,25 +2369,6 @@ export function OperationsPage() {
                               depositLifecycle.stageSummary
                             )
                           : null,
-                        depositLifecycle &&
-                        (depositLifecycle.requestedByValue || depositLifecycle.requestedAtValue)
-                          ? e("div", { className: "fact-grid", key: "deposit-review-meta" }, [
-                              depositLifecycle.requestedByValue
-                                ? e(FactPill, {
-                                    key: "requested-by",
-                                    label: depositLifecycle.requestedByLabel,
-                                    value: depositLifecycle.requestedByValue
-                                  })
-                                : null,
-                              depositLifecycle.requestedAtValue
-                                ? e(FactPill, {
-                                    key: "requested-at",
-                                    label: depositLifecycle.requestedAtLabel,
-                                    value: depositLifecycle.requestedAtValue
-                                  })
-                                : null
-                            ])
-                          : null,
                         e("div", { className: "fact-grid", key: "totals" }, [
                           e(FactPill, {
                             key: "held",
@@ -2375,71 +2389,6 @@ export function OperationsPage() {
                             tone: "warning"
                           })
                         ]),
-                        depositRecord.settlement_artifact_name
-                          ? e(
-                              NoteBlock,
-                              { key: "settlement-file", label: "Settlement proof", tone: "accent" },
-                              "Settlement proof: " +
-                                depositRecord.settlement_artifact_name +
-                                (formatArtifactMeta(
-                                  depositRecord.settlement_artifact_content_type,
-                                  depositRecord.settlement_artifact_size_bytes
-                                )
-                                  ? " | " +
-                                    formatArtifactMeta(
-                                      depositRecord.settlement_artifact_content_type,
-                                      depositRecord.settlement_artifact_size_bytes
-                                    )
-                                  : "")
-                            )
-                          : null,
-                        depositRecord.settlement_summary
-                          ? e(
-                              NoteBlock,
-                              { key: "settlement-summary", label: "Settlement summary", tone: "accent" },
-                              depositRecord.settlement_summary
-                            )
-                          : null,
-                        depositRecord.dispute_notes
-                          ? e(
-                              NoteBlock,
-                              { key: "deposit-dispute-notes", label: "Dispute notes", tone: "danger" },
-                              depositRecord.dispute_notes
-                            )
-                          : null,
-                        depositRecord.verdict_summary
-                          ? e(
-                              NoteBlock,
-                              { key: "deposit-verdict-summary", label: "Verdict", tone: "danger" },
-                              formatVerdictSummary({
-                                verdictSummary: depositRecord.verdict_summary,
-                                verdictOutcome: depositRecord.verdict_outcome,
-                                tenantScoreDelta: depositRecord.verdict_tenant_score_delta,
-                                landlordScoreDelta: depositRecord.verdict_landlord_score_delta
-                              })
-                            )
-                          : null,
-                        depositRecord.appeal_notes
-                          ? e(
-                              NoteBlock,
-                              { key: "deposit-appeal-notes", label: "Appeal notes", tone: "danger" },
-                              depositRecord.appeal_notes
-                            )
-                          : null,
-                        depositRecord.settlement_stored_artifact_id
-                          ? e(
-                              "button",
-                              {
-                                type: "button",
-                                className: "button button-small",
-                                onClick: function onClick() {
-                                  openStoredArtifact(depositRecord.settlement_stored_artifact_id);
-                                },
-                                key: "open-settlement-proof"
-                              },
-                              "Open settlement proof"
-                            )
-                          : null,
                         session.user.id === tenancy.landlord_user_id &&
                         ["held", "return_submitted", "returned", "partially_withheld"].indexOf(depositRecord.deposit_status) !== -1
                           ? e("div", { className: "auth-form", key: "settlement" }, [
@@ -2844,57 +2793,6 @@ export function OperationsPage() {
                                   ticketLifecycle.stageSummary
                                 )
                               : null,
-                            ticketLifecycle.requestedByValue || ticketLifecycle.requestedAtValue
-                              ? e("div", { className: "fact-grid", key: "ticket-review-meta" }, [
-                                  ticketLifecycle.requestedByValue
-                                    ? e(FactPill, {
-                                        key: "requested-by",
-                                        label: ticketLifecycle.requestedByLabel,
-                                        value: ticketLifecycle.requestedByValue
-                                      })
-                                    : null,
-                                  ticketLifecycle.requestedAtValue
-                                    ? e(FactPill, {
-                                        key: "requested-at",
-                                        label: ticketLifecycle.requestedAtLabel,
-                                        value: ticketLifecycle.requestedAtValue
-                                      })
-                                    : null
-                                ])
-                              : null,
-                            e(NoteBlock, { key: "description", label: "Reported issue", tone: "accent" }, ticket.description),
-                            ticket.reported_artifact_name
-                              ? e(
-                                  NoteBlock,
-                                  { key: "reported-artifact", label: "Reported evidence", tone: "accent" },
-                                  "Reported with: " +
-                                    ticket.reported_artifact_name +
-                                    (formatArtifactMeta(
-                                      ticket.reported_artifact_content_type,
-                                      ticket.reported_artifact_size_bytes
-                                    )
-                                      ? " | " +
-                                        formatArtifactMeta(
-                                          ticket.reported_artifact_content_type,
-                                          ticket.reported_artifact_size_bytes
-                                        )
-                                      : "")
-                                )
-                              : null,
-                            ticket.reported_stored_artifact_id
-                              ? e(
-                                  "button",
-                                  {
-                                    type: "button",
-                                    className: "button button-small",
-                                    onClick: function onClick() {
-                                      openStoredArtifact(ticket.reported_stored_artifact_id);
-                                    },
-                                    key: "open-reported-artifact"
-                                  },
-                                  "Open reported evidence"
-                                )
-                              : null,
                             session.user.id === tenancy.landlord_user_id &&
                             ticket.ticket_status !== "resolved" &&
                             ticket.ticket_status !== "disputed" &&
@@ -3020,64 +2918,6 @@ export function OperationsPage() {
                                       : "Resolve"
                                   )
                                 ])
-                              : null,
-                            ticket.resolution_summary
-                              ? e(
-                                  NoteBlock,
-                                  { key: "resolution-summary", label: "Resolution", tone: "success" },
-                                  ticket.resolution_summary
-                                )
-                              : null,
-                            ticket.resolution_artifact_name
-                              ? e(
-                                  NoteBlock,
-                                  { key: "resolution-artifact", label: "Resolution file", tone: "success" },
-                                  "Resolution file: " +
-                                    ticket.resolution_artifact_name +
-                                    (formatArtifactMeta(
-                                      ticket.resolution_artifact_content_type,
-                                      ticket.resolution_artifact_size_bytes
-                                    )
-                                      ? " | " +
-                                        formatArtifactMeta(
-                                          ticket.resolution_artifact_content_type,
-                                          ticket.resolution_artifact_size_bytes
-                                        )
-                                      : "")
-                                )
-                              : null,
-                            ticket.resolution_stored_artifact_id
-                              ? e(
-                                  "button",
-                                  {
-                                    type: "button",
-                                    className: "button button-small",
-                                    onClick: function onClick() {
-                                      openStoredArtifact(ticket.resolution_stored_artifact_id);
-                                    },
-                                    key: "open-resolution-artifact"
-                                  },
-                                  "Open resolution file"
-                                )
-                              : null,
-                            ticket.verdict_summary
-                              ? e(
-                                  NoteBlock,
-                                  { key: "verdict-summary", label: "Verdict", tone: "danger" },
-                                  formatVerdictSummary({
-                                    verdictSummary: ticket.verdict_summary,
-                                    verdictOutcome: ticket.verdict_outcome,
-                                    tenantScoreDelta: ticket.verdict_tenant_score_delta,
-                                    landlordScoreDelta: ticket.verdict_landlord_score_delta
-                                  })
-                                )
-                              : null,
-                            ticket.appeal_notes
-                              ? e(
-                                  NoteBlock,
-                                  { key: "appeal-notes", label: "Appeal notes", tone: "danger" },
-                                  ticket.appeal_notes
-                                )
                               : null,
                             session.user.id === tenancy.tenant_user_id && ticket.ticket_status === "resolved"
                               ? e("div", { className: "form-grid", key: "dispute" }, [

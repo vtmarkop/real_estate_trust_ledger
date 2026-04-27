@@ -5,7 +5,7 @@ This file is the current resume point for any new device, new Codex thread, or i
 ## Current Checkpoint
 
 - Program state: completed through Sprint 20
-- Latest non-sprint checkpoint: archive-alignment UX reset in progress, with selected-property operations, compact payment/issue targeting, daily/history separation, create-vs-existing action separation, and score-role clarity completed
+- Latest non-sprint checkpoint: archive-alignment UX reset in progress, with selected-property operations, compact payment/issue targeting, daily/history separation, create-vs-existing action separation, role-wide history lane separation, and score-role clarity completed
 - Next planned sprint: Sprint 21
 - Recommended immediate focus: visually review the updated `Rent & Issues` `Daily work` versus `History` split with demo tenant/landlord data, then continue the broader workflow continuity audit across the remaining role surfaces
 - Repository bootstrap state: published to GitHub as `real_estate_trust_ledger` and ready to clone on a new machine
@@ -52,6 +52,7 @@ The newest UX-reset checkpoint added:
 - the second object-first operations slice, so the selected property now has compact payment and issue dropdowns with one focused action/history pane at a time
 - the third object-first operations slice, so selected-property `Daily work` actions are separated from read-only `History` timelines
 - the fourth object-first operations slice, so `Create new` payment work and `Report new` maintenance work no longer render existing saved record details underneath the blank forms
+- the fifth separation pass, so operations action cards no longer show read-only proof/notes/verdict history inline, and agency saved trust checks now live in `Screening history`
 - score presentation in `Home` and `My Trust` now clarifies that landlord-side score is the signed-in user's own landlord/property-owner dimension, not the score of a tenant's current landlord
 - a pushed branch checkpoint on `origin/codex/archive-ux-reset` so home/work continuation can resume from the same branch state
 
@@ -94,7 +95,7 @@ Record active findings in `docs/WORKFLOW_GAPS.md`.
 ## Next Recommended Actions
 
 1. Continue the `Rent & Issues` archive-alignment reset:
-   - visually review the selected property, `Daily work`, `History`, create-vs-existing payment modes, create-vs-existing maintenance modes, payment menu, and issue menu with the seeded demo accounts
+   - visually review the selected property, `Daily work`, `History`, create-vs-existing payment modes, create-vs-existing maintenance modes, payment menu, issue menu, and agency `Screening history` with the seeded demo accounts
    - keep one property active at a time for normal tenant/landlord work
    - continue reducing any remaining action-form density where `Daily work` still feels heavier than the archive pattern
 2. Run the broader workflow continuity scan across:
@@ -147,5 +148,5 @@ Continue the Trust Ledger rebuild from the current repo state.
 
 Read README.md, AGENTS.md, docs/HANDOFF.md, docs/WORKFLOW_GAPS.md, docs/SPRINTS.md, docs/ROADMAP.md, docs/DECISIONS.md, docs/WORKFLOW_MAP.md, and docs/WORKFLOW_DIAGRAMS.md first.
 
-We are currently on branch codex/archive-ux-reset, post-Sprint-20. The dispute and appeal handoff pass is complete, and the active checkpoint is the archive-alignment UX reset with selected-property targeting, Daily work versus History separation, create-vs-existing payment/issue modes, selected payment/issue detail focus, and score-role clarity complete.
+We are currently on branch codex/archive-ux-reset, post-Sprint-20. The dispute and appeal handoff pass is complete, and the active checkpoint is the archive-alignment UX reset with selected-property targeting, Daily work versus History separation, create-vs-existing payment/issue modes, selected payment/issue detail focus, role-wide history/log lane separation, and score-role clarity complete.
 ```
