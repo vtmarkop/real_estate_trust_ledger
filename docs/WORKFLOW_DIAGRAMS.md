@@ -24,22 +24,28 @@ This diagram shows how the main roles enter the product and which frontend works
 ```mermaid
 flowchart TD
     A["User signs in"] --> B{"Capability set"}
-    B -->|"personal workspace"| C["Home"]
-    B -->|"personal workspace"| D["My Trust"]
-    B -->|"personal workspace"| E["Rental Records"]
-    B -->|"personal workspace"| F["Rent & Issues"]
-    B -->|"personal workspace"| G["Listings"]
-    B -->|"personal workspace"| H["Account"]
-    B -->|"agency membership"| I["Agency Tools"]
-    B -->|"internal reviewer/admin"| J["Review Center"]
+    B --> K{"Active workspace role"}
+    K -->|"tenant"| C["Tenant Home"]
+    K -->|"tenant"| D["Tenant Trust"]
+    K -->|"tenant"| E["Tenant Rental Records"]
+    K -->|"tenant"| F["Tenant Rent & Issues"]
+    K -->|"tenant"| G["Listings"]
+    K -->|"landlord"| L["Landlord Home"]
+    K -->|"landlord"| M["Landlord Trust"]
+    K -->|"landlord"| N["Landlord Rental Records"]
+    K -->|"landlord"| O["Landlord Rent & Issues"]
+    K -->|"agency"| I["Agency Tools"]
+    K -->|"internal reviewer/admin"| J["Review Center"]
+    K --> H["Account"]
 ```
 
 ### What this reflects
 
 - Personal users can access the personal workspaces.
+- Personal users now choose active tenant or landlord mode, which filters visible personal menus and records.
 - Agency access is capability-driven.
 - Internal review access is separate from agency access.
-- A user can keep both a personal and agency workspace when they legitimately have both capabilities.
+- A user can still have multiple legitimate capabilities, but the active role controls which workspace is visible at one time.
 
 ## Diagram 2: Property Setup To Tenancy Activation
 

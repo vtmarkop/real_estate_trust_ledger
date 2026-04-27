@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 
 import { apiRequest } from "../lib/api.js";
 import { e } from "../lib/i18n.js";
-import { useSession } from "../app/session.js";
+import { getWorkspaceRoleLabel, isPersonalWorkspaceRole, useSession } from "../app/session.js";
 import {
   FactPill,
   HeroStat,
@@ -278,94 +278,142 @@ export function WorkspaceHomePage() {
   }
 
   var scoreSummary = state.scoreSummary;
+  var activeWorkspaceRole = session.activeWorkspaceRole || "tenant";
+  var activeWorkspaceLabel = getWorkspaceRoleLabel(activeWorkspaceRole);
+  var isLandlordWorkspace = activeWorkspaceRole === "landlord";
+  var isTenantWorkspace = activeWorkspaceRole === "tenant";
+  var isAgencyWorkspace = activeWorkspaceRole === "agency";
+  var isInternalWorkspace = activeWorkspaceRole === "internal";
+  var isPersonalWorkspace = isPersonalWorkspaceRole(activeWorkspaceRole);
   var landlordSideActive = hasLandlordSideSignals(scoreSummary);
   var organizations = state.organizations;
   var menuGuide = [
     {
       title: "Home",
       copy: "Start here for a quick summary and shortcuts into the rest of the workspace."
-    },
-    {
-      title: "My Trust",
-      copy:
-        "See your tenant-side and landlord-side scores, understand what affects them, and control who can view your shared report."
-    },
-    {
-      title: "Listings",
-      copy: "Browse available homes and keep track of the applications you already submitted."
-    },
-    {
-      title: "Rental Records",
-      copy: "Manage tenancy history, upload supporting evidence, submit past rental history, and handle references."
-    },
-    {
-      title: "Rent & Issues",
-      copy: "Handle daily rent, deposit, and maintenance work separately from read-only property history."
-    },
-    {
-      title: "Agency Tools",
-      copy: "Use this area only if you belong to an agency and need listings, screening, or trust checks."
-    },
-    {
-      title: "Account",
-      copy: "Review the devices signed into your account and your recent sign-in activity."
     }
   ];
 
-  if (session.capabilities.canAccessInternal) {
+  if (isTenantWorkspace || isLandlordWorkspace) {
+    menuGuide.push(
+      {
+        title: isLandlordWorkspace ? "Landlord Trust" : "Tenant Trust",
+        copy: isLandlordWorkspace
+          ? "See your landlord-side score, inputs, sharing, and score history."
+          : "See your tenant-side score, sharing controls, and trust history."
+      },
+      isTenantWorkspace
+        ? {
+            title: "Listings",
+            copy: "Browse available homes and keep track of the applications you already submitted."
+          }
+        : null,
+      {
+        title: "Rental Records",
+        copy: isLandlordWorkspace
+          ? "Manage properties, tenant records, landlord evidence, and references."
+          : "Manage tenancy records, tenant evidence, imports, and references."
+      },
+      {
+        title: "Rent & Issues",
+        copy: isLandlordWorkspace
+          ? "Handle rent collection, deposits, repair responses, and disputes."
+          : "Handle rent payments, deposits, maintenance requests, and disputes."
+      }
+    );
+  }
+
+  if (isAgencyWorkspace) {
+    menuGuide.push({
+      title: "Agency Tools",
+      copy: "Use this area for listings, screening, portfolio work, and agency trust checks."
+    });
+  }
+
+  if (isInternalWorkspace) {
     menuGuide.push({
       title: "Review Center",
       copy: "Internal reviewers and admins use this area for queues, audits, automation, and release checks."
     });
   }
 
-  var workspaceStats = [
-    e(HeroStat, {
-      key: "tenant-score",
-      label: "Tenant score",
-      value: String(scoreSummary.tenant_score),
-      copy: "Current evidence-backed tenant score."
-    }),
-    e(HeroStat, {
-      key: "verification-strength",
-      label: "Verification strength",
-      value: String(scoreSummary.verification_strength) + "%",
-      copy: "Confidence built from accepted evidence and reviewed history."
-    }),
-    e(HeroStat, {
-      key: "active-memberships",
-      label: "Active memberships",
-      value: String(organizations.length),
-      copy: organizations.length
-        ? "Organizations currently connected to this account."
-        : "You are currently operating only in the personal workspace."
-    })
-  ];
+  menuGuide.push({
+    title: "Account",
+    copy: "Review the devices signed into your account and your recent sign-in activity."
+  });
+
+  menuGuide = menuGuide.filter(Boolean);
+
+  var workspaceStats = isPersonalWorkspace
+    ? [
+        e(HeroStat, {
+          key: "role-score",
+          label: isLandlordWorkspace ? "Landlord score" : "Tenant score",
+          value: String(isLandlordWorkspace ? scoreSummary.landlord_score : scoreSummary.tenant_score),
+          copy: isLandlordWorkspace
+            ? "Current property-owner trust score."
+            : "Current evidence-backed renter score."
+        }),
+        e(HeroStat, {
+          key: "verification-strength",
+          label: "Verification strength",
+          value: String(scoreSummary.verification_strength) + "%",
+          copy: "Confidence built from accepted evidence and reviewed history."
+        }),
+        e(HeroStat, {
+          key: "active-mode",
+          label: "Active role",
+          value: activeWorkspaceLabel,
+          copy: "Menus and records are filtered for this role."
+        })
+      ]
+    : [
+        e(HeroStat, {
+          key: "active-mode",
+          label: "Active role",
+          value: activeWorkspaceLabel,
+          copy: "Menus and records are filtered for this role."
+        }),
+        e(HeroStat, {
+          key: "active-memberships",
+          label: isAgencyWorkspace ? "Agency memberships" : "Internal access",
+          value: isAgencyWorkspace ? String(organizations.length) : "Enabled",
+          copy: isAgencyWorkspace
+            ? "Agency organizations connected to this account."
+            : "Reviewer/admin tools are available in this workspace mode."
+        })
+      ];
 
   return e("div", { className: "workspace-page" }, [
     e(PageHero, {
       key: "hero",
       eyebrow: "Home",
-      title: "Welcome back, " + session.user.full_name + ".",
+      title: activeWorkspaceLabel + " home for " + session.user.full_name + ".",
       copy:
-        "This is your starting point. Use the menu on the left to move between your trust profile, rental records, day-to-day tenancy operations, listings, and account tools.",
+        isLandlordWorkspace
+          ? "This view is scoped to landlord-side property, tenant, rent, deposit, repair, and score work."
+          : isTenantWorkspace
+            ? "This view is scoped to tenant-side applications, records, rent, maintenance, and score work."
+            : isAgencyWorkspace
+              ? "This view is scoped to agency portfolio, listing, screening, and application work."
+              : "This view is scoped to internal review, disputes, automation, runtime, and audit work.",
       details: [
         "The home page is now meant to answer two questions quickly: where am I working, and what should I open next?"
       ],
       actions: [
-        session.capabilities.canUsePersonalWorkspace
-          ? e(Link, { className: "button", to: "/app/trust", key: "trust" }, "Open My Trust")
+        isPersonalWorkspace
+          ? e(Link, { className: "button", to: "/app/trust", key: "trust" }, isLandlordWorkspace ? "Open landlord trust" : "Open tenant trust")
           : null,
-        session.capabilities.canUsePersonalWorkspace
+        isTenantWorkspace
           ? e(Link, { className: "button button-secondary", to: "/app/marketplace", key: "marketplace" }, "Browse listings")
           : null,
-        session.capabilities.canUsePersonalWorkspace
+        isPersonalWorkspace
           ? e(Link, { className: "button button-secondary", to: "/app/records", key: "records" }, "Open rental records")
           : null,
-        session.capabilities.canOperateAgency
+        isAgencyWorkspace
           ? e(Link, { className: "button button-secondary", to: "/app/agency", key: "agency" }, "Open agency tools")
           : null,
-        session.capabilities.canAccessInternal
+        isInternalWorkspace
           ? e(Link, { className: "button button-secondary", to: "/app/internal", key: "internal" }, "Open review center")
           : null
       ],
@@ -426,32 +474,36 @@ export function WorkspaceHomePage() {
       )
     ])]),
     e("section", { className: "split-grid", key: "trust-and-orgs" }, [
-      e("article", { className: "detail-panel", key: "trust" }, [
+      isPersonalWorkspace
+        ? e("article", { className: "detail-panel", key: "trust" }, [
       e(SectionHeading, {
-        title: "Trust profile snapshot",
+        title: isLandlordWorkspace ? "Landlord trust snapshot" : "Tenant trust snapshot",
         copy:
-          "These are the core personal trust signals that power sharing, screening, and score-aware workflows across the app.",
+          isLandlordWorkspace
+            ? "This panel only shows the score dimension for your landlord/property-owner role."
+            : "This panel only shows the score dimension for your renter role.",
         key: "heading"
       }),
       e("div", { className: "metric-grid", key: "metrics" }, [
-        e("article", { className: "metric-card", key: "tenant" }, [
-          e("p", { className: "metric-kicker", key: "kicker" }, "Tenant score"),
-          e("strong", { className: "metric-value", key: "value" }, String(scoreSummary.tenant_score)),
-          e("p", { className: "metric-copy", key: "copy" }, "Your score for records where you act as a renter.")
-        ]),
-        e("article", { className: "metric-card", key: "landlord" }, [
+        e("article", { className: "metric-card", key: "role-score" }, [
           e(
             "p",
             { className: "metric-kicker", key: "kicker" },
-            landlordSideActive ? "Your landlord-side score" : "Landlord-side score inactive"
+            isLandlordWorkspace
+              ? landlordSideActive
+                ? "Your landlord-side score"
+                : "Landlord-side score inactive"
+              : "Tenant score"
           ),
-          e("strong", { className: "metric-value", key: "value" }, String(scoreSummary.landlord_score)),
+          e("strong", { className: "metric-value", key: "value" }, String(isLandlordWorkspace ? scoreSummary.landlord_score : scoreSummary.tenant_score)),
           e(
             "p",
             { className: "metric-copy", key: "copy" },
-            landlordSideActive
-              ? "Your score for records where you act as a landlord or property owner."
-              : "This is your own landlord-side score, not your current landlord's score; it stays neutral until you rent out property."
+            isLandlordWorkspace
+              ? landlordSideActive
+                ? "Your score for records where you act as a landlord or property owner."
+                : "This landlord-side score stays neutral until you rent out property."
+              : "Your score for records where you act as a renter."
           )
         ]),
         e("article", { className: "metric-card", key: "version" }, [
@@ -460,12 +512,16 @@ export function WorkspaceHomePage() {
           e("p", { className: "metric-copy", key: "copy" }, "Canonical model version currently powering both self-service and agency-facing score reads.")
         ])
       ])
-    ]),
-      e("article", { className: "detail-panel", key: "organizations" }, [
+    ])
+        : null,
+      isAgencyWorkspace || isInternalWorkspace
+        ? e("article", { className: "detail-panel", key: "organizations" }, [
       e(SectionHeading, {
-        title: "Your active organizations",
+        title: isAgencyWorkspace ? "Your agency organizations" : "Internal workspace context",
         copy:
-          "This area shows where your account can act beyond the personal workspace, including agency and internal memberships.",
+          isAgencyWorkspace
+            ? "This area shows the agencies where this account can operate."
+            : "This area stays away from personal rental info while you are in reviewer mode.",
         key: "heading"
       }),
       organizations.length
@@ -475,8 +531,10 @@ export function WorkspaceHomePage() {
             { className: "empty-copy", key: "empty" },
             "No active agency or internal memberships are attached to this account yet."
           )
-    ])]),
-    session.capabilities.canCreateAgencyWorkspace
+    ])
+        : null
+    ].filter(Boolean)),
+    session.capabilities.canCreateAgencyWorkspace && isLandlordWorkspace
       ? e("section", { className: "detail-panel", key: "agency-create" }, [
           e(SectionHeading, {
             title: "Create an agency workspace",

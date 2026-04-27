@@ -2,7 +2,7 @@ import React from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
 import { e } from "../lib/i18n.js";
-import { useSession } from "../app/session.js";
+import { WORKSPACE_ROLE_OPTIONS, useSession } from "../app/session.js";
 
 function buildInitialState(mode) {
   return {
@@ -10,6 +10,7 @@ function buildInitialState(mode) {
     fullName: "",
     password: "",
     confirmPassword: "",
+    workspaceRole: "tenant",
     mode: mode || "login"
   };
 }
@@ -65,11 +66,15 @@ export function AuthPage(props) {
           email: fields.email,
           full_name: fields.fullName,
           password: fields.password
+        }, {
+          workspaceRole: fields.workspaceRole
         });
       } else {
         await session.login({
           email: fields.email,
           password: fields.password
+        }, {
+          workspaceRole: fields.workspaceRole
         });
       }
 
@@ -104,7 +109,7 @@ export function AuthPage(props) {
           { className: "auth-copy", key: "copy" },
           mode === "register"
             ? "Create a secure account first. After that, you can build your rental record, share your trust profile, and join organizations."
-            : "Sign in to open your workspace, review your records, and continue from where you left off."
+            : "Sign in, choose the role you want to work as, and the app will open only the matching workspace lanes for that account."
         )
       ]),
       e(
@@ -154,6 +159,26 @@ export function AuthPage(props) {
               autoComplete: mode === "register" ? "new-password" : "current-password",
               required: true
             })
+          ]),
+          e("label", { className: "field", key: "workspaceRole" }, [
+            e("span", { className: "field-label", key: "label" }, "Open workspace as"),
+            e(
+              "select",
+              {
+                className: "field-input field-select",
+                name: "workspaceRole",
+                value: fields.workspaceRole,
+                onChange: updateField
+              },
+              WORKSPACE_ROLE_OPTIONS.map(function renderWorkspaceRole(option) {
+                return e("option", { value: option.id, key: option.id }, option.label);
+              })
+            ),
+            e(
+              "span",
+              { className: "field-help", key: "help" },
+              "Only roles actually available on this account will open after sign-in."
+            )
           ]),
           mode === "register"
             ? e("label", { className: "field", key: "confirmPassword" }, [

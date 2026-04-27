@@ -283,6 +283,13 @@ function buildTenancyPartyContext(tenancy, userId) {
   };
 }
 
+function matchesWorkspaceRole(tenancy, userId, workspaceRole) {
+  if (workspaceRole === "landlord") {
+    return tenancy.landlord_user_id === userId;
+  }
+  return tenancy.tenant_user_id === userId;
+}
+
 function formatPaymentSelectorLabel(payment) {
   return [
     formatWorkflowLabel(payment.payment_type),
@@ -1021,20 +1028,23 @@ export function OperationsPage() {
 
   React.useEffect(
     function normalizeSelectedTenancy() {
-      if (!state.tenancies.length) {
+      var roleTenancies = state.tenancies.filter(function filterRoleTenancy(tenancy) {
+        return matchesWorkspaceRole(tenancy, session.user.id, session.activeWorkspaceRole);
+      });
+      if (!roleTenancies.length) {
         if (selectedTenancyId) {
           setSelectedTenancyId("");
         }
         return;
       }
-      var hasSelectedTenancy = state.tenancies.some(function matchTenancy(tenancy) {
+      var hasSelectedTenancy = roleTenancies.some(function matchTenancy(tenancy) {
         return tenancy.id === selectedTenancyId;
       });
       if (!hasSelectedTenancy) {
-        setSelectedTenancyId(state.tenancies[0].id);
+        setSelectedTenancyId(roleTenancies[0].id);
       }
     },
-    [selectedTenancyId, state.tenancies]
+    [selectedTenancyId, session.activeWorkspaceRole, session.user.id, state.tenancies]
   );
 
   React.useEffect(
@@ -1120,7 +1130,10 @@ export function OperationsPage() {
   var maintenanceCount = 0;
   var depositCount = 0;
   var disputeOpportunities = [];
-  state.tenancies.forEach(function collectDisputeData(tenancy) {
+  var roleScopedTenancies = state.tenancies.filter(function filterRoleScopedTenancies(tenancy) {
+    return matchesWorkspaceRole(tenancy, session.user.id, session.activeWorkspaceRole);
+  });
+  roleScopedTenancies.forEach(function collectDisputeData(tenancy) {
     var payments = state.paymentsByTenancy[tenancy.id] || [];
     var depositRecord = state.depositsByTenancy[tenancy.id];
     var maintenanceTickets = state.maintenanceByTenancy[tenancy.id] || [];
@@ -1180,7 +1193,7 @@ export function OperationsPage() {
       }
     });
   });
-  var filteredTenancies = state.tenancies.filter(function filterTenancies(tenancy) {
+  var filteredTenancies = roleScopedTenancies.filter(function filterTenancies(tenancy) {
     return matchesTenancyFilter(tenancy, tenancySearch);
   });
   var selectedTenancy =
@@ -1258,7 +1271,9 @@ export function OperationsPage() {
       eyebrow: "Rent & Issues",
       title: "Rent, deposit, and repair tracking",
       copy:
-        "Use this page for the day-to-day side of a tenancy: rent records, deposit handling, and maintenance issues.",
+          session.activeWorkspaceRole === "landlord"
+            ? "Use this landlord workspace for rent collection, deposit handling, maintenance responses, and disputes tied to properties where you are the landlord."
+            : "Use this tenant workspace for rent payments, deposit handling, maintenance requests, and disputes tied to properties where you are the tenant.",
       details: [
         "The goal here is operational clarity: pick one property, separate daily work from read-only history, and only open the dispute lane when a disagreement actually exists."
       ],
@@ -1305,7 +1320,7 @@ export function OperationsPage() {
         "aria-label": "Operational workflow sections"
       })
     ]),
-    operationsFocus !== "disputes" && state.tenancies.length
+    operationsFocus !== "disputes" && roleScopedTenancies.length
       ? e("section", { className: "detail-panel", key: "tenancy-picker" }, [
           e(SectionHeading, {
             title: "Choose one property first",
@@ -1354,7 +1369,7 @@ export function OperationsPage() {
                 e(FactPill, {
                   key: "visible",
                   label: "Visible properties",
-                  value: String(filteredTenancies.length) + " of " + String(state.tenancies.length),
+                  value: String(filteredTenancies.length) + " of " + String(roleScopedTenancies.length),
                   tone: "accent"
                 }),
                 selectedTenancy
@@ -3064,9 +3079,11 @@ export function OperationsPage() {
           e(
             "p",
             { className: "empty-copy", key: "copy" },
-            state.tenancies.length
+            roleScopedTenancies.length
               ? "No tenancy matches the current property filter."
-              : "No tenancy records are attached to this account yet."
+              : session.activeWorkspaceRole === "landlord"
+                ? "No landlord-side tenancy records are attached to this account yet."
+                : "No tenant-side tenancy records are attached to this account yet."
           )
         ])
         : null

@@ -552,6 +552,22 @@ textarea {
   font-weight: 700;
 }
 
+.workspace-role-switch {
+  display: grid;
+  gap: 6px;
+}
+
+.workspace-role-select {
+  width: 100%;
+  min-height: 40px;
+  padding: 0 0.85rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--ink);
+  font-weight: 700;
+}
+
 .app-main {
   position: relative;
   padding: var(--main-pad) var(--main-pad) calc(var(--main-pad) + 10px);

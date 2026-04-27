@@ -6,6 +6,15 @@ The rebuilt frontend now supports both English and Greek. Use the floating `EN` 
 
 The rebuilt frontend also now supports `Comfort` and `Compact` density modes. Use the density control in the top-right area of the signed-in shell when you want heavier workspaces like `Agency Tools` or `Review Center` to show more information with less spacing.
 
+The signed-in shell now also supports an active role mode. Choose a role at sign-in, or switch it later from the sidebar:
+
+- `Tenant` shows tenant trust, listings, tenant records, and tenant-side rent/issue work.
+- `Landlord` shows landlord trust, landlord property/tenant records, and landlord-side rent/issue work.
+- `Agency` shows agency tools without personal rental lanes.
+- `Reviewer` shows review-center tools without personal rental lanes.
+
+This role mode is a workspace filter, not a permission grant. The backend still decides what the account may access.
+
 Most workspaces now also use focused section tabs inside the page itself. Good examples are:
 
 - `My Trust`: overview, sharing, history, and access log are separated.
@@ -77,31 +86,31 @@ Instead of treating rental history as private notes scattered across email, chat
 
 ## The Main Menu
 
-The signed-in workspace uses these menu items:
+The signed-in workspace uses these menu items, depending on the active role:
 
 - `Home`
-  - Your starting page.
+  - Your role-scoped starting page.
   - Use it to understand where to go next.
 
-- `My Trust`
-  - Your scores, score history, trust events, and sharing controls.
+- `Tenant Trust` or `Landlord Trust`
+  - The score, score history, trust events, and sharing controls for the active role.
   - Use it when you want to understand or share your trust profile.
 
 - `Listings`
   - Public/open listings plus your applications.
-  - Use it when you want to apply for a property.
+  - Tenant mode only.
 
 - `Rental Records`
-  - Current tenancies, uploaded evidence, past rental history, and references.
+  - Current role-specific tenancies, uploaded evidence, past rental history, properties in landlord mode, and references.
   - Use it when you want to build or strengthen your trust record.
 
 - `Rent & Issues`
-  - Payments, deposits, and maintenance tickets.
+  - Role-specific payments, deposits, and maintenance tickets.
   - Use it for the day-to-day running of an active tenancy.
 
 - `Agency Tools`
   - Agency-only workspace for properties, listings, applications, and trust checks.
-  - Use it only if your account belongs to an agency organization.
+  - Agency mode only, and only if your account belongs to an agency organization.
 
 - `Account`
   - Sessions and sign-in activity.
@@ -109,7 +118,7 @@ The signed-in workspace uses these menu items:
 
 - `Review Center`
   - Internal-only area for queue reviews, automation, audit logs, and release readiness.
-  - You only see this if your account has internal access.
+  - Reviewer mode only, and only if your account has internal access.
 
 ## Roles And What They Usually Do
 
@@ -129,7 +138,7 @@ Best menu order:
 
 1. `Home`
 2. `Rental Records`
-3. `My Trust`
+3. `Tenant Trust`
 4. `Listings`
 5. `Rent & Issues`
 6. `Account`
@@ -149,7 +158,7 @@ Best menu order:
 1. `Home`
 2. `Rental Records`
 3. `Rent & Issues`
-4. `My Trust`
+4. `Landlord Trust`
 5. `Account`
 
 ### Agency Owner Or Agent
@@ -166,8 +175,7 @@ Best menu order:
 
 1. `Home`
 2. `Agency Tools`
-3. `Listings`
-4. `Account`
+3. `Account`
 
 ### Internal Reviewer Or Admin
 
@@ -193,8 +201,7 @@ Purpose:
 - Gives you a quick summary and helps you decide where to go next.
 
 What you can do:
-- see your current score snapshot,
-- see your organizations,
+- see the score or organization summary relevant to the active role,
 - use shortcuts to key areas,
 - install the web app if your browser supports it,
 - read the built-in menu guide.
@@ -203,16 +210,15 @@ When to use it:
 - every time you sign in,
 - when you feel lost and want to re-orient quickly.
 
-### My Trust
+### Tenant Trust Or Landlord Trust
 
 Purpose:
-- Shows your trust profile and lets you share it safely.
+- Shows the trust profile for the active tenant or landlord role and lets you share it safely.
 
 What you can do:
-- view your tenant-side renter score,
-- view your own landlord-side/property-owner score,
+- view only the active role's score dimension,
 - view verification strength,
-- see what affects your score,
+- see what affects that role-specific score,
 - create a share token and access code for an agency,
 - revoke a share permission,
 - inspect score history,
@@ -227,6 +233,7 @@ When to use it:
 Friendly explanation:
 - `Tenant-side score` evaluates you as a renter.
 - `Landlord-side score` evaluates the same account only when you act as a landlord or property owner. It is not a score for your current landlord.
+- The active workspace role decides which score dimension is shown first.
 
 ### Listings
 
@@ -252,7 +259,8 @@ Purpose:
 
 What you can do:
 - create a new tenancy record by using a counterparty email,
-- view your tenancies,
+- view only the tenancies where you match the active role,
+- create and manage saved properties in landlord mode,
 - request review on a tenancy,
 - confirm a tenancy if you are the counterparty,
 - upload evidence for a tenancy,
@@ -270,6 +278,7 @@ When to use it:
 Friendly explanation:
 - This is the best place to start if you want to "build your file."
 - You do not need to know internal IDs. The app now lets you create a tenancy by using the other person's email.
+- The active role locks the tenancy form to tenant or landlord so you do not accidentally create the wrong side of a record.
 - Tenancy cards show your role and the actual counterparty, not a generic parties label.
 - Your uploaded documents are stored privately. Depending on the environment, that storage may be local private storage or S3-compatible object storage such as MinIO, but the app keeps the same safe download flow either way.
 
@@ -299,6 +308,7 @@ When to use it:
 
 Friendly explanation:
 - Think of this page as the day-to-day "running the rental" page.
+- Tenant mode only shows properties where you are the tenant. Landlord mode only shows properties where you are the landlord.
 - First choose one property. The property summary shows your role in that tenancy and the counterparty you are dealing with.
 - Then use `Daily work` for actions and `History` for the read-only timeline of what already happened.
 - In `Payments`, use `Create new` only for a blank new payment form, or `Existing records` to open the payment dropdown and act on a saved payment.
@@ -460,11 +470,11 @@ Go to `Home`. It now includes a built-in menu guide.
 
 ### I cannot see Agency Tools
 
-Your account probably is not a member of an agency organization.
+Switch the active role to `Agency` from the sidebar. If `Agency` is not available, your account probably is not a member of an agency organization.
 
 ### I cannot see Review Center
 
-Your account does not currently have internal reviewer/admin access.
+Switch the active role to `Reviewer` from the sidebar. If `Reviewer` is not available, your account does not currently have internal reviewer/admin access.
 
 ### A trust check is denied
 

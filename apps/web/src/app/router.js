@@ -8,7 +8,7 @@ import {
 
 import { e } from "../lib/i18n.js";
 import { AppShell } from "./AppShell.js";
-import { useSession } from "./session.js";
+import { isPersonalWorkspaceRole, useSession } from "./session.js";
 import { AuthPage } from "../pages/AuthPage.js";
 import { LandingPage } from "../pages/LandingPage.js";
 import { NotFoundPage } from "../pages/NotFoundPage.js";
@@ -92,7 +92,7 @@ function RequireAuth() {
 function RequireInternalAccess() {
   var session = useSession();
 
-  if (!session.capabilities.canAccessInternal) {
+  if (!session.capabilities.canAccessInternal || session.activeWorkspaceRole !== "internal") {
     return e(Navigate, {
       to: "/app",
       replace: true
@@ -105,7 +105,7 @@ function RequireInternalAccess() {
 function RequireAgencyAccess() {
   var session = useSession();
 
-  if (!session.capabilities.canOperateAgency) {
+  if (!session.capabilities.canOperateAgency || session.activeWorkspaceRole !== "agency") {
     return e(Navigate, {
       to: "/app",
       replace: true
@@ -118,7 +118,7 @@ function RequireAgencyAccess() {
 function RequirePersonalWorkspace() {
   var session = useSession();
 
-  if (!session.capabilities.canUsePersonalWorkspace) {
+  if (!session.capabilities.canUsePersonalWorkspace || !isPersonalWorkspaceRole(session.activeWorkspaceRole)) {
     return e(Navigate, {
       to: "/app",
       replace: true

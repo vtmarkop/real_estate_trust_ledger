@@ -1,7 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { buildCapabilities } from "../src/app/session.js";
+import {
+  buildCapabilities,
+  getAvailableWorkspaceRoles,
+  normalizeWorkspaceRole
+} from "../src/app/session.js";
 import { buildNavigation, normalizeDensity } from "../src/app/AppShell.js";
 
 test("buildCapabilities exposes agency and internal access separately", function () {
@@ -39,6 +43,7 @@ test("buildCapabilities keeps personal workspace tabs for users who also belong 
 
 test("buildNavigation hides agency tools when the user cannot operate an agency", function () {
   const session = {
+    activeWorkspaceRole: "tenant",
     capabilities: {
       canUsePersonalWorkspace: true,
       canOperateAgency: false,
@@ -55,8 +60,9 @@ test("buildNavigation hides agency tools when the user cannot operate an agency"
   assert.equal(labels.includes("Rent & Issues"), true);
 });
 
-test("buildNavigation shows agency and review spaces only when capabilities allow them", function () {
+test("buildNavigation scopes agency mode to agency tools", function () {
   const session = {
+    activeWorkspaceRole: "agency",
     capabilities: {
       canUsePersonalWorkspace: false,
       canOperateAgency: true,
@@ -68,7 +74,72 @@ test("buildNavigation shows agency and review spaces only when capabilities allo
     return item.label;
   });
 
-  assert.deepEqual(labels, ["Home", "Agency Tools", "Review Center", "Account"]);
+  assert.deepEqual(labels, ["Home", "Agency Tools", "Account"]);
+});
+
+test("buildNavigation scopes internal mode to review center", function () {
+  const session = {
+    activeWorkspaceRole: "internal",
+    capabilities: {
+      canUsePersonalWorkspace: false,
+      canOperateAgency: true,
+      canAccessInternal: true
+    }
+  };
+
+  const labels = buildNavigation(session).map(function pickLabel(item) {
+    return item.label;
+  });
+
+  assert.deepEqual(labels, ["Home", "Review Center", "Account"]);
+});
+
+test("buildNavigation keeps listings tenant-only", function () {
+  const tenantSession = {
+    activeWorkspaceRole: "tenant",
+    capabilities: {
+      canUsePersonalWorkspace: true,
+      canOperateAgency: false,
+      canAccessInternal: false
+    }
+  };
+  const landlordSession = {
+    activeWorkspaceRole: "landlord",
+    capabilities: {
+      canUsePersonalWorkspace: true,
+      canOperateAgency: false,
+      canAccessInternal: false
+    }
+  };
+
+  assert.equal(
+    buildNavigation(tenantSession).some(function hasListings(item) {
+      return item.label === "Listings";
+    }),
+    true
+  );
+  assert.equal(
+    buildNavigation(landlordSession).some(function hasListings(item) {
+      return item.label === "Listings";
+    }),
+    false
+  );
+});
+
+test("workspace role normalization only returns available roles", function () {
+  const user = {
+    system_role: "user"
+  };
+  const organizations = [
+    {
+      organization_type: "agency",
+      current_user_membership_role: "agent"
+    }
+  ];
+
+  assert.deepEqual(getAvailableWorkspaceRoles(user, organizations), ["tenant", "landlord", "agency"]);
+  assert.equal(normalizeWorkspaceRole("agency", user, organizations), "agency");
+  assert.equal(normalizeWorkspaceRole("internal", user, organizations), "tenant");
 });
 
 test("normalizeDensity keeps the compact toggle strict and safe", function () {

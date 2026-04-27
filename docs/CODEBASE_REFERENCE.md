@@ -1627,7 +1627,7 @@ Definitions:
 - `formatRoleLabel`
   - Human-readable role text.
 - `buildNavigation(session)`
-  - Builds the visible menu from current capabilities.
+  - Builds the visible menu from current capabilities plus the active workspace role.
 - `NavigationLink`
   - Shell link component.
 - `AppShell`
@@ -1635,8 +1635,10 @@ Definitions:
 
 Important behavior:
 
-- tabs are capability-driven,
+- tabs are capability-driven and active-role-scoped,
 - agency/internal tabs only appear when the session permits them,
+- tenant and landlord modes show different personal navigation,
+- the sidebar role switch changes the active workspace role and returns the user to `Home`,
 - role visibility is not only cosmetic because router guards reinforce it.
 
 #### `app/router.js`
@@ -1661,11 +1663,17 @@ Purpose:
 
 - load `/auth/me`,
 - derive frontend capabilities from user + organizations,
+- normalize and persist the active workspace role,
 - expose session state/actions to the app.
 
 Definitions:
 
-- `buildCapabilities(user, organizations)`
+- `buildCapabilities(user, organizations, activeWorkspaceRole)`
+- `getAvailableWorkspaceRoles(user, organizations)`
+- `normalizeWorkspaceRole(role, user, organizations)`
+- `getWorkspaceRoleLabel(role)`
+- `getWorkspaceRoleCopy(role)`
+- `isPersonalWorkspaceRole(role)`
 - `SessionProvider`
 - `useSession`
 
@@ -1726,7 +1734,7 @@ Purpose:
 
 Purpose:
 
-- login and registration.
+- login, registration, and initial workspace role selection.
 
 #### `pages/WorkspaceHomePage.js`
 
@@ -1799,6 +1807,7 @@ Purpose:
 - history imports,
 - reference requests,
 - role/counterparty clarity on tenancy cards,
+- active tenant/landlord role filtering,
 - property tagging.
 
 This is one of the most important pages because it covers the "build the trust record" lane.
@@ -1830,6 +1839,7 @@ Purpose:
   - disputes
   - appeals
 - selected-property role/counterparty context
+- active tenant/landlord role filtering
 
 This page is the closest equivalent to the practical "active tenancy operations desk."
 

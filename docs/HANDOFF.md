@@ -5,7 +5,7 @@ This file is the current resume point for any new device, new Codex thread, or i
 ## Current Checkpoint
 
 - Program state: completed through Sprint 20
-- Latest non-sprint checkpoint: archive-alignment UX reset in progress, with selected-property operations, compact payment/issue targeting, daily/history separation, create-vs-existing action separation, role-wide history lane separation, tenancy role/counterparty clarity, and score-role clarity completed
+- Latest non-sprint checkpoint: archive-alignment UX reset in progress, with selected-property operations, compact payment/issue targeting, daily/history separation, create-vs-existing action separation, role-wide history lane separation, active workspace-role scoping, tenancy role/counterparty clarity, and score-role clarity completed
 - Next planned sprint: Sprint 21
 - Recommended immediate focus: visually review the updated `Rent & Issues` `Daily work` versus `History` split with demo tenant/landlord data, then continue the broader workflow continuity audit across the remaining role surfaces
 - Repository bootstrap state: published to GitHub as `real_estate_trust_ledger` and ready to clone on a new machine
@@ -54,6 +54,7 @@ The newest UX-reset checkpoint added:
 - the fourth object-first operations slice, so `Create new` payment work and `Report new` maintenance work no longer render existing saved record details underneath the blank forms
 - the fifth separation pass, so operations action cards no longer show read-only proof/notes/verdict history inline, and agency saved trust checks now live in `Screening history`
 - tenancy metadata in `Rental Records` and `Rent & Issues` now shows `Your role` plus the relevant tenant/landlord counterparty instead of the low-value `Parties: Tenant and Landlord` pill
+- active workspace-role scoping now starts at sign-in, is switchable from the shell, and hides role-irrelevant navigation, direct routes, score dimensions, tenancy records, property setup, and operations records in the main tenant/landlord workspaces
 - score presentation in `Home` and `My Trust` now clarifies that landlord-side score is the signed-in user's own landlord/property-owner dimension, not the score of a tenant's current landlord
 - a pushed branch checkpoint on `origin/codex/archive-ux-reset` so home/work continuation can resume from the same branch state
 
@@ -149,5 +150,5 @@ Continue the Trust Ledger rebuild from the current repo state.
 
 Read README.md, AGENTS.md, docs/HANDOFF.md, docs/WORKFLOW_GAPS.md, docs/SPRINTS.md, docs/ROADMAP.md, docs/DECISIONS.md, docs/WORKFLOW_MAP.md, and docs/WORKFLOW_DIAGRAMS.md first.
 
-We are currently on branch codex/archive-ux-reset, post-Sprint-20. The dispute and appeal handoff pass is complete, and the active checkpoint is the archive-alignment UX reset with selected-property targeting, Daily work versus History separation, create-vs-existing payment/issue modes, selected payment/issue detail focus, role-wide history/log lane separation, tenancy role/counterparty clarity, and score-role clarity complete.
+We are currently on branch codex/archive-ux-reset, post-Sprint-20. The dispute and appeal handoff pass is complete, and the active checkpoint is the archive-alignment UX reset with selected-property targeting, Daily work versus History separation, create-vs-existing payment/issue modes, selected payment/issue detail focus, role-wide history/log lane separation, active workspace-role scoping, tenancy role/counterparty clarity, and score-role clarity complete.
 ```

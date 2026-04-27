@@ -233,3 +233,36 @@ For each slice of this reset:
   - `.\.venv\Scripts\python -m unittest tests.test_repo_layout tests.test_web_scaffold`
   - `npm test`
   - `npm run build`
+
+### 2026-04-27 - Slice 7: Active workspace role scoping
+
+- Problem:
+  - mixed-role accounts could still see too many unrelated menus and records at once
+  - tenant, landlord, agency, and reviewer work needed stronger separation without creating duplicate accounts or weakening backend permissions
+- Rebuilt files changed:
+  - `apps/web/src/app/session.js`
+  - `apps/web/src/app/AppShell.js`
+  - `apps/web/src/app/router.js`
+  - `apps/web/src/pages/AuthPage.js`
+  - `apps/web/src/pages/WorkspaceHomePage.js`
+  - `apps/web/src/pages/TrustProfilePage.js`
+  - `apps/web/src/pages/RecordsPage.js`
+  - `apps/web/src/pages/OperationsPage.js`
+  - `apps/web/src/styles/index.css`
+  - `apps/web/tests/navigation.test.mjs`
+  - `tests/test_web_scaffold.py`
+- What changed:
+  - sign-in now lets the user request the workspace role to open
+  - the shell persists and switches the active workspace role among roles available to the account
+  - navigation and direct route guards now honor the active role
+  - tenant mode hides landlord/agency/reviewer lanes and shows tenant-side records, listings, scores, and operations
+  - landlord mode hides listings and tenant-only views, shows landlord-side records, property setup, scores, and operations
+  - agency mode shows agency tools without personal rental lanes
+  - reviewer mode shows review center without personal rental lanes
+  - `Rental Records`, `Rent & Issues`, `Home`, and `My Trust` now scope visible frontend data to the active role
+- Guardrail:
+  - this is UI/workspace scoping, not authorization; backend RBAC, organization membership, and record-participation checks remain authoritative
+- Verification:
+  - `node --check` on all changed frontend files
+  - `npm test`
+  - `npm run build`

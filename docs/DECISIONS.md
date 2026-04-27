@@ -754,3 +754,16 @@ The operations workspace now includes a dedicated dispute desk that highlights:
 - the next action a tenant or landlord can take.
 
 Reason: dispute capability existed in the backend and tenancy detail flows, but it was too easy to miss. Clarifying the workflow mattered more than styling it.
+
+## D097: Login Role Selection Is Workspace Scoping, Not Authorization
+
+The web app now lets a signed-in user choose an active workspace role:
+
+- tenant,
+- landlord,
+- agency,
+- reviewer.
+
+The selected role controls which menus, routes, and role-relevant frontend records are shown. It does not grant permissions by itself.
+
+Reason: this gives users strong separation of concerns without violating D007. Tenant and landlord remain business personas derived from domain participation, while agency and reviewer access still come from organization membership and system role checks enforced by the backend.

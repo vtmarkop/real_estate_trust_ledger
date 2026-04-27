@@ -34,6 +34,13 @@ The rebuilt web app now separates work by lane so each role does the minimum nee
 - `Review Center`: overview, controls, reviews, disputes, runtime, and audit
 - `Account`: session and account safety controls
 
+The shell now also applies an active workspace role:
+
+- `tenant`: tenant trust, listings, tenant records, and tenant-side operations
+- `landlord`: landlord trust, property/tenant records, and landlord-side operations
+- `agency`: agency tools only, plus account controls
+- `internal/reviewer`: review center only, plus account controls
+
 The dense pages are now intentionally split into tabs or lanes:
 
 - `Rental Records`
@@ -66,6 +73,7 @@ This matters because it gives us clearer separation of concerns both in the UI a
 
 Current UX-reset note:
 
+- users now choose an active workspace role at sign-in or from the shell; this scopes visible menus, direct routes, score dimensions, tenancy records, property setup, and operational records without replacing backend authorization
 - the non-dispute `Rent & Issues` lanes now begin with property targeting, so normal tenant/landlord work can stay inside one selected tenancy context instead of requiring cross-property scrolling
 - tenancy metadata in `Rental Records` and `Rent & Issues` now identifies the signed-in user's role and the counterparty instead of repeating generic tenant/landlord labels
 - the selected property now separates `Daily work` from read-only `History`, so forms/actions and timeline browsing are no longer mixed together
@@ -79,10 +87,11 @@ The rebuilt product works with capability-driven roles instead of only hard-code
 
 - `Personal user`
   - Can act as tenant, landlord, or both depending on the tenancy/property relationship
+  - Chooses an active tenant or landlord workspace mode so the UI only shows that persona's records and actions
 - `Agency member`
-  - Can use `Agency Tools`
+  - Can choose agency workspace mode and use `Agency Tools`
 - `Internal reviewer`
-  - Can use `Review Center`
+  - Can choose reviewer workspace mode and use `Review Center`
 - `Platform admin`
   - Has the broadest internal control surface
 
@@ -90,6 +99,7 @@ Important architectural difference from the archive MVP:
 
 - The old `judge` concept is now implemented as the internal `reviewer/admin` lane.
 - This preserves the neutral-verdict business function without exposing a powerful adjudication role as a normal end-user persona.
+- The active workspace role is a UI scoping choice, not a permission grant. Backend access still depends on system roles, organization memberships, and record participation.
 
 ## Workflow 1: Authentication And Session Safety
 
@@ -125,9 +135,10 @@ Important architectural difference from the archive MVP:
 
 1. User signs in.
 2. Backend creates an opaque session.
-3. Frontend loads `/auth/me`.
-4. Navigation is built from capabilities.
-5. User can later revoke an older session from `Account`.
+3. Frontend loads `/auth/me` and `/organizations/mine`.
+4. The selected workspace role is normalized against the roles actually available to the account.
+5. Navigation is built from the active role plus backend-derived capabilities.
+6. User can later switch active role from the shell or revoke an older session from `Account`.
 
 ### Example
 

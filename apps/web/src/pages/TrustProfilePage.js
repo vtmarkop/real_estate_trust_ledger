@@ -255,6 +255,28 @@ export function TrustProfilePage() {
 
   var summary = state.summary;
   var inputs = summary.inputs;
+  var activeWorkspaceRole = session.activeWorkspaceRole || "tenant";
+  var isLandlordWorkspace = activeWorkspaceRole === "landlord";
+  var roleScore = isLandlordWorkspace ? summary.landlord_score : summary.tenant_score;
+  var roleScoreLabel = isLandlordWorkspace ? "Landlord score" : "Tenant score";
+  var roleScoreCopy = isLandlordWorkspace
+    ? "Your score for records where you act as a landlord or property owner."
+    : "Your score for records where you act as a renter.";
+  var roleInputCards = isLandlordWorkspace
+    ? [
+        e(FactPill, { key: "confirmed-landlord", label: "Confirmed landlord tenancies", value: String(inputs.landlord_counterparty_confirmed_tenancies), tone: "accent" }),
+        e(FactPill, { key: "verified-landlord", label: "Verified landlord tenancies", value: String(inputs.landlord_verified_tenancies), tone: "success" }),
+        e(FactPill, { key: "landlord-evidence", label: "Accepted landlord evidence", value: String(inputs.accepted_landlord_evidence_documents), tone: "success" }),
+        e(FactPill, { key: "landlord-references", label: "Accepted landlord references", value: String(inputs.accepted_landlord_counterparty_references), tone: "accent" }),
+        e(FactPill, { key: "history-imports", label: "Accepted history imports", value: String(inputs.accepted_history_imports), tone: "warning" })
+      ]
+    : [
+        e(FactPill, { key: "confirmed-tenant", label: "Confirmed tenant tenancies", value: String(inputs.tenant_counterparty_confirmed_tenancies), tone: "accent" }),
+        e(FactPill, { key: "verified-tenant", label: "Verified tenant tenancies", value: String(inputs.tenant_verified_tenancies), tone: "success" }),
+        e(FactPill, { key: "tenant-evidence", label: "Accepted tenant evidence", value: String(inputs.accepted_tenant_evidence_documents), tone: "success" }),
+        e(FactPill, { key: "tenant-references", label: "Accepted tenant references", value: String(inputs.accepted_tenant_counterparty_references), tone: "accent" }),
+        e(FactPill, { key: "history-imports", label: "Accepted history imports", value: String(inputs.accepted_history_imports), tone: "warning" })
+      ];
   var landlordSideActive = hasLandlordSideSignals(summary);
   var activeConsents = state.consents.filter(function filterActive(consent) {
     return consent.is_active;
@@ -286,25 +308,27 @@ export function TrustProfilePage() {
     e(PageHero, {
       key: "hero",
       eyebrow: "My Trust",
-      title: "My score, sharing, and trust history",
+      title: isLandlordWorkspace ? "My landlord trust profile" : "My tenant trust profile",
       copy:
-        "Use this page to understand how your score is built, share it with an agency when you choose to, and review the history behind your trust record.",
+        isLandlordWorkspace
+          ? "Use this page to understand your property-owner trust score, share your report when you choose to, and review landlord-side score history."
+          : "Use this page to understand your renter trust score, share it with an agency when you choose to, and review tenant-side score history.",
       details: [
         "The sections below separate score drivers, sharing controls, historical changes, and report-access activity so you do not have to scan everything at once."
       ],
       stats: [
         e(HeroStat, {
-          label: "Tenant score",
-          value: String(summary.tenant_score),
-          copy: "Your score for records where you act as a renter."
+          label: roleScoreLabel,
+          value: String(roleScore),
+          copy: roleScoreCopy
         }),
-        e(HeroStat, {
-          label: landlordSideActive ? "Your landlord-side score" : "Landlord-side score inactive",
-          value: String(summary.landlord_score),
-          copy: landlordSideActive
-            ? "Your score for records where you act as a landlord or property owner."
-            : "This is your own landlord-side score, not your current landlord's score; it stays neutral until you rent out property."
-        }),
+        isLandlordWorkspace && !landlordSideActive
+          ? e(HeroStat, {
+              label: "Landlord-side status",
+              value: "Inactive",
+              copy: "This side stays neutral until you rent out property or build landlord-side evidence."
+            })
+          : null,
         e(HeroStat, {
           label: "Verification strength",
           value: String(summary.verification_strength) + "%",
@@ -343,19 +367,11 @@ export function TrustProfilePage() {
       e(
         NoteBlock,
         { key: "role-score-note", label: "Score role clarity", tone: "accent" },
-        "Tenant-side score evaluates you as a renter. Landlord-side score evaluates you only when you act as a landlord or property owner; it is not a rating for your current landlord."
+        isLandlordWorkspace
+          ? "This lane evaluates you as a landlord or property owner. It is not showing tenant-side application behavior."
+          : "This lane evaluates you as a renter. It is not a rating for your current landlord."
       ),
-      e("div", { className: "fact-grid", key: "inputs" }, [
-        e(FactPill, { key: "confirmed-tenant", label: "Tenant confirmed tenancies", value: String(inputs.tenant_counterparty_confirmed_tenancies), tone: "accent" }),
-        e(FactPill, { key: "verified-tenant", label: "Tenant verified tenancies", value: String(inputs.tenant_verified_tenancies), tone: "success" }),
-        e(FactPill, { key: "confirmed-landlord", label: "Landlord-side confirmed tenancies", value: String(inputs.landlord_counterparty_confirmed_tenancies), tone: "accent" }),
-        e(FactPill, { key: "verified-landlord", label: "Landlord-side verified tenancies", value: String(inputs.landlord_verified_tenancies), tone: "success" }),
-        e(FactPill, { key: "tenant-evidence", label: "Accepted tenant evidence", value: String(inputs.accepted_tenant_evidence_documents), tone: "success" }),
-        e(FactPill, { key: "landlord-evidence", label: "Accepted landlord-side evidence", value: String(inputs.accepted_landlord_evidence_documents), tone: "success" }),
-        e(FactPill, { key: "tenant-references", label: "Accepted tenant references", value: String(inputs.accepted_tenant_counterparty_references), tone: "accent" }),
-        e(FactPill, { key: "landlord-references", label: "Accepted landlord-side references", value: String(inputs.accepted_landlord_counterparty_references), tone: "accent" }),
-        e(FactPill, { key: "history-imports", label: "Accepted history imports", value: String(inputs.accepted_history_imports), tone: "warning" })
-      ])
+      e("div", { className: "fact-grid", key: "inputs" }, roleInputCards)
     ])
       : null,
     trustSection === "sharing"
@@ -537,10 +553,7 @@ export function TrustProfilePage() {
                 key: entry.id,
                 eyebrow: "Score snapshot",
                 title:
-                  "Tenant-side " +
-                  String(entry.tenant_score) +
-                  " | Landlord-side " +
-                  String(entry.landlord_score),
+                  roleScoreLabel + " " + String(isLandlordWorkspace ? entry.landlord_score : entry.tenant_score),
                 meta: entry.calculated_at,
                 badges: [
                   e(StatusBadge, {

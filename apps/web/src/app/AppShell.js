@@ -2,7 +2,12 @@ import React from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 
 import { e } from "../lib/i18n.js";
-import { useSession } from "./session.js";
+import {
+  getWorkspaceRoleCopy,
+  getWorkspaceRoleLabel,
+  isPersonalWorkspaceRole,
+  useSession
+} from "./session.js";
 
 var DENSITY_STORAGE_KEY = "trustledger.workspace-density";
 
@@ -28,6 +33,7 @@ export function resolveInitialDensity() {
 }
 
 export function buildNavigation(session) {
+  var activeWorkspaceRole = session.activeWorkspaceRole || "tenant";
   var items = [
     {
       to: "/app",
@@ -36,32 +42,44 @@ export function buildNavigation(session) {
     }
   ];
 
-  if (session.capabilities.canUsePersonalWorkspace) {
+  if (session.capabilities.canUsePersonalWorkspace && isPersonalWorkspaceRole(activeWorkspaceRole)) {
     items.push(
       {
         to: "/app/trust",
-        label: "My Trust",
-        copy: "Scores, sharing, and trust history"
-      },
-      {
-        to: "/app/marketplace",
-        label: "Listings",
-        copy: "Browse listings and track applications"
+        label: activeWorkspaceRole === "landlord" ? "Landlord Trust" : "Tenant Trust",
+        copy:
+          activeWorkspaceRole === "landlord"
+            ? "Your property-owner score, inputs, and sharing"
+            : "Your renter score, sharing, and trust history"
       },
       {
         to: "/app/records",
         label: "Rental Records",
-        copy: "Leases, evidence, imports, and references"
+        copy:
+          activeWorkspaceRole === "landlord"
+            ? "Properties, tenant records, evidence, and references"
+            : "Tenancy records, evidence, imports, and references"
       },
       {
         to: "/app/operations",
         label: "Rent & Issues",
-        copy: "Payments, deposits, repairs, and disputes"
+        copy:
+          activeWorkspaceRole === "landlord"
+            ? "Rent collection, deposits, repairs, and disputes"
+            : "Payments, deposits, repairs, and disputes"
       }
     );
   }
 
-  if (session.capabilities.canOperateAgency) {
+  if (session.capabilities.canUsePersonalWorkspace && activeWorkspaceRole === "tenant") {
+    items.splice(2, 0, {
+      to: "/app/marketplace",
+      label: "Listings",
+      copy: "Browse listings and track applications"
+    });
+  }
+
+  if (session.capabilities.canOperateAgency && activeWorkspaceRole === "agency") {
     items.push({
       to: "/app/agency",
       label: "Agency Tools",
@@ -69,7 +87,7 @@ export function buildNavigation(session) {
     });
   }
 
-  if (session.capabilities.canAccessInternal) {
+  if (session.capabilities.canAccessInternal && activeWorkspaceRole === "internal") {
     items.push({
       to: "/app/internal",
       label: "Review Center",
@@ -113,6 +131,9 @@ export function AppShell() {
   var density = densityTuple[0];
   var setDensity = densityTuple[1];
   var navigation = buildNavigation(session);
+  var activeWorkspaceRole = session.activeWorkspaceRole || "tenant";
+  var activeWorkspaceLabel = getWorkspaceRoleLabel(activeWorkspaceRole);
+  var activeWorkspaceCopy = getWorkspaceRoleCopy(activeWorkspaceRole);
 
   React.useEffect(function syncDensityPreference() {
     if (typeof window === "undefined" || typeof document === "undefined") {
@@ -140,6 +161,11 @@ export function AppShell() {
     }
   }
 
+  function handleWorkspaceRoleChange(event) {
+    session.setActiveWorkspaceRole(event.target.value);
+    navigate("/app");
+  }
+
   return e("div", { className: "app-shell", "data-density": density }, [
     e("aside", { className: "app-sidebar", key: "sidebar" }, [
       e("div", { className: "brand-lockup", key: "brand" }, [
@@ -152,6 +178,30 @@ export function AppShell() {
       e("nav", { className: "shell-nav-list", key: "nav" }, navigation.map(NavigationLink)),
       e("div", { className: "sidebar-foot", key: "foot" }, [
         e("p", { className: "sidebar-user-name", key: "name" }, session.user.full_name),
+        session.availableWorkspaceRoles.length > 1
+          ? e("label", { className: "workspace-role-switch", key: "role-switch" }, [
+              e("span", { className: "sidebar-user-role", key: "label" }, "Active role"),
+              e(
+                "select",
+                {
+                  className: "workspace-role-select",
+                  value: activeWorkspaceRole,
+                  onChange: handleWorkspaceRoleChange
+                },
+                session.availableWorkspaceRoles.map(function renderRole(role) {
+                  return e(
+                    "option",
+                    { value: role, key: role },
+                    getWorkspaceRoleLabel(role)
+                  );
+                })
+              )
+            ])
+          : e(
+              "p",
+              { className: "sidebar-user-role", key: "single-role" },
+              "Active role: " + activeWorkspaceLabel
+            ),
         e(
           "p",
           { className: "sidebar-user-role", key: "role" },
@@ -170,11 +220,7 @@ export function AppShell() {
         e(
           "p",
           { className: "sidebar-user-role", key: "workspace-kind" },
-          session.capabilities.canAccessInternal
-            ? "Workspace mode: internal review"
-            : session.capabilities.canOperateAgency
-              ? "Workspace mode: personal + agency"
-              : "Workspace mode: personal"
+          "Workspace mode: " + activeWorkspaceLabel
         ),
         e(
           "button",
@@ -193,11 +239,11 @@ export function AppShell() {
       e("header", { className: "app-topbar", key: "topbar" }, [
         e("div", { className: "topbar-copy", key: "topbar-copy" }, [
           e("p", { className: "eyebrow", key: "eyebrow" }, "Workspace"),
-          e("h2", { className: "topbar-title", key: "title" }, "Trust Ledger"),
+          e("h2", { className: "topbar-title", key: "title" }, activeWorkspaceLabel + " workspace"),
           e(
             "p",
             { className: "topbar-copy-line", key: "copy" },
-            "Evidence-backed leasing workflows with cleaner operational lanes."
+            activeWorkspaceCopy
           )
         ]),
         e("div", { className: "topbar-controls", key: "controls" }, [
@@ -235,11 +281,7 @@ export function AppShell() {
           e(
             "div",
             { className: "status-chip", key: "status" },
-            session.capabilities.canAccessInternal
-              ? "Reviewer tools available"
-              : session.capabilities.canOperateAgency
-                ? "Agency workspace available"
-                : "Personal workspace"
+            "Showing " + activeWorkspaceLabel.toLowerCase() + " info only"
           )
         ])
       ]),

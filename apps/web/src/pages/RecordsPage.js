@@ -121,6 +121,13 @@ function buildTenancyPartyContext(tenancy, userId) {
   };
 }
 
+function matchesWorkspaceRole(tenancy, userId, workspaceRole) {
+  if (workspaceRole === "landlord") {
+    return tenancy.landlord_user_id === userId;
+  }
+  return tenancy.tenant_user_id === userId;
+}
+
 function buildReferenceFulfillmentForm() {
   return {
     artifact_name: "",
@@ -474,7 +481,7 @@ export function RecordsPage() {
     setActionState({ kind: "evidence", id: tenancyId, message: null });
     try {
       var evidencePayload = {
-        subject_user_id: payload.subject_user_id,
+        subject_user_id: session.user.id,
         document_type: payload.document_type,
         artifact_name: payload.artifact_name,
         summary: payload.summary
@@ -553,7 +560,7 @@ export function RecordsPage() {
         payload.country_code = tenancyForm.country_code;
       }
 
-      if (tenancyForm.user_role === "tenant") {
+      if (activeWorkspaceRole === "tenant") {
         payload.tenant_user_id = session.user.id;
         payload.landlord_email = tenancyForm.counterparty_email;
       } else {
@@ -662,17 +669,54 @@ export function RecordsPage() {
     }
   }
 
+  var activeWorkspaceRole = session.activeWorkspaceRole || "tenant";
+  var roleScopedTenancies = state.tenancies.filter(function filterRoleScopedTenancies(tenancy) {
+    return matchesWorkspaceRole(tenancy, session.user.id, activeWorkspaceRole);
+  });
+  var roleScopedTenancyIds = new Set(
+    roleScopedTenancies.map(function mapTenancyId(tenancy) {
+      return tenancy.id;
+    })
+  );
+  var roleScopedPropertyIds = new Set(
+    roleScopedTenancies
+      .map(function mapPropertyId(tenancy) {
+        return tenancy.property_id;
+      })
+      .filter(Boolean)
+  );
+  var roleScopedProperties =
+    activeWorkspaceRole === "landlord"
+      ? state.properties.filter(function filterLandlordProperties(propertyRecord) {
+          return (
+            propertyRecord.created_by_user_id === session.user.id ||
+            roleScopedPropertyIds.has(propertyRecord.id)
+          );
+        })
+      : [];
+  var roleScopedReferenceRequests = state.referenceRequests.filter(function filterRoleReferences(referenceRequest) {
+    return roleScopedTenancyIds.has(referenceRequest.tenancy_id);
+  });
   var ownedPropertyCountForAccess = session.user
-    ? state.properties.filter(function countOwnedProperties(propertyRecord) {
+    ? roleScopedProperties.filter(function countOwnedProperties(propertyRecord) {
         return propertyRecord.created_by_user_id === session.user.id;
       }).length
     : 0;
   var propertyWorkspaceAccessForHooks = getPropertyWorkspaceAccess({
-    propertyCount: state.properties.length,
+    propertyCount: roleScopedProperties.length,
     ownedPropertyCount: ownedPropertyCountForAccess,
-    canOperateAgency: session.capabilities.canOperateAgency,
-    tenancyRole: tenancyForm.user_role
+    canOperateAgency: false,
+    tenancyRole: activeWorkspaceRole
   });
+
+  React.useEffect(function syncTenancyFormRoleToWorkspace() {
+    if (
+      (activeWorkspaceRole === "tenant" || activeWorkspaceRole === "landlord") &&
+      tenancyForm.user_role !== activeWorkspaceRole
+    ) {
+      updateSimpleForm(setTenancyForm, "user_role", activeWorkspaceRole);
+    }
+  }, [activeWorkspaceRole, tenancyForm.user_role]);
 
   React.useEffect(function normalizeRecordLanes() {
     if (!propertyWorkspaceAccessForHooks.canSee && activeRecordsSection === "properties") {
@@ -708,33 +752,34 @@ export function RecordsPage() {
     ]);
   }
 
-  var pendingIncomingRequests = state.referenceRequests.filter(function filterIncoming(referenceRequest) {
+  var pendingIncomingRequests = roleScopedReferenceRequests.filter(function filterIncoming(referenceRequest) {
     return (
       referenceRequest.status === "pending" &&
       referenceRequest.requested_from_user_id === session.user.id
     );
   });
-  var outgoingReferenceRequests = state.referenceRequests.filter(function filterOutgoing(referenceRequest) {
+  var outgoingReferenceRequests = roleScopedReferenceRequests.filter(function filterOutgoing(referenceRequest) {
     return referenceRequest.requested_by_user_id === session.user.id;
   });
-  var reusableOwnedProperties = state.properties.filter(function filterOwnedProperties(propertyRecord) {
+  var reusableOwnedProperties = roleScopedProperties.filter(function filterOwnedProperties(propertyRecord) {
     return propertyRecord.created_by_user_id === session.user.id;
   });
-  var totalArtifactCount = Object.values(state.evidenceByTenancy).reduce(function sumArtifacts(total, list) {
-    return total + (Array.isArray(list) ? list.length : 0);
+  var totalArtifactCount = roleScopedTenancies.reduce(function sumArtifacts(total, tenancy) {
+    var evidenceList = state.evidenceByTenancy[tenancy.id] || [];
+    return total + evidenceList.length;
   }, 0);
   var propertyWorkspaceAccess = getPropertyWorkspaceAccess({
-    propertyCount: state.properties.length,
+    propertyCount: roleScopedProperties.length,
     ownedPropertyCount: reusableOwnedProperties.length,
-    canOperateAgency: session.capabilities.canOperateAgency,
-    tenancyRole: tenancyForm.user_role
+    canOperateAgency: false,
+    tenancyRole: activeWorkspaceRole
   });
   var canCreatePropertyWorkspace = propertyWorkspaceAccess.canCreate;
   var canSeePropertyWorkspace = propertyWorkspaceAccess.canSee;
   var propertyWorkspaceTabs = canCreatePropertyWorkspace
     ? [
         { id: "create", label: "Create property", meta: "New property setup" },
-        { id: "manage", label: "Manage saved properties", meta: String(state.properties.length) + " records" }
+        { id: "manage", label: "Manage saved properties", meta: String(roleScopedProperties.length) + " records" }
       ]
     : [];
   var effectivePropertyWorkspace = canCreatePropertyWorkspace ? propertyWorkspace : "manage";
@@ -742,24 +787,24 @@ export function RecordsPage() {
     {
       id: "tenancies",
       label: "Tenancy records",
-      meta: String(state.tenancies.length) + " active or past records"
+      meta: String(roleScopedTenancies.length) + " active or past records"
     },
     canSeePropertyWorkspace
       ? {
           id: "properties",
           label: "Properties & setup",
-          meta: String(state.properties.length) + " saved properties"
+          meta: String(roleScopedProperties.length) + " saved properties"
         }
       : null,
     {
       id: "artifacts",
       label: "Artifacts",
-      meta: state.tenancies.length ? "Create and review supporting files" : "Available after your first tenancy"
+      meta: roleScopedTenancies.length ? "Create and review supporting files" : "Available after your first tenancy"
     },
     {
       id: "history",
       label: "History & references",
-      meta: String(state.historyImports.length + state.referenceRequests.length) + " import or reference items"
+      meta: String(state.historyImports.length + roleScopedReferenceRequests.length) + " import or reference items"
     }
   ].filter(Boolean);
   var recordsSectionCopyByTab = {
@@ -791,26 +836,31 @@ export function RecordsPage() {
       eyebrow: "Rental Records",
       title: "Rental records, evidence, and references",
       copy:
-        "Use this page to manage current and past tenancies, upload supporting documents, import old rental history, and request or answer references.",
+        activeWorkspaceRole === "landlord"
+          ? "Use this landlord workspace to manage property-owner records, tenant evidence, landlord-side history, and references."
+          : "Use this tenant workspace to manage your tenancies, upload supporting documents, import old rental history, and request or answer references.",
       details: [
         "This workspace is now structured so record setup, property setup, artifacts, and historical proof each live in their own lane."
       ],
       stats: [
         e(HeroStat, {
           label: "Tenancies",
-          value: String(state.tenancies.length),
-          copy: "Active and historical tenancy records."
+          value: String(roleScopedTenancies.length),
+          copy:
+            activeWorkspaceRole === "landlord"
+              ? "Records where you are the landlord."
+              : "Records where you are the tenant."
         }),
         canSeePropertyWorkspace
           ? e(HeroStat, {
               label: "Saved properties",
-              value: String(state.properties.length),
+              value: String(roleScopedProperties.length),
               copy: String(reusableOwnedProperties.length) + " reusable by you for future tenancy setup."
             })
           : null,
         e(HeroStat, {
           label: "Artifacts & references",
-          value: String(totalArtifactCount + state.referenceRequests.length),
+          value: String(totalArtifactCount + roleScopedReferenceRequests.length),
           copy: String(pendingIncomingRequests.length) + " incoming reference requests awaiting action."
         })
       ]
@@ -849,7 +899,8 @@ export function RecordsPage() {
                 "select",
                 {
                   className: "field-input field-select",
-                  value: tenancyForm.user_role,
+                  value: activeWorkspaceRole,
+                  disabled: true,
                   onChange: function onChange(event) {
                     updateSimpleForm(setTenancyForm, "user_role", event.target.value);
                   }
@@ -864,7 +915,7 @@ export function RecordsPage() {
               e(
                 "span",
                 { className: "field-label", key: "label" },
-                tenancyForm.user_role === "tenant" ? "Landlord email" : "Tenant email"
+                activeWorkspaceRole === "tenant" ? "Landlord email" : "Tenant email"
               ),
               e("input", {
                 className: "field-input",
@@ -874,7 +925,7 @@ export function RecordsPage() {
                   updateSimpleForm(setTenancyForm, "counterparty_email", event.target.value);
                 },
                 placeholder:
-                  tenancyForm.user_role === "tenant"
+                  activeWorkspaceRole === "tenant"
                     ? "landlord@example.com"
                     : "tenant@example.com",
                 required: true
@@ -1245,11 +1296,11 @@ export function RecordsPage() {
           )
         ])
           : null,
-        effectivePropertyWorkspace === "manage" && state.properties.length
+        effectivePropertyWorkspace === "manage" && roleScopedProperties.length
           ? e(
               "div",
               { className: "list-stack", key: "list" },
-              state.properties.map(function renderPropertySummary(propertyRecord) {
+              roleScopedProperties.map(function renderPropertySummary(propertyRecord) {
                 var isOwner = propertyRecord.created_by_user_id === session.user.id;
                 var propertyEditForm =
                   propertyEditForms[propertyRecord.id] || buildPropertyEditForm(propertyRecord);
@@ -1524,7 +1575,7 @@ export function RecordsPage() {
               })
             )
           : null,
-        effectivePropertyWorkspace === "manage" && !state.properties.length
+        effectivePropertyWorkspace === "manage" && !roleScopedProperties.length
           ? e(
               "p",
               { className: "empty-copy", key: "empty" },
@@ -1734,11 +1785,11 @@ export function RecordsPage() {
             )
       ])
     ]),
-    state.tenancies.length
+    roleScopedTenancies.length
       ? e(
           "div",
           { className: "list-stack", key: "tenancies", id: "records-section-artifacts" },
-          state.tenancies.map(function renderTenancy(tenancy) {
+          roleScopedTenancies.map(function renderTenancy(tenancy) {
             var evidenceForm = evidenceForms[tenancy.id] || buildEvidenceForm(session.user.id, tenancy);
             var referenceForm = referenceForms[tenancy.id];
             var canConfirm =
@@ -1858,13 +1909,13 @@ export function RecordsPage() {
                         {
                           className: "field-input field-select",
                           value: evidenceForm.subject_user_id,
+                          disabled: true,
                           onChange: function onChange(event) {
                             updateEntityForm(setEvidenceForms, tenancy.id, "subject_user_id", event.target.value);
                           }
                         },
                         [
-                          e("option", { value: tenancy.tenant_user_id, key: "tenant" }, tenancy.tenant_full_name),
-                          e("option", { value: tenancy.landlord_user_id, key: "landlord" }, tenancy.landlord_full_name)
+                          e("option", { value: session.user.id, key: "current-user" }, session.user.full_name + " (" + tenancyPartyContext.role + ")")
                         ]
                       )
                     ]),
@@ -2075,7 +2126,13 @@ export function RecordsPage() {
       : e(
           "div",
           { className: "detail-panel", key: "empty" },
-          e("p", { className: "empty-copy" }, "No tenancy records are attached to this account yet.")
+          e(
+            "p",
+            { className: "empty-copy" },
+            activeWorkspaceRole === "landlord"
+              ? "No landlord-side tenancy records are attached to this account yet."
+              : "No tenant-side tenancy records are attached to this account yet."
+          )
         )
   ]);
 }

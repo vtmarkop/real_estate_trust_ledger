@@ -107,6 +107,26 @@ This file should stay short, practical, and current. Long explanation belongs in
 - Next fix:
   - keep this wording style when agency previews or future score surfaces are audited
 
+### Active Workspace Role Scoping
+
+- Expected behavior:
+  - users should choose the role they are working as and see only the menus, routes, score surfaces, tenancy records, property setup, and operational records relevant to that active role
+  - role selection should not grant backend permissions
+- Actual behavior:
+  - sign-in now includes an intended workspace role
+  - the authenticated shell persists and switches the active workspace role only among roles available to the account
+  - tenant mode shows tenant trust, listings, tenant records, and tenant-side operations
+  - landlord mode shows landlord trust, landlord property/tenant records, and landlord-side operations
+  - agency mode shows agency tools without personal rental lanes
+  - reviewer mode shows review center without personal rental lanes
+  - backend authorization remains capability-driven through system roles, organization memberships, and domain participation
+- Backend status: unchanged and still authoritative
+- Frontend status: complete for shell navigation, route guards, `Home`, `My Trust`, `Rental Records`, and `Rent & Issues`
+- Classification: `complete_and_obvious`
+- Next fix:
+  - visually review seeded tenant, landlord, agency, and reviewer accounts to confirm no role-irrelevant cards remain in the active workspace mode
+  - if future API responses need strict role-scoped data contracts, add backend query filters rather than trusting the frontend role selector as a security boundary
+
 ### Full Workflow Continuity Audit
 
 - Expected behavior:
