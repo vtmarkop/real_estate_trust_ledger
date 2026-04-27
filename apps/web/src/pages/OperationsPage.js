@@ -488,7 +488,7 @@ function buildTenancyActivityEntries(tenancy, payments, depositRecord, maintenan
       entries.push(entry);
     });
   });
-  return sortTimelineEntries(entries).slice(0, 10);
+  return sortTimelineEntries(entries);
 }
 
 export function OperationsPage() {
@@ -552,6 +552,9 @@ export function OperationsPage() {
   var operationsFocusTuple = React.useState("payments");
   var operationsFocus = operationsFocusTuple[0];
   var setOperationsFocus = operationsFocusTuple[1];
+  var propertyContextViewTuple = React.useState("daily");
+  var propertyContextView = propertyContextViewTuple[0];
+  var setPropertyContextView = propertyContextViewTuple[1];
   var tenancySearchTuple = React.useState("");
   var tenancySearch = tenancySearchTuple[0];
   var setTenancySearch = tenancySearchTuple[1];
@@ -961,6 +964,18 @@ export function OperationsPage() {
       meta: String(disputeOpportunities.length + openDepositDisputes.length + openPaymentDisputes.length + openMaintenanceDisputes.length) + " live items"
     }
   ];
+  var propertyContextTabs = [
+    {
+      id: "daily",
+      label: "Daily work",
+      meta: "Create records, attach proof, answer, dispute, or appeal"
+    },
+    {
+      id: "history",
+      label: "History",
+      meta: "Read-only timeline for the selected property"
+    }
+  ];
 
   return e("div", { className: "workspace-page" }, [
     e(PageHero, {
@@ -970,7 +985,7 @@ export function OperationsPage() {
       copy:
         "Use this page for the day-to-day side of a tenancy: rent records, deposit handling, and maintenance issues.",
       details: [
-        "The goal here is operational clarity: record the event, attach proof when needed, and only open the dispute lane when a disagreement actually exists."
+        "The goal here is operational clarity: pick one property, separate daily work from read-only history, and only open the dispute lane when a disagreement actually exists."
       ],
       stats: [
         e(HeroStat, {
@@ -1020,7 +1035,7 @@ export function OperationsPage() {
           e(SectionHeading, {
             title: "Choose one property first",
             copy:
-              "Use the original object-first pattern here: pick the tenancy you want, then handle rent, deposit, or repair actions inside that one property context.",
+              "Use the original object-first pattern here: pick the tenancy you want, then choose daily work or history inside that one property context.",
             key: "heading"
           }),
           e("div", { className: "form-grid", key: "fields" }, [
@@ -1088,6 +1103,25 @@ export function OperationsPage() {
                 { className: "empty-copy", key: "empty" },
                 "No tenancy matches this filter. Clear the search to bring the full property menu back."
               )
+        ])
+      : null,
+    operationsFocus !== "disputes" && selectedTenancy
+      ? e("section", { className: "detail-panel section-switcher", key: "property-context-switcher" }, [
+          e(SectionHeading, {
+            title: "Separate action from history",
+            copy:
+              propertyContextView === "daily"
+                ? "Daily work is for doing something now: creating records, attaching proof, responding, disputing, or appealing."
+                : "History is read-only. Use it when you want to understand what already happened before taking the next action.",
+            key: "heading"
+          }),
+          e(SegmentedTabs, {
+            key: "tabs",
+            tabs: propertyContextTabs,
+            activeTab: propertyContextView,
+            onChange: setPropertyContextView,
+            "aria-label": "Selected property daily work or history"
+          })
         ])
       : null,
     operationsFocus === "disputes"
@@ -1510,6 +1544,26 @@ export function OperationsPage() {
                depositRecord,
                maintenanceTickets
              );
+             var historyLaneLabel =
+               operationsFocus === "payments"
+                 ? "Payments"
+                 : operationsFocus === "deposit"
+                   ? "Deposit"
+                   : "Maintenance";
+             var visibleTenancyActivityEntries = tenancyActivityEntries
+               .filter(function filterVisibleHistory(entry) {
+                 if (operationsFocus === "payments") {
+                   return entry.kind.indexOf("payment") === 0;
+                 }
+                 if (operationsFocus === "deposit") {
+                   return entry.kind.indexOf("deposit") === 0;
+                 }
+                 if (operationsFocus === "maintenance") {
+                   return entry.kind.indexOf("maintenance") === 0;
+                 }
+                 return true;
+               })
+               .slice(0, 10);
 
             return e("section", { className: "detail-panel", key: tenancy.id }, [
               e("h2", { className: "detail-title", key: "title" }, tenancy.property_label),
@@ -1534,31 +1588,41 @@ export function OperationsPage() {
                   tone: "accent"
                 })
               ]),
-              tenancyActivityEntries.length
+              propertyContextView === "history"
                 ? e("article", { className: "stack-card", key: "timeline" }, [
-                    e("strong", { className: "stack-card-title", key: "title" }, "History timeline"),
+                    e("strong", { className: "stack-card-title", key: "title" }, historyLaneLabel + " history timeline"),
                     e(
                       "p",
                       { className: "empty-copy", key: "copy" },
-                      "Recent rent, deposit, and repair handoffs for this property in time order."
+                      "Read-only " +
+                        historyLaneLabel.toLowerCase() +
+                        " handoffs for this selected property in time order."
                     ),
-                    e(
-                      "div",
-                      { className: "timeline-list", key: "list" },
-                      tenancyActivityEntries.map(function renderTimelineEntry(entry, index) {
-                        return e(TimelineEntry, {
-                          key: tenancy.id + ":" + entry.kind + ":" + index,
-                          eyebrow: entry.eyebrow,
-                          title: entry.title,
-                          meta: formatDateTime(entry.timestamp),
-                          summary: entry.summary,
-                          badges: entry.badges
-                        });
-                      })
-                    )
+                    visibleTenancyActivityEntries.length
+                      ? e(
+                          "div",
+                          { className: "timeline-list", key: "list" },
+                          visibleTenancyActivityEntries.map(function renderTimelineEntry(entry, index) {
+                            return e(TimelineEntry, {
+                              key: tenancy.id + ":" + entry.kind + ":" + index,
+                              eyebrow: entry.eyebrow,
+                              title: entry.title,
+                              meta: formatDateTime(entry.timestamp),
+                              summary: entry.summary,
+                              badges: entry.badges
+                            });
+                          })
+                        )
+                      : e(
+                          "p",
+                          { className: "empty-copy", key: "empty" },
+                          "No " +
+                            historyLaneLabel.toLowerCase() +
+                            " history has been recorded for this property yet."
+                        )
                   ])
                 : null,
-              e("div", { className: "split-grid", key: "top" }, [
+              propertyContextView === "daily" ? e("div", { className: "split-grid", key: "top" }, [
                 operationsFocus === "payments" ? e("article", { className: "stack-card", key: "payments" }, [
                   e("strong", { className: "stack-card-title", key: "title" }, "Payments"),
                   e("div", { className: "auth-form", key: "create-payment" }, [
@@ -1759,7 +1823,6 @@ export function OperationsPage() {
                             reviewRequestedByName: payment.review_requested_by_user_full_name,
                             disputedByName: payment.disputed_by_user_full_name
                           });
-                          var paymentTimelineEntries = buildPaymentTimelineEntries(payment);
                           return e("article", { className: "stack-card", key: payment.id }, [
                             e(
                               "strong",
@@ -1813,22 +1876,6 @@ export function OperationsPage() {
                                 value: payment.payer_user_full_name + " to " + payment.payee_user_full_name
                               })
                             ]),
-                            paymentTimelineEntries.length
-                              ? e(
-                                  "div",
-                                  { className: "timeline-list", key: "payment-timeline" },
-                                  paymentTimelineEntries.map(function renderPaymentTimelineEntry(entry, index) {
-                                    return e(TimelineEntry, {
-                                      key: payment.id + ":" + entry.kind + ":" + index,
-                                      eyebrow: entry.eyebrow,
-                                      title: entry.title,
-                                      meta: formatDateTime(entry.timestamp),
-                                      summary: entry.summary,
-                                      badges: entry.badges
-                                    });
-                                  })
-                                )
-                              : null,
                             payment.proof_artifact_name
                               ? e(
                                   NoteBlock,
@@ -2720,7 +2767,6 @@ export function OperationsPage() {
                             reviewRequestedByName: ticket.review_requested_by_user_full_name,
                             disputedByName: ticket.disputed_by_user_full_name
                           });
-                          var ticketTimelineEntries = buildMaintenanceTimelineEntries(ticket);
                           return e("article", { className: "stack-card", key: ticket.id }, [
                             e("strong", { className: "stack-card-title", key: "title" }, ticket.title),
                             e("div", { className: "status-row", key: "status" }, [
@@ -2763,22 +2809,6 @@ export function OperationsPage() {
                                 ])
                               : null,
                             e(NoteBlock, { key: "description", label: "Reported issue", tone: "accent" }, ticket.description),
-                            ticketTimelineEntries.length
-                              ? e(
-                                  "div",
-                                  { className: "timeline-list", key: "ticket-timeline" },
-                                  ticketTimelineEntries.map(function renderTicketTimelineEntry(entry, index) {
-                                    return e(TimelineEntry, {
-                                      key: ticket.id + ":" + entry.kind + ":" + index,
-                                      eyebrow: entry.eyebrow,
-                                      title: entry.title,
-                                      meta: formatDateTime(entry.timestamp),
-                                      summary: entry.summary,
-                                      badges: entry.badges
-                                    });
-                                  })
-                                )
-                              : null,
                             ticket.reported_artifact_name
                               ? e(
                                   NoteBlock,
@@ -3079,7 +3109,7 @@ export function OperationsPage() {
                   )
                     : e("p", { className: "empty-copy", key: "empty" }, "No maintenance tickets yet.")
                 ]) : null
-              ])
+              ]) : null
             ]);
           })
         )

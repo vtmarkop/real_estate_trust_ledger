@@ -63,6 +63,17 @@ function OrganizationCard(organization) {
   ]);
 }
 
+function hasLandlordSideSignals(summary) {
+  var inputs = summary && summary.inputs ? summary.inputs : {};
+  return Boolean(
+    inputs.landlord_counterparty_confirmed_tenancies ||
+      inputs.landlord_verified_tenancies ||
+      inputs.accepted_landlord_evidence_documents ||
+      inputs.accepted_landlord_counterparty_references ||
+      inputs.landlord_adjudication_adjustment
+  );
+}
+
 function isStandaloneDisplayMode() {
   if (typeof window === "undefined") {
     return false;
@@ -267,6 +278,7 @@ export function WorkspaceHomePage() {
   }
 
   var scoreSummary = state.scoreSummary;
+  var landlordSideActive = hasLandlordSideSignals(scoreSummary);
   var organizations = state.organizations;
   var menuGuide = [
     {
@@ -275,7 +287,8 @@ export function WorkspaceHomePage() {
     },
     {
       title: "My Trust",
-      copy: "See your scores, understand what affects them, and control who can view your shared report."
+      copy:
+        "See your tenant-side and landlord-side scores, understand what affects them, and control who can view your shared report."
     },
     {
       title: "Listings",
@@ -287,7 +300,7 @@ export function WorkspaceHomePage() {
     },
     {
       title: "Rent & Issues",
-      copy: "Record payments, deposit steps, and maintenance updates for active tenancies."
+      copy: "Handle daily rent, deposit, and maintenance work separately from read-only property history."
     },
     {
       title: "Agency Tools",
@@ -424,12 +437,22 @@ export function WorkspaceHomePage() {
         e("article", { className: "metric-card", key: "tenant" }, [
           e("p", { className: "metric-kicker", key: "kicker" }, "Tenant score"),
           e("strong", { className: "metric-value", key: "value" }, String(scoreSummary.tenant_score)),
-          e("p", { className: "metric-copy", key: "copy" }, "Primary score agencies and landlords can eventually review with consent.")
+          e("p", { className: "metric-copy", key: "copy" }, "Your score for records where you act as a renter.")
         ]),
         e("article", { className: "metric-card", key: "landlord" }, [
-          e("p", { className: "metric-kicker", key: "kicker" }, "Landlord score"),
+          e(
+            "p",
+            { className: "metric-kicker", key: "kicker" },
+            landlordSideActive ? "Your landlord-side score" : "Landlord-side score inactive"
+          ),
           e("strong", { className: "metric-value", key: "value" }, String(scoreSummary.landlord_score)),
-          e("p", { className: "metric-copy", key: "copy" }, "Separate landlord-side signal so a single account can build trust in both directions.")
+          e(
+            "p",
+            { className: "metric-copy", key: "copy" },
+            landlordSideActive
+              ? "Your score for records where you act as a landlord or property owner."
+              : "This is your own landlord-side score, not your current landlord's score; it stays neutral until you rent out property."
+          )
         ]),
         e("article", { className: "metric-card", key: "version" }, [
           e("p", { className: "metric-kicker", key: "kicker" }, "Scoring version"),

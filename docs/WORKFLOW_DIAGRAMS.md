@@ -173,7 +173,7 @@ sequenceDiagram
 
 Continuity note: once a payment is disputed or appealed, the next action belongs to `Review Center > Disputes` until a reviewer issues the next verdict. The normal counterparty decision path is no longer the active handoff.
 
-UX-reset note: the personal `Payments` lane now keeps the selected property active and exposes one selected payment detail/action/history pane from a compact payment dropdown.
+UX-reset note: the personal `Payments` lane now keeps the selected property active, exposes one selected payment detail/action pane from a compact payment dropdown under `Daily work`, and keeps the read-only timeline in the selected property's separate `History` view.
 
 ### Why this matters
 
@@ -224,7 +224,7 @@ sequenceDiagram
 
 Continuity note: an appeal returns the ticket to `Review Center > Disputes`, and the earlier verdict is no longer final until a fresh verdict is issued.
 
-UX-reset note: the personal `Maintenance` lane now keeps the selected property active and exposes one selected issue detail/action/history pane from a compact issue dropdown.
+UX-reset note: the personal `Maintenance` lane now keeps the selected property active, exposes one selected issue detail/action pane from a compact issue dropdown under `Daily work`, and keeps the read-only timeline in the selected property's separate `History` view.
 
 ## Diagram 7: Deposit Settlement Workflow With Dispute And Appeal
 
@@ -359,6 +359,8 @@ flowchart TD
 ### Important implementation note
 
 The scoring effect is not distributed randomly across route files anymore. The routes trigger workflows, but the trust-score computation is centralized in the scoring service.
+
+Score-role note: `tenant_score` and `landlord_score` are both dimensions of the signed-in user's own trust profile. The landlord-side score is not a rating for a tenant's current landlord; it only becomes active when that same account acts as a landlord or property owner.
 
 ## Diagram 11: Demo Scenario Coverage
 

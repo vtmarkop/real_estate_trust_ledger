@@ -209,7 +209,8 @@ Purpose:
 - Shows your trust profile and lets you share it safely.
 
 What you can do:
-- view tenant and landlord scores,
+- view your tenant-side renter score,
+- view your own landlord-side/property-owner score,
 - view verification strength,
 - see what affects your score,
 - create a share token and access code for an agency,
@@ -222,6 +223,10 @@ When to use it:
 - after adding evidence,
 - before sharing with an agency,
 - when you want to understand score changes.
+
+Friendly explanation:
+- `Tenant-side score` evaluates you as a renter.
+- `Landlord-side score` evaluates the same account only when you act as a landlord or property owner. It is not a score for your current landlord.
 
 ### Listings
 
@@ -293,6 +298,8 @@ When to use it:
 
 Friendly explanation:
 - Think of this page as the day-to-day "running the rental" page.
+- First choose one property. Then use `Daily work` for actions and `History` for the read-only timeline of what already happened.
+- In `Payments` and `Maintenance`, choose the specific payment or issue from the dropdown before acting.
 - If something goes wrong, use the `Dispute desk` at the top of the page. It gathers open disputes and items that can be disputed right now, so you do not have to search through every record one by one.
 
 ### Agency Tools
@@ -471,4 +478,3 @@ The browser may not support install prompts, or it may not be offering one at th
 ### I signed in but the page still feels too technical
 
 Use this guide together with the `Home` page first. The workspace labels are now aligned with this document, so the guide and menu should match one another.
-

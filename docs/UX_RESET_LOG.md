@@ -123,3 +123,35 @@ For each slice of this reset:
 - Next likely slice:
   - visually review the tenant and landlord demo flows in the browser
   - reduce any remaining form density if the live interaction still feels heavier than the archive pattern
+
+### 2026-04-27 - Slice 3: Daily work/history separation and score-role clarity
+
+- Problem:
+  - selected-property action work and timeline reading were still presented together, which made normal tenant/landlord use feel heavier than the archive pattern
+  - tenant users could read `Landlord score` as if it referred to their current landlord, even though the rebuild stores it as the signed-in user's own landlord/property-owner score dimension
+- Archive reference:
+  - `Payments.jsx`, `Tickets.jsx`, and `TicketTimeline.jsx` kept direct action flows and history/timeline reading as distinct mental modes
+- Rebuilt files changed:
+  - `apps/web/src/pages/OperationsPage.js`
+  - `apps/web/src/pages/TrustProfilePage.js`
+  - `apps/web/src/pages/WorkspaceHomePage.js`
+- What stayed preserved from the rebuild:
+  - existing payment, deposit, maintenance, dispute, and appeal APIs
+  - selected-property context and compact record dropdowns
+  - deterministic tenant-side and landlord-side scoring model
+  - reviewer handoff architecture
+- What changed:
+  - selected-property `Rent & Issues` now has `Daily work` and `History` modes
+  - `Daily work` keeps payment/deposit/maintenance actions and compact record dropdowns
+  - `History` contains the read-only selected-property timeline for the active operational lane
+  - `Home` and `My Trust` now explain that landlord-side score belongs to the signed-in user's own landlord/property-owner persona, not to the tenant's current landlord
+- Verification:
+  - `node --check apps/web/src/pages/OperationsPage.js`
+  - `node --check apps/web/src/pages/TrustProfilePage.js`
+  - `node --check apps/web/src/pages/WorkspaceHomePage.js`
+  - `.\.venv\Scripts\python -m unittest tests.test_repo_layout tests.test_web_scaffold`
+  - `npm test`
+  - `npm run build`
+- Next likely slice:
+  - visually review `Daily work` and `History` with seeded tenant and landlord accounts
+  - continue the broader workflow continuity audit, especially agency-facing score language and remaining dense action forms

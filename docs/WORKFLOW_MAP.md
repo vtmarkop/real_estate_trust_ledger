@@ -66,8 +66,9 @@ This matters because it gives us clearer separation of concerns both in the UI a
 Current UX-reset note:
 
 - the non-dispute `Rent & Issues` lanes now begin with property targeting, so normal tenant/landlord work can stay inside one selected tenancy context instead of requiring cross-property scrolling
-- the selected property also surfaces an operational history timeline built from the existing payment, deposit, and maintenance workflow timestamps
-- inside the selected property, `Payments` and `Maintenance` now use compact record dropdowns so only one payment or issue detail/action/history pane is expanded at a time
+- the selected property now separates `Daily work` from read-only `History`, so forms/actions and timeline browsing are no longer mixed together
+- inside `Daily work`, `Payments` and `Maintenance` use compact record dropdowns so only one payment or issue detail/action pane is expanded at a time
+- inside `History`, the selected property shows the read-only timeline for the active operational lane, built from existing payment, deposit, or maintenance workflow timestamps
 
 ## Role Model
 
@@ -478,12 +479,12 @@ Important architectural difference from the archive MVP:
 ### Typical flow
 
 1. User selects the relevant property from the `Rent & Issues` property menu.
-2. User selects the relevant payment from the payment menu or creates a new payment record.
+2. User keeps `Daily work` active, then selects the relevant payment from the payment menu or creates a new payment record.
 3. Payer attaches proof inside the selected payment detail.
 4. Payee confirms or rejects inside the selected payment detail.
 5. If rejected, the other party may dispute and send the case into reviewer flow.
 6. Once a payment is disputed or re-opened for review, the normal payee decision path is blocked.
-7. The selected payment detail shows its local timeline/history.
+7. User switches to `History` when they want the read-only payment/deposit/maintenance timeline for the selected property.
 8. Reviewer issues verdict if needed.
 9. Either side may appeal, which returns the case to `UNDER_REVIEW` for a fresh verdict.
 10. Score impact is recalculated through the central scoring service.
@@ -558,10 +559,10 @@ Important architectural difference from the archive MVP:
 ### Typical flow
 
 1. User selects the relevant property from the `Rent & Issues` property menu.
-2. User selects the relevant issue from the issue menu or creates a new maintenance ticket.
+2. User keeps `Daily work` active, then selects the relevant issue from the issue menu or creates a new maintenance ticket.
 3. Tenant reports a problem with evidence.
 4. Landlord acknowledges and resolves with response evidence inside the selected issue detail.
-5. The selected issue detail shows its local timeline/history.
+5. User switches to `History` when they want the read-only payment/deposit/maintenance timeline for the selected property.
 6. If disputed, reviewer decides.
 7. Either party can appeal, which returns the case to `UNDER_REVIEW`.
 8. The reopened case stays in reviewer flow until a fresh verdict is issued.
@@ -644,9 +645,10 @@ Important architectural difference from the archive MVP:
 ### Typical flow
 
 1. Score is viewed from `My Trust`.
-2. Internal reviewer can queue a refresh or batch recalculation.
-3. Worker/runtime processes queued items.
-4. Score history remains visible to the subject user.
+2. The personal UI labels tenant-side score as the user's renter dimension and landlord-side score as the user's own landlord/property-owner dimension.
+3. Internal reviewer can queue a refresh or batch recalculation.
+4. Worker/runtime processes queued items.
+5. Score history remains visible to the subject user with tenant-side and landlord-side labels.
 
 ## Workflow 15: Automation, Notifications, Worker Runs
 
@@ -744,11 +746,12 @@ Important architectural difference from the archive MVP:
 
 1. User opens `My Trust`.
 2. They see:
-   - current scores
+   - current tenant-side and landlord-side scores
    - verification strength
    - score history
    - trust events
    - sharing/access history
+3. If the account has no landlord-side inputs yet, the UI explains that the landlord-side score is inactive/neutral and is not a score for the user's current landlord.
 
 ## Workflow 18: Demo Data Scenarios
 

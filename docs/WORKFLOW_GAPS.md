@@ -59,15 +59,32 @@ This file should stay short, practical, and current. Long explanation belongs in
   - the rebuilt page had drifted into tenancy-first browsing and forced users to scan too many cards before acting
   - the first UX-reset slice now adds property search, a property dropdown, and a selected-property history timeline in `Rent & Issues`
   - the second UX-reset slice now adds compact payment and issue dropdowns inside the selected property flow
-  - payment and maintenance detail actions now render one focused record at a time with a local timeline, closer to the archive's details-modal pattern without weakening rebuilt API rules
+  - the third UX-reset slice separates selected-property `Daily work` from read-only `History`, so action forms are no longer mixed into timeline browsing
+  - payment and maintenance detail actions now render one focused record at a time under `Daily work`, closer to the archive's details-modal pattern without weakening rebuilt API rules
   - the page still needs live visual review to confirm the form density feels simple enough for normal tenant/landlord use
 - Backend status: complete
 - Frontend status: materially improved but still mid-reset pending visual review
 - Classification: `complete_but_hard_to_understand`
 - Next fix:
   - keep normal user work inside one selected property at a time
-  - visually review the selected property, payment menu, and issue menu with seeded demo accounts
+  - visually review the selected property, `Daily work`, `History`, payment menu, and issue menu with seeded demo accounts
   - reduce any remaining form density if the live flow still feels heavier than the archive interaction model
+
+### Tenant-Side Versus Landlord-Side Score Meaning
+
+- Expected behavior:
+  - a tenant should understand that the landlord-side score shown in their account is their own dormant landlord/property-owner dimension, not a rating for the landlord of the selected tenancy
+  - a landlord or mixed-role user should understand that the same account can build trust in both persona dimensions
+- Actual behavior:
+  - the scoring backend already stores separate tenant-side and landlord-side score inputs on the signed-in user
+  - `Home` and `My Trust` now label the landlord-side score as the user's own landlord/property-owner dimension
+  - tenant-only accounts now see copy explaining that landlord-side score is inactive/neutral until they rent out property
+  - score history now says `Tenant-side` and `Landlord-side` instead of implying an external landlord rating
+- Backend status: complete
+- Frontend status: complete for the current score summary/history surfaces
+- Classification: `complete_and_obvious`
+- Next fix:
+  - keep this wording style when agency previews or future score surfaces are audited
 
 ### Full Workflow Continuity Audit
 
@@ -85,7 +102,7 @@ This file should stay short, practical, and current. Long explanation belongs in
     - property ownership and management assignment
     - tenancy setup and confirmation
     - artifact creation, library, and reference requests
-    - trust-score explanation outside live dispute cards
+    - agency-facing score explanation outside live dispute cards
     - agency screening and application movement
     - trust sharing, consent revoke, and access history
     - cross-role history and next-step framing after reviewer decisions
@@ -97,7 +114,7 @@ These are not yet confirmed as gaps, but they are the right places to inspect fi
 1. Property owner-managed versus agency-managed setup clarity
 2. Prospective tenant assignment versus activated tenancy transition
 3. Artifact upload versus artifact review/library separation
-4. Trust-score explanation outside live dispute cards and reviewer queues
+4. Agency-facing score explanation outside live dispute cards and reviewer queues
 5. Agency screening next-step guidance after a trust-check result
 6. Consent/share-token lifecycle clarity for end users
 7. Cross-role history and timeline clarity after reviewer decisions

@@ -118,6 +118,10 @@ Repo-resident handoff, workflow-gap tracking, and workstation sync guidance for 
 
 Private GitHub publication and machine-to-machine bootstrap hardening for reliable repo recovery on a new workstation.
 
+### Post-Sprint-20 Archive-Alignment UX Reset
+
+Object-first repair work on the rebuilt presentation layer: selected-property operations, compact payment/issue targeting, strict separation between daily actions and read-only timelines, and clearer role-specific score wording.
+
 ### Sprint 21: Motion, Accessibility, And Release Polish
 
 Motion, accessibility, responsive behavior, design-system documentation, and release-level frontend polish.
