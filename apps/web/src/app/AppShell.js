@@ -186,7 +186,8 @@ export function AppShell() {
                 {
                   className: "workspace-role-select",
                   value: activeWorkspaceRole,
-                  onChange: handleWorkspaceRoleChange
+                  onChange: handleWorkspaceRoleChange,
+                  key: "select"
                 },
                 session.availableWorkspaceRoles.map(function renderRole(role) {
                   return e(
