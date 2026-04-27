@@ -15,7 +15,7 @@ The goal is not to weaken the rebuilt backend or role model. The goal is to rest
 - Start date: 2026-04-24
 - Base commit: `a6cfeb4`
 - Working branch: `codex/archive-ux-reset`
-- Latest pushed checkpoint commit: `0a928d9`
+- Latest pushed checkpoint commit: see the current tip of `origin/codex/archive-ux-reset`
 - Backup snapshot: `C:\Users\vmarkopoulos\Documents\dev_projects\MESITIS_app\repo_backups\real_estate_trust_ledger\20260424_134119`
 
 Backup contents:
@@ -88,7 +88,7 @@ For each slice of this reset:
 ### 2026-04-24 - Home/work handoff note
 
 - The active reset branch was pushed to `origin/codex/archive-ux-reset`
-- The current remote checkpoint is commit `0a928d9`
+- The remote checkpoint should be read from the current branch tip because this reset now has multiple small pushed checkpoints
 - The repo handoff state is now recorded in:
   - `docs/HANDOFF.md`
   - `docs/WORKFLOW_GAPS.md`
@@ -96,3 +96,30 @@ For each slice of this reset:
   - this log file
 - One local file remains intentionally outside the checkpoint:
   - `apps/web/package-lock.json`
+
+### 2026-04-27 - Slice 2: Selected payment and issue detail focus
+
+- Problem:
+  - after selecting one property, tenants and landlords still saw every payment or maintenance ticket as a full card, so the page remained noisy inside the selected-property flow
+- Archive reference:
+  - `Payments.jsx` and `Tickets.jsx` used compact row/detail selection, details modals, and local history areas instead of expanding every action surface at once
+- Rebuilt files changed:
+  - `apps/web/src/pages/OperationsPage.js`
+- What stayed preserved from the rebuild:
+  - existing payment and maintenance APIs
+  - proof upload, counterparty decision, dispute, verdict, and appeal action rules
+  - selected-property context from Slice 1
+  - the separate dispute desk and reviewer handoff model
+- What changed:
+  - the selected property `Payments` lane now has a payment dropdown and renders one selected payment detail/action pane
+  - the selected property `Maintenance` lane now has an issue dropdown and renders one selected issue detail/action pane
+  - newly created payments or issues become the selected detail target after refresh
+  - selected payment and issue details now include local timeline histories using the rebuild's `TimelineEntry` component
+- Verification:
+  - `node --check apps/web/src/pages/OperationsPage.js`
+  - `.\.venv\Scripts\python -m unittest tests.test_repo_layout tests.test_web_scaffold`
+  - `npm test`
+  - `npm run build`
+- Next likely slice:
+  - visually review the tenant and landlord demo flows in the browser
+  - reduce any remaining form density if the live interaction still feels heavier than the archive pattern

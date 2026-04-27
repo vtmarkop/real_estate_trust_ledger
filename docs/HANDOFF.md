@@ -5,15 +5,15 @@ This file is the current resume point for any new device, new Codex thread, or i
 ## Current Checkpoint
 
 - Program state: completed through Sprint 20
-- Latest non-sprint checkpoint: archive-alignment UX reset started, with the first `Rent & Issues` targeting/timeline slice completed
+- Latest non-sprint checkpoint: archive-alignment UX reset in progress, with the first two `Rent & Issues` slices completed
 - Next planned sprint: Sprint 21
-- Recommended immediate focus: continue the archive-alignment UX reset on top of the existing architecture, starting with tighter payment/ticket detail views and task-first navigation in `Rent & Issues`, then continue the broader workflow continuity audit across the remaining role surfaces
+- Recommended immediate focus: visually review the updated `Rent & Issues` selected-property flow with demo tenant/landlord data, then continue the broader workflow continuity audit across the remaining role surfaces
 - Repository bootstrap state: published to GitHub as `real_estate_trust_ledger` and ready to clone on a new machine
 
 ## Current Git Sync State
 
 - Active branch: `codex/archive-ux-reset`
-- Latest pushed checkpoint commit: `0a928d9`
+- Latest pushed checkpoint commit: see the current tip of `origin/codex/archive-ux-reset`
 - Remote branch status: pushed to `origin/codex/archive-ux-reset`
 - Pull request shortcut:
   - `https://github.com/vtmarkop/real_estate_trust_ledger/pull/new/codex/archive-ux-reset`
@@ -49,7 +49,8 @@ The newest UX-reset checkpoint added:
 - a dedicated reset branch `codex/archive-ux-reset`
 - a repo-resident change journal in `docs/UX_RESET_LOG.md`
 - the first object-first operations slice, so `Rent & Issues` now starts with property targeting and a selected-property history timeline instead of forcing cross-property scrolling
-- a pushed git checkpoint at commit `0a928d9` so home/work continuation can resume from the same branch state
+- the second object-first operations slice, so the selected property now has compact payment and issue dropdowns with one focused action/history pane at a time
+- a pushed branch checkpoint on `origin/codex/archive-ux-reset` so home/work continuation can resume from the same branch state
 
 ## Current Product Reality
 
@@ -90,9 +91,9 @@ Record active findings in `docs/WORKFLOW_GAPS.md`.
 ## Next Recommended Actions
 
 1. Continue the `Rent & Issues` archive-alignment reset:
-   - tighten payment and maintenance detail focus inside the selected property workflow
+   - visually review the selected property, payment menu, and issue menu with the seeded demo accounts
    - keep one property active at a time for normal tenant/landlord work
-   - continue reintroducing compact timeline/history readability where the archive was clearer
+   - continue reducing any remaining action-form density where it still feels heavier than the archive pattern
 2. Run the broader workflow continuity scan across:
    - property creation and assignment
    - tenancy creation and activation
@@ -143,5 +144,5 @@ Continue the Trust Ledger rebuild from the current repo state.
 
 Read README.md, AGENTS.md, docs/HANDOFF.md, docs/WORKFLOW_GAPS.md, docs/SPRINTS.md, docs/ROADMAP.md, docs/DECISIONS.md, docs/WORKFLOW_MAP.md, and docs/WORKFLOW_DIAGRAMS.md first.
 
-We are currently post-Sprint-20. The dispute and appeal handoff pass is complete, and the next priority is the broader workflow continuity audit across the remaining role surfaces according to the existing architecture.
+We are currently on branch codex/archive-ux-reset, post-Sprint-20. The dispute and appeal handoff pass is complete, and the active checkpoint is the archive-alignment UX reset with property targeting plus selected payment/issue detail focus complete in Rent & Issues.
 ```

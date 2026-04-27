@@ -255,6 +255,27 @@ function formatTenancySelectorLabel(tenancy) {
     .join(" | ");
 }
 
+function formatPaymentSelectorLabel(payment) {
+  return [
+    formatWorkflowLabel(payment.payment_type),
+    formatMinorAmount(payment.amount_minor, payment.currency_code),
+    payment.due_date ? "due " + payment.due_date : null,
+    formatWorkflowLabel(payment.payment_status)
+  ]
+    .filter(Boolean)
+    .join(" | ");
+}
+
+function formatMaintenanceSelectorLabel(ticket) {
+  return [
+    ticket.title || "Maintenance issue",
+    formatWorkflowLabel(ticket.priority),
+    formatWorkflowLabel(ticket.ticket_status)
+  ]
+    .filter(Boolean)
+    .join(" | ");
+}
+
 function buildPaymentTimelineEntries(payment) {
   var entries = [];
   pushTimelineEntry(entries, {
@@ -537,6 +558,12 @@ export function OperationsPage() {
   var selectedTenancyIdTuple = React.useState("");
   var selectedTenancyId = selectedTenancyIdTuple[0];
   var setSelectedTenancyId = selectedTenancyIdTuple[1];
+  var selectedPaymentIdTuple = React.useState("");
+  var selectedPaymentId = selectedPaymentIdTuple[0];
+  var setSelectedPaymentId = selectedPaymentIdTuple[1];
+  var selectedMaintenanceTicketIdTuple = React.useState("");
+  var selectedMaintenanceTicketId = selectedMaintenanceTicketIdTuple[0];
+  var setSelectedMaintenanceTicketId = selectedMaintenanceTicketIdTuple[1];
 
   var loadOperations = React.useCallback(async function loadOperations() {
     setState(function markLoading(previous) {
@@ -757,6 +784,47 @@ export function OperationsPage() {
       }
     },
     [selectedTenancyId, state.tenancies]
+  );
+
+  React.useEffect(
+    function normalizeSelectedOperationalRecords() {
+      if (!selectedTenancyId) {
+        if (selectedPaymentId) {
+          setSelectedPaymentId("");
+        }
+        if (selectedMaintenanceTicketId) {
+          setSelectedMaintenanceTicketId("");
+        }
+        return;
+      }
+
+      var payments = state.paymentsByTenancy[selectedTenancyId] || [];
+      var hasSelectedPayment = payments.some(function matchPayment(payment) {
+        return payment.id === selectedPaymentId;
+      });
+      if (payments.length && !hasSelectedPayment) {
+        setSelectedPaymentId(payments[0].id);
+      } else if (!payments.length && selectedPaymentId) {
+        setSelectedPaymentId("");
+      }
+
+      var tickets = state.maintenanceByTenancy[selectedTenancyId] || [];
+      var hasSelectedTicket = tickets.some(function matchTicket(ticket) {
+        return ticket.id === selectedMaintenanceTicketId;
+      });
+      if (tickets.length && !hasSelectedTicket) {
+        setSelectedMaintenanceTicketId(tickets[0].id);
+      } else if (!tickets.length && selectedMaintenanceTicketId) {
+        setSelectedMaintenanceTicketId("");
+      }
+    },
+    [
+      selectedMaintenanceTicketId,
+      selectedPaymentId,
+      selectedTenancyId,
+      state.maintenanceByTenancy,
+      state.paymentsByTenancy
+    ]
   );
 
   async function runAction(kind, id, task, successMessage) {
@@ -1406,6 +1474,18 @@ export function OperationsPage() {
              var depositRecord = state.depositsByTenancy[tenancy.id];
              var paymentsForTenancy = state.paymentsByTenancy[tenancy.id] || [];
              var maintenanceTickets = state.maintenanceByTenancy[tenancy.id] || [];
+             var selectedPayment =
+               paymentsForTenancy.find(function findSelectedPayment(payment) {
+                 return payment.id === selectedPaymentId;
+               }) ||
+               paymentsForTenancy[0] ||
+               null;
+             var selectedMaintenanceTicket =
+               maintenanceTickets.find(function findSelectedMaintenanceTicket(ticket) {
+                 return ticket.id === selectedMaintenanceTicketId;
+               }) ||
+               maintenanceTickets[0] ||
+               null;
              var depositSettlementForm = depositSettlementForms[tenancy.id] || buildDepositSettlementForm(tenancy);
              var depositDisputeForm = depositRecord
                ? depositDisputeForms[depositRecord.id] || buildDepositDisputeForm()
@@ -1612,10 +1692,13 @@ export function OperationsPage() {
                                   ? storedArtifact.id
                                   : undefined;
                               }
-                              await apiRequest("/payments/tenancies/" + tenancy.id, {
+                              var createdPayment = await apiRequest("/payments/tenancies/" + tenancy.id, {
                                 method: "POST",
                                 body: body
                               });
+                              if (createdPayment && createdPayment.id) {
+                                setSelectedPaymentId(createdPayment.id);
+                              }
                               setPaymentForms(function resetPaymentForm(previous) {
                                 var next = Object.assign({}, previous);
                                 next[tenancy.id] = buildPaymentForm(session.user.id, tenancy);
@@ -1635,7 +1718,35 @@ export function OperationsPage() {
                     ? e(
                         "div",
                         { className: "list-stack", key: "payment-list" },
-                        paymentsForTenancy.map(function renderPayment(payment) {
+                        [
+                          e("label", { className: "field", key: "payment-menu" }, [
+                            e("span", { className: "field-label", key: "label" }, "Payment menu"),
+                            e(
+                              "select",
+                              {
+                                className: "field-input field-select",
+                                value: selectedPayment ? selectedPayment.id : "",
+                                onChange: function onChange(event) {
+                                  setSelectedPaymentId(event.target.value);
+                                }
+                              },
+                              paymentsForTenancy.map(function renderPaymentOption(payment) {
+                                return e(
+                                  "option",
+                                  { value: payment.id, key: payment.id },
+                                  formatPaymentSelectorLabel(payment)
+                                );
+                              })
+                            )
+                          ]),
+                          e(
+                            "div",
+                            { className: "list-stack", key: "payment-detail" },
+                            paymentsForTenancy
+                              .filter(function onlySelectedPayment(payment) {
+                                return selectedPayment && payment.id === selectedPayment.id;
+                              })
+                              .map(function renderPayment(payment) {
                           var paymentProofForm = paymentProofForms[payment.id] || buildPaymentProofForm();
                           var paymentDecisionForm = paymentDecisionForms[payment.id] || buildPaymentDecisionForm();
                           var paymentDisputeForm = paymentDisputeForms[payment.id] || buildPaymentDisputeForm();
@@ -1648,6 +1759,7 @@ export function OperationsPage() {
                             reviewRequestedByName: payment.review_requested_by_user_full_name,
                             disputedByName: payment.disputed_by_user_full_name
                           });
+                          var paymentTimelineEntries = buildPaymentTimelineEntries(payment);
                           return e("article", { className: "stack-card", key: payment.id }, [
                             e(
                               "strong",
@@ -1701,6 +1813,22 @@ export function OperationsPage() {
                                 value: payment.payer_user_full_name + " to " + payment.payee_user_full_name
                               })
                             ]),
+                            paymentTimelineEntries.length
+                              ? e(
+                                  "div",
+                                  { className: "timeline-list", key: "payment-timeline" },
+                                  paymentTimelineEntries.map(function renderPaymentTimelineEntry(entry, index) {
+                                    return e(TimelineEntry, {
+                                      key: payment.id + ":" + entry.kind + ":" + index,
+                                      eyebrow: entry.eyebrow,
+                                      title: entry.title,
+                                      meta: formatDateTime(entry.timestamp),
+                                      summary: entry.summary,
+                                      badges: entry.badges
+                                    });
+                                  })
+                                )
+                              : null,
                             payment.proof_artifact_name
                               ? e(
                                   NoteBlock,
@@ -2092,6 +2220,8 @@ export function OperationsPage() {
                           ]);
                         })
                       )
+                    ]
+                  )
                     : e("p", { className: "empty-copy", key: "empty" }, "No payment records yet.")
                 ]) : null,
                 operationsFocus === "deposit" ? e("article", { className: "stack-card", key: "deposit" }, [
@@ -2509,7 +2639,7 @@ export function OperationsPage() {
                                   "maintenance_report"
                                 );
                               }
-                              await apiRequest("/maintenance-tickets/tenancies/" + tenancy.id, {
+                              var createdTicket = await apiRequest("/maintenance-tickets/tenancies/" + tenancy.id, {
                                 method: "POST",
                                 body: {
                                   title: maintenanceForm.title,
@@ -2523,6 +2653,9 @@ export function OperationsPage() {
                                     : undefined
                                 }
                               });
+                              if (createdTicket && createdTicket.id) {
+                                setSelectedMaintenanceTicketId(createdTicket.id);
+                              }
                               setMaintenanceForms(function resetMaintenanceForm(previous) {
                                 var next = Object.assign({}, previous);
                                 next[tenancy.id] = buildMaintenanceForm();
@@ -2542,7 +2675,35 @@ export function OperationsPage() {
                     ? e(
                         "div",
                         { className: "list-stack", key: "maintenance-list" },
-                        maintenanceTickets.map(function renderTicket(ticket) {
+                        [
+                          e("label", { className: "field", key: "maintenance-menu" }, [
+                            e("span", { className: "field-label", key: "label" }, "Issue menu"),
+                            e(
+                              "select",
+                              {
+                                className: "field-input field-select",
+                                value: selectedMaintenanceTicket ? selectedMaintenanceTicket.id : "",
+                                onChange: function onChange(event) {
+                                  setSelectedMaintenanceTicketId(event.target.value);
+                                }
+                              },
+                              maintenanceTickets.map(function renderTicketOption(ticket) {
+                                return e(
+                                  "option",
+                                  { value: ticket.id, key: ticket.id },
+                                  formatMaintenanceSelectorLabel(ticket)
+                                );
+                              })
+                            )
+                          ]),
+                          e(
+                            "div",
+                            { className: "list-stack", key: "maintenance-detail" },
+                            maintenanceTickets
+                              .filter(function onlySelectedMaintenanceTicket(ticket) {
+                                return selectedMaintenanceTicket && ticket.id === selectedMaintenanceTicket.id;
+                              })
+                              .map(function renderTicket(ticket) {
                           var acknowledgeForm = maintenanceAcknowledgeForms[ticket.id] || buildSimpleNotesForm();
                           var resolveForm = maintenanceResolveForms[ticket.id] || {
                             resolution_summary: "",
@@ -2559,6 +2720,7 @@ export function OperationsPage() {
                             reviewRequestedByName: ticket.review_requested_by_user_full_name,
                             disputedByName: ticket.disputed_by_user_full_name
                           });
+                          var ticketTimelineEntries = buildMaintenanceTimelineEntries(ticket);
                           return e("article", { className: "stack-card", key: ticket.id }, [
                             e("strong", { className: "stack-card-title", key: "title" }, ticket.title),
                             e("div", { className: "status-row", key: "status" }, [
@@ -2601,6 +2763,22 @@ export function OperationsPage() {
                                 ])
                               : null,
                             e(NoteBlock, { key: "description", label: "Reported issue", tone: "accent" }, ticket.description),
+                            ticketTimelineEntries.length
+                              ? e(
+                                  "div",
+                                  { className: "timeline-list", key: "ticket-timeline" },
+                                  ticketTimelineEntries.map(function renderTicketTimelineEntry(entry, index) {
+                                    return e(TimelineEntry, {
+                                      key: ticket.id + ":" + entry.kind + ":" + index,
+                                      eyebrow: entry.eyebrow,
+                                      title: entry.title,
+                                      meta: formatDateTime(entry.timestamp),
+                                      summary: entry.summary,
+                                      badges: entry.badges
+                                    });
+                                  })
+                                )
+                              : null,
                             ticket.reported_artifact_name
                               ? e(
                                   NoteBlock,
@@ -2897,6 +3075,8 @@ export function OperationsPage() {
                           ]);
                         })
                       )
+                    ]
+                  )
                     : e("p", { className: "empty-copy", key: "empty" }, "No maintenance tickets yet.")
                 ]) : null
               ])

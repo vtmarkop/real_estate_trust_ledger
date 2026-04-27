@@ -67,6 +67,7 @@ Current UX-reset note:
 
 - the non-dispute `Rent & Issues` lanes now begin with property targeting, so normal tenant/landlord work can stay inside one selected tenancy context instead of requiring cross-property scrolling
 - the selected property also surfaces an operational history timeline built from the existing payment, deposit, and maintenance workflow timestamps
+- inside the selected property, `Payments` and `Maintenance` now use compact record dropdowns so only one payment or issue detail/action/history pane is expanded at a time
 
 ## Role Model
 
@@ -477,14 +478,15 @@ Important architectural difference from the archive MVP:
 ### Typical flow
 
 1. User selects the relevant property from the `Rent & Issues` property menu.
-2. Payment is recorded.
-3. Payer attaches proof.
-4. Payee confirms or rejects.
+2. User selects the relevant payment from the payment menu or creates a new payment record.
+3. Payer attaches proof inside the selected payment detail.
+4. Payee confirms or rejects inside the selected payment detail.
 5. If rejected, the other party may dispute and send the case into reviewer flow.
 6. Once a payment is disputed or re-opened for review, the normal payee decision path is blocked.
-7. Reviewer issues verdict if needed.
-8. Either side may appeal, which returns the case to `UNDER_REVIEW` for a fresh verdict.
-9. Score impact is recalculated through the central scoring service.
+7. The selected payment detail shows its local timeline/history.
+8. Reviewer issues verdict if needed.
+9. Either side may appeal, which returns the case to `UNDER_REVIEW` for a fresh verdict.
+10. Score impact is recalculated through the central scoring service.
 
 ## Workflow 11: Deposit Settlement, Dispute, Verdict, Appeal
 
@@ -556,11 +558,13 @@ Important architectural difference from the archive MVP:
 ### Typical flow
 
 1. User selects the relevant property from the `Rent & Issues` property menu.
-2. Tenant reports a problem with evidence.
-3. Landlord acknowledges and resolves with response evidence.
-4. If disputed, reviewer decides.
-5. Either party can appeal, which returns the case to `UNDER_REVIEW`.
-6. The reopened case stays in reviewer flow until a fresh verdict is issued.
+2. User selects the relevant issue from the issue menu or creates a new maintenance ticket.
+3. Tenant reports a problem with evidence.
+4. Landlord acknowledges and resolves with response evidence inside the selected issue detail.
+5. The selected issue detail shows its local timeline/history.
+6. If disputed, reviewer decides.
+7. Either party can appeal, which returns the case to `UNDER_REVIEW`.
+8. The reopened case stays in reviewer flow until a fresh verdict is issued.
 
 ### Example
 

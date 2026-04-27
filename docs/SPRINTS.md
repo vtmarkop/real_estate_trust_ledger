@@ -22,7 +22,7 @@
 - Post-Sprint-20 cross-device continuity checkpoint outcome: the repo now includes a durable handoff system with repo-wide agent instructions, a live handoff file, a workflow-gap tracker, and a daily workstation sync guide so work can continue safely across devices and new Codex threads
 - Post-Sprint-20 GitHub bootstrap checkpoint outcome: the repo is now prepared for a first private GitHub publish as `real_estate_trust_ledger`, with local-only databases and artifact storage excluded from version control and the full first-push plus home/work sync procedure documented in-project
 - Post-Sprint-20 dispute continuity checkpoint outcome: payment, deposit, and maintenance dispute flows now surface explicit appeal and re-review handoffs in both the user dispute desk and `Review Center > Disputes`, and the payment counterparty decision path is blocked once a case has moved into reviewer flow
-- Post-Sprint-20 archive-alignment UX reset status: the reset is underway on branch `codex/archive-ux-reset`, with the first slice restoring property targeting and a selected-property operational history timeline in `Rent & Issues` while preserving the rebuilt dispute/reviewer architecture
+- Post-Sprint-20 archive-alignment UX reset status: the reset is underway on branch `codex/archive-ux-reset`, with the first slices restoring property targeting, selected-property operational history, and compact payment/issue detail dropdowns in `Rent & Issues` while preserving the rebuilt dispute/reviewer architecture
 - Remaining planned launch track: none
 - Remaining planned post-pilot experience track: Sprint 21
 

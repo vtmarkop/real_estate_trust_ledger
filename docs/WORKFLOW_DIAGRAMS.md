@@ -140,7 +140,7 @@ sequenceDiagram
     participant Reviewer as "Review Center > Disputes"
     participant Scoring as "scoring service"
 
-    Tenant->>Frontend: Create payment record
+    Tenant->>Frontend: Select property, then create or choose a payment
     Frontend->>API: POST /payments/tenancies/{tenancy_id}
     API->>Service: validate tenancy and participants
     Service-->>API: payment created
@@ -173,6 +173,8 @@ sequenceDiagram
 
 Continuity note: once a payment is disputed or appealed, the next action belongs to `Review Center > Disputes` until a reviewer issues the next verdict. The normal counterparty decision path is no longer the active handoff.
 
+UX-reset note: the personal `Payments` lane now keeps the selected property active and exposes one selected payment detail/action/history pane from a compact payment dropdown.
+
 ### Why this matters
 
 This is one of the clearest examples of “real workflow” in the rebuild:
@@ -195,7 +197,7 @@ sequenceDiagram
     participant Service as "maintenance service"
     participant Reviewer as "Review Center > Disputes"
 
-    Tenant->>Frontend: Report issue with evidence
+    Tenant->>Frontend: Select property, then report or choose an issue
     Frontend->>API: POST /maintenance-tickets/tenancies/{tenancy_id}
     API->>Service: create ticket
     Service-->>API: ticket created
@@ -221,6 +223,8 @@ sequenceDiagram
 ```
 
 Continuity note: an appeal returns the ticket to `Review Center > Disputes`, and the earlier verdict is no longer final until a fresh verdict is issued.
+
+UX-reset note: the personal `Maintenance` lane now keeps the selected property active and exposes one selected issue detail/action/history pane from a compact issue dropdown.
 
 ## Diagram 7: Deposit Settlement Workflow With Dispute And Appeal
 

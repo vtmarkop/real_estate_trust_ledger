@@ -58,13 +58,16 @@ This file should stay short, practical, and current. Long explanation belongs in
   - the backend and action rules were already strong
   - the rebuilt page had drifted into tenancy-first browsing and forced users to scan too many cards before acting
   - the first UX-reset slice now adds property search, a property dropdown, and a selected-property history timeline in `Rent & Issues`
-  - the page still does not yet match the archive's tighter detail-focus pattern for payments and tickets
+  - the second UX-reset slice now adds compact payment and issue dropdowns inside the selected property flow
+  - payment and maintenance detail actions now render one focused record at a time with a local timeline, closer to the archive's details-modal pattern without weakening rebuilt API rules
+  - the page still needs live visual review to confirm the form density feels simple enough for normal tenant/landlord use
 - Backend status: complete
-- Frontend status: improved but still mid-reset
+- Frontend status: materially improved but still mid-reset pending visual review
 - Classification: `complete_but_hard_to_understand`
 - Next fix:
   - keep normal user work inside one selected property at a time
-  - continue restoring compact payment/ticket detail focus and stronger timeline readability inside `OperationsPage.js`
+  - visually review the selected property, payment menu, and issue menu with seeded demo accounts
+  - reduce any remaining form density if the live flow still feels heavier than the archive interaction model
 
 ### Full Workflow Continuity Audit
 
@@ -98,4 +101,4 @@ These are not yet confirmed as gaps, but they are the right places to inspect fi
 5. Agency screening next-step guidance after a trust-check result
 6. Consent/share-token lifecycle clarity for end users
 7. Cross-role history and timeline clarity after reviewer decisions
-8. Payment/ticket detail focus versus archive interaction clarity in `Rent & Issues`
+8. Remaining action-form density versus archive interaction clarity in `Rent & Issues`
