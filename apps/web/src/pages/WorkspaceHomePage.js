@@ -308,16 +308,19 @@ export function WorkspaceHomePage() {
 
   var workspaceStats = [
     e(HeroStat, {
+      key: "tenant-score",
       label: "Tenant score",
       value: String(scoreSummary.tenant_score),
       copy: "Current evidence-backed tenant score."
     }),
     e(HeroStat, {
+      key: "verification-strength",
       label: "Verification strength",
       value: String(scoreSummary.verification_strength) + "%",
       copy: "Confidence built from accepted evidence and reviewed history."
     }),
     e(HeroStat, {
+      key: "active-memberships",
       label: "Active memberships",
       value: String(organizations.length),
       copy: organizations.length
