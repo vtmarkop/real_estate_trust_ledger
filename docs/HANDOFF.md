@@ -60,10 +60,10 @@ The newest UX-reset checkpoint added:
 - explicit account workspace-role entitlements now live on `User.workspace_roles`, are returned from `/auth/me`, drive the sign-in and shell role menus, and are editable from `Review Center > Roles` by platform admins
 - tenant, landlord, and agency backend routes now check the matching workspace entitlement in addition to existing tenancy/property/membership permissions, so a visible role and a record permission are separate requirements
 - a destructive local reset script now wipes local data and creates only the four requested accounts:
-  - `vasilis.markopoulos@trustledger.local` / `VasilisTenantAdmin123!` with tenant + admin/internal roles
-  - `lila.tsoutsoura@trustledger.local` / `LilaLandlord123!` with landlord role
-  - `theodore.tsoutsouras@trustledger.local` / `TheodoreAgent123!` with agent role and no agency organization yet
-  - `froso.evangeliadou@trustledger.local` / `FrosoTenantLandlord123!` with tenant + landlord roles
+  - `vasilis.markopoulos@accounts.trustledger.app` / `VasilisTenantAdmin123!` with tenant + admin/internal roles
+  - `lila.tsoutsoura@accounts.trustledger.app` / `LilaLandlord123!` with landlord role
+  - `theodore.tsoutsouras@accounts.trustledger.app` / `TheodoreAgent123!` with agent role and no agency organization yet
+  - `froso.evangeliadou@accounts.trustledger.app` / `FrosoTenantLandlord123!` with tenant + landlord roles
 - a pushed branch checkpoint on `origin/codex/archive-ux-reset` so home/work continuation can resume from the same branch state
 
 ## Current Product Reality

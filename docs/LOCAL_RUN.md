@@ -151,10 +151,10 @@ If you switch storage backend settings, restart the API before testing uploads a
 
 These accounts exist after `dev_reset_minimal_users.py`:
 
-- `Tenant + Admin`: `vasilis.markopoulos@trustledger.local` / `VasilisTenantAdmin123!`
-- `Landlord`: `lila.tsoutsoura@trustledger.local` / `LilaLandlord123!`
-- `Agent`: `theodore.tsoutsouras@trustledger.local` / `TheodoreAgent123!`
-- `Tenant + Landlord`: `froso.evangeliadou@trustledger.local` / `FrosoTenantLandlord123!`
+- `Tenant + Admin`: `vasilis.markopoulos@accounts.trustledger.app` / `VasilisTenantAdmin123!`
+- `Landlord`: `lila.tsoutsoura@accounts.trustledger.app` / `LilaLandlord123!`
+- `Agent`: `theodore.tsoutsouras@accounts.trustledger.app` / `TheodoreAgent123!`
+- `Tenant + Landlord`: `froso.evangeliadou@accounts.trustledger.app` / `FrosoTenantLandlord123!`
 
 This reset intentionally creates no other data. The agent role can be assigned to an account before that account is attached to an agency organization; agency tools stay empty until membership data exists.
 

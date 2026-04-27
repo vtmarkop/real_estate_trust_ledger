@@ -13,34 +13,34 @@ from trustledger_domain import AccountWorkspaceRole, SystemRole
 
 
 DEFAULT_PASSWORDS = {
-    "vasilis.markopoulos@trustledger.local": "VasilisTenantAdmin123!",
-    "lila.tsoutsoura@trustledger.local": "LilaLandlord123!",
-    "theodore.tsoutsouras@trustledger.local": "TheodoreAgent123!",
-    "froso.evangeliadou@trustledger.local": "FrosoTenantLandlord123!",
+    "vasilis.markopoulos@accounts.trustledger.app": "VasilisTenantAdmin123!",
+    "lila.tsoutsoura@accounts.trustledger.app": "LilaLandlord123!",
+    "theodore.tsoutsouras@accounts.trustledger.app": "TheodoreAgent123!",
+    "froso.evangeliadou@accounts.trustledger.app": "FrosoTenantLandlord123!",
 }
 
 
 USER_SEED = (
     {
-        "email": "vasilis.markopoulos@trustledger.local",
+        "email": "vasilis.markopoulos@accounts.trustledger.app",
         "full_name": "vasilis markopoulos",
         "system_role": SystemRole.ADMIN,
         "workspace_roles": (AccountWorkspaceRole.TENANT, AccountWorkspaceRole.INTERNAL),
     },
     {
-        "email": "lila.tsoutsoura@trustledger.local",
+        "email": "lila.tsoutsoura@accounts.trustledger.app",
         "full_name": "lila tsoutsoura",
         "system_role": SystemRole.USER,
         "workspace_roles": (AccountWorkspaceRole.LANDLORD,),
     },
     {
-        "email": "theodore.tsoutsouras@trustledger.local",
+        "email": "theodore.tsoutsouras@accounts.trustledger.app",
         "full_name": "theodore tsoutsouras",
         "system_role": SystemRole.USER,
         "workspace_roles": (AccountWorkspaceRole.AGENCY,),
     },
     {
-        "email": "froso.evangeliadou@trustledger.local",
+        "email": "froso.evangeliadou@accounts.trustledger.app",
         "full_name": "froso evangeliadou",
         "system_role": SystemRole.USER,
         "workspace_roles": (AccountWorkspaceRole.TENANT, AccountWorkspaceRole.LANDLORD),

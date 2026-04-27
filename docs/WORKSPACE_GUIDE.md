@@ -461,10 +461,10 @@ These are the current seeded demo accounts for local use:
 
 After the account-only reset, the local accounts are:
 
-- `Tenant + Admin`: `vasilis.markopoulos@trustledger.local` / `VasilisTenantAdmin123!`
-- `Landlord`: `lila.tsoutsoura@trustledger.local` / `LilaLandlord123!`
-- `Agent`: `theodore.tsoutsouras@trustledger.local` / `TheodoreAgent123!`
-- `Tenant + Landlord`: `froso.evangeliadou@trustledger.local` / `FrosoTenantLandlord123!`
+- `Tenant + Admin`: `vasilis.markopoulos@accounts.trustledger.app` / `VasilisTenantAdmin123!`
+- `Landlord`: `lila.tsoutsoura@accounts.trustledger.app` / `LilaLandlord123!`
+- `Agent`: `theodore.tsoutsouras@accounts.trustledger.app` / `TheodoreAgent123!`
+- `Tenant + Landlord`: `froso.evangeliadou@accounts.trustledger.app` / `FrosoTenantLandlord123!`
 
 That reset intentionally has no properties, tenancies, organizations, or history records.
 
