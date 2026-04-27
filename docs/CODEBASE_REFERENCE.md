@@ -84,6 +84,8 @@ The `packages/domain/trustledger_domain` package exists so the backend uses a st
 
 - `SystemRole`
   - Global platform roles such as end user, reviewer, or admin.
+- `AccountWorkspaceRole`
+  - Explicit account entitlements for tenant, landlord, agent/agency, and admin/internal workspace visibility.
 - `OrganizationType`
   - Distinguishes agency organizations from internal/platform organizations.
 - `OrganizationMembershipRole`
@@ -95,7 +97,7 @@ Why this matters:
 
 - route guards use these enums,
 - organization access decisions use these enums,
-- frontend capabilities are derived from these enums.
+- frontend capabilities and workspace role menus are derived from these enums.
 
 ### `trust.py`
 
@@ -229,6 +231,12 @@ Key definitions:
   - Resolves the active signed-in user.
 - `require_system_roles`
   - Enforces reviewer/admin-style platform access.
+- `has_workspace_role`
+  - Checks whether a signed-in account has a specific account workspace entitlement.
+- `require_workspace_role_for_user`
+  - Rejects tenant, landlord, or agency workflows when the account lacks the matching workspace entitlement.
+- `require_tenancy_workspace_access`
+  - Combines tenant/landlord workspace entitlement checks with tenancy participation checks.
 - `OrganizationAccessContext`
   - Structured org-access result used by org-scoped routes.
 - `get_organization_access_context`
@@ -236,13 +244,13 @@ Key definitions:
 - `require_membership_manager`
   - Enforces org-owner/manager controls.
 - `require_agency_operator_access`
-  - Enforces agency workspace access.
+  - Enforces agency workspace access by requiring both the agency account entitlement and agency organization membership.
 
 Example:
 
 - `InternalOperationsPage` is only useful if the signed-in user is a reviewer or admin.
 - The route guard uses `require_system_roles`.
-- The frontend router also hides those tabs unless the session capability allows them.
+- The frontend router also hides those tabs unless the account has the internal workspace entitlement.
 
 ### `apps/api/app/core/config.py`
 
@@ -343,8 +351,13 @@ The backend uses SQLModel models under `apps/api/app/models`.
     - `full_name`
     - `password_hash`
     - `system_role`
+    - `workspace_roles_json`
     - `is_active`
     - `email_verified`
+  - Workspace role helpers:
+    - `workspace_roles`
+    - `set_workspace_roles(...)`
+    - `normalize_workspace_roles(...)`
   - Key security fields:
     - `failed_login_attempt_count`
     - `last_login_attempt_at`
@@ -364,8 +377,8 @@ The backend uses SQLModel models under `apps/api/app/models`.
 Example:
 
 - One user can be both a personal workspace user and an agency member.
-- The personal workspace is still available.
-- Agency tools appear because org membership adds that capability.
+- Tenant, landlord, agency, and admin/internal workspace visibility comes from explicit account entitlements.
+- Agency tools can be visible because the account has the agency entitlement, but backend agency work still requires organization membership.
 
 ### `organization.py`
 
@@ -709,11 +722,18 @@ The schema package describes the request and response contracts returned to the 
 - `LoginRequest`
   - Email and password.
 - `UserResponse`
-  - Current user profile returned after auth/session reads.
+  - Current user profile returned after auth/session reads, including `workspace_roles`.
 - `AuthSessionResponse`
   - Session metadata for account security pages.
 - `AuthSessionBulkRevokeResponse`
   - Returned when revoking all sessions except the current one.
+
+#### `internal.py`
+
+- `InternalUserResponse`
+  - Admin-facing user summary for account role management.
+- `WorkspaceRolesUpdateRequest`
+  - Replaces the editable account workspace-role entitlement set.
 
 ### Organizations and agency work
 
@@ -1457,11 +1477,13 @@ Endpoints:
 
 Purpose:
 
-- internal access status and reviewer queues for tenancies, evidence, and history imports.
+- internal access status, account role management, and reviewer queues for tenancies, evidence, and history imports.
 
 Endpoints:
 
 - `GET /internal/access`
+- `GET /internal/users`
+- `PATCH /internal/users/{user_id}/workspace-roles`
 - `GET /internal/review-queue/tenancies`
 - `GET /internal/review-queue/evidence`
 - `GET /internal/review-queue/history-imports`
@@ -1662,7 +1684,7 @@ Definitions:
 Purpose:
 
 - load `/auth/me`,
-- derive frontend capabilities from user + organizations,
+- derive frontend capabilities from explicit user workspace-role entitlements + organizations,
 - normalize and persist the active workspace role,
 - expose session state/actions to the app.
 
@@ -1893,6 +1915,7 @@ Purpose:
   - dispute verdicts
   - scoring control
   - automation queue control
+  - account workspace-role management
   - worker/notification visibility
   - audit visibility
   - release readiness
@@ -1941,6 +1964,10 @@ Primary entrypoint:
 
 - `apps/api/app/devtools/demo_seed.py`
 
+Minimal account-only reset entrypoint:
+
+- `apps/api/dev_reset_minimal_users.py`
+
 It creates:
 
 - platform users,
@@ -1953,6 +1980,8 @@ It creates:
 - payment/deposit/maintenance examples,
 - dispute queues and verdict-ready states,
 - trust checks and shareable flows.
+
+The minimal reset script is destructive for local data. It wipes model tables and local private artifacts, then creates only the four requested users with explicit account workspace-role entitlements and no properties, tenancies, organizations, trust events, or operational records.
 
 Key seeded scenarios:
 

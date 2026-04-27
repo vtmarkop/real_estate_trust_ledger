@@ -23,7 +23,7 @@ This diagram shows how the main roles enter the product and which frontend works
 
 ```mermaid
 flowchart TD
-    A["User signs in"] --> B{"Capability set"}
+    A["User signs in"] --> B{"Account workspace-role entitlements"}
     B --> K{"Active workspace role"}
     K -->|"tenant"| C["Tenant Home"]
     K -->|"tenant"| D["Tenant Trust"]
@@ -35,17 +35,17 @@ flowchart TD
     K -->|"landlord"| N["Landlord Rental Records"]
     K -->|"landlord"| O["Landlord Rent & Issues"]
     K -->|"agency"| I["Agency Tools"]
-    K -->|"internal reviewer/admin"| J["Review Center"]
+    K -->|"internal/admin"| J["Review Center"]
     K --> H["Account"]
 ```
 
 ### What this reflects
 
-- Personal users can access the personal workspaces.
-- Personal users now choose active tenant or landlord mode, which filters visible personal menus and records.
-- Agency access is capability-driven.
-- Internal review access is separate from agency access.
-- A user can still have multiple legitimate capabilities, but the active role controls which workspace is visible at one time.
+- Account role visibility is explicit: tenant, landlord, agency, and internal/admin roles come from `User.workspace_roles`.
+- Personal users only see tenant or landlord modes when those entitlements are assigned.
+- Agency mode can be assigned independently, but backend agency work still requires active agency organization membership.
+- Internal/admin mode is separate from agency access and is synced with backend platform-admin protection.
+- A user can still have multiple legitimate workspace roles, but the active role controls which workspace is visible at one time.
 
 ## Diagram 2: Property Setup To Tenancy Activation
 

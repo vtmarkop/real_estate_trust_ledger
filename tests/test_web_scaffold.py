@@ -63,6 +63,8 @@ class WebScaffoldTests(unittest.TestCase):
         self.assertIn('/auth/login', session_source)
         self.assertIn('/auth/register', session_source)
         self.assertIn('/auth/logout', session_source)
+        self.assertIn("workspace_roles", session_source)
+        self.assertIn("getAvailableWorkspaceRoles", session_source)
         self.assertIn("VITE_TRUST_LEDGER_API_BASE_URL", api_source)
         self.assertIn("formatApiErrorMessage", api_source)
         self.assertIn('detail.loc.join(" > ")', api_source)
@@ -125,6 +127,9 @@ class WebScaffoldTests(unittest.TestCase):
         self.assertIn('/internal/notifications?limit=10', internal_source)
         self.assertIn('/internal/workers/runs?limit=10', internal_source)
         self.assertIn('/internal/audit-logs?limit=20', internal_source)
+        self.assertIn('/internal/users?limit=25', internal_source)
+        self.assertIn('/workspace-roles', internal_source)
+        self.assertIn('Account roles', internal_source)
         self.assertIn('action_type=', internal_source)
         self.assertIn('Claim due tasks', internal_source)
         self.assertIn('Score controls', internal_source)
@@ -186,6 +191,9 @@ class WebScaffoldTests(unittest.TestCase):
         self.assertIn("docs/CODEBASE_REFERENCE.md", readme_source)
         self.assertIn("docs/WORKFLOW_MAP.md", readme_source)
         self.assertIn("docs/WORKFLOW_DIAGRAMS.md", readme_source)
+        self.assertIn("explicit account workspace-role entitlements", readme_source)
+        self.assertIn("explicit account workspace-role entitlements", roadmap_source)
+        self.assertIn("explicit account workspace-role entitlements", sprint_source)
 
 
 if __name__ == "__main__":

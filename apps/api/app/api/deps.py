@@ -10,9 +10,9 @@ from sqlmodel import select
 from app.core.config import Settings, get_settings
 from app.core.db import SessionDep
 from app.core.security import hash_token
-from app.models import AuthSession, Organization, OrganizationMembership, User
+from app.models import AuthSession, Organization, OrganizationMembership, Tenancy, User
 from app.models.common import utcnow
-from trustledger_domain import OrganizationType, SystemRole
+from trustledger_domain import AccountWorkspaceRole, OrganizationType, SystemRole
 
 
 def get_runtime_settings() -> Settings:
@@ -69,6 +69,58 @@ def get_current_user(
 
 
 CurrentUserDep = Annotated[User, Depends(get_current_user)]
+
+
+def has_workspace_role(user: User, role: AccountWorkspaceRole) -> bool:
+    return role in user.workspace_roles
+
+
+def require_workspace_role_for_user(
+    *,
+    user: User,
+    role: AccountWorkspaceRole,
+    detail: str,
+    allow_platform_admin: bool = False,
+) -> None:
+    if allow_platform_admin and user.system_role.can_manage_platform:
+        return
+    if has_workspace_role(user, role):
+        return
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail=detail,
+    )
+
+
+def require_tenancy_workspace_access(
+    *,
+    tenancy: Tenancy,
+    current_user: User,
+    detail: str,
+    allow_internal_review: bool = False,
+) -> None:
+    if current_user.system_role.can_manage_platform:
+        return
+    if allow_internal_review and current_user.system_role.can_access_admin_surfaces:
+        return
+    if current_user.id == tenancy.tenant_user_id:
+        require_workspace_role_for_user(
+            user=current_user,
+            role=AccountWorkspaceRole.TENANT,
+            detail=detail,
+        )
+        return
+    if current_user.id == tenancy.landlord_user_id:
+        require_workspace_role_for_user(
+            user=current_user,
+            role=AccountWorkspaceRole.LANDLORD,
+            detail=detail,
+        )
+        return
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail=detail,
+    )
 
 
 def require_system_roles(*allowed_roles: SystemRole):
@@ -160,6 +212,11 @@ def require_agency_operator_access(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="This resource is only available within agency organizations.",
         )
+    require_workspace_role_for_user(
+        user=context.current_user,
+        role=AccountWorkspaceRole.AGENCY,
+        detail="Your account does not have the agent role.",
+    )
     if context.membership and context.membership.can_run_trust_checks:
         return context
     raise HTTPException(

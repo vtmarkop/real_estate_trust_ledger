@@ -18,12 +18,12 @@ export var WORKSPACE_ROLE_OPTIONS = [
   },
   {
     id: "agency",
-    label: "Agency",
-    copy: "Listings, screening, portfolio work, and agency trust checks."
+    label: "Agent",
+    copy: "Agency listings, screening, portfolio work, and trust checks."
   },
   {
     id: "internal",
-    label: "Reviewer",
+    label: "Admin",
     copy: "Internal review queues, disputes, runtime controls, and audit work."
   }
 ];
@@ -67,27 +67,32 @@ function getAgencyMemberships(organizations) {
   });
 }
 
-function canOperateAgencyMembership(organization) {
-  return ["owner", "admin", "agent"].indexOf(organization.current_user_membership_role) !== -1;
-}
-
 export function getAvailableWorkspaceRoles(user, organizations) {
   if (!user) {
     return [];
   }
 
+  var assignedRoles = Array.isArray(user.workspace_roles) ? user.workspace_roles.slice() : [];
+  if (!assignedRoles.length) {
+    if (user.system_role === "reviewer" || user.system_role === "admin") {
+      assignedRoles.push("internal");
+    } else if (user.system_role === "user") {
+      assignedRoles.push("tenant");
+    }
+  }
+
   var roles = [];
-  var agencyMemberships = getAgencyMemberships(organizations);
-  var hasAgencyOperatorAccess = agencyMemberships.some(canOperateAgencyMembership);
   var isInternalUser = user.system_role === "reviewer" || user.system_role === "admin";
 
-  if (user.system_role === "user") {
-    roles.push("tenant", "landlord");
-  }
-  if (hasAgencyOperatorAccess) {
+  ["tenant", "landlord"].forEach(function appendPersonalRole(role) {
+    if (assignedRoles.indexOf(role) !== -1) {
+      roles.push(role);
+    }
+  });
+  if (assignedRoles.indexOf("agency") !== -1) {
     roles.push("agency");
   }
-  if (isInternalUser) {
+  if (assignedRoles.indexOf("internal") !== -1 && isInternalUser) {
     roles.push("internal");
   }
 
@@ -129,22 +134,28 @@ export function buildCapabilities(user, organizations, activeWorkspaceRole) {
       organization.current_user_membership_role === "admin"
     );
   });
-  var canOperateAgency = agencyMemberships.some(canOperateAgencyMembership);
   var isInternalUser =
     user.system_role === "reviewer" || user.system_role === "admin";
   var normalizedWorkspaceRole = normalizeWorkspaceRole(activeWorkspaceRole || "tenant", user, organizations);
+  var availableWorkspaceRoles = getAvailableWorkspaceRoles(user, organizations);
 
   return {
     isAuthenticated: true,
     activeWorkspaceRole: normalizedWorkspaceRole,
-    availableWorkspaceRoles: getAvailableWorkspaceRoles(user, organizations),
+    availableWorkspaceRoles: availableWorkspaceRoles,
     hasAgencyWorkspace: agencyMemberships.length > 0,
-    canOperateAgency: canOperateAgency,
+    canOperateAgency: availableWorkspaceRoles.indexOf("agency") !== -1,
     canManageAgency: canManageAgency,
-    canCreateAgencyWorkspace: user.system_role === "user" && agencyMemberships.length === 0,
-    canAccessInternal: isInternalUser,
-    canManagePlatform: user.system_role === "admin",
-    canUsePersonalWorkspace: user.system_role === "user",
+    canCreateAgencyWorkspace:
+      availableWorkspaceRoles.indexOf("landlord") !== -1 &&
+      agencyMemberships.length === 0,
+    canAccessInternal: availableWorkspaceRoles.indexOf("internal") !== -1,
+    canManagePlatform:
+      user.system_role === "admin" &&
+      availableWorkspaceRoles.indexOf("internal") !== -1,
+    canUsePersonalWorkspace:
+      availableWorkspaceRoles.indexOf("tenant") !== -1 ||
+      availableWorkspaceRoles.indexOf("landlord") !== -1,
     organizations: organizations || []
   };
 }

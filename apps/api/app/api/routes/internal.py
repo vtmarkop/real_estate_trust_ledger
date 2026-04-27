@@ -3,20 +3,27 @@ from __future__ import annotations
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import or_
 from sqlmodel import select
 
 from app.api.deps import SessionDep, require_system_roles
 from app.models import EvidenceDocument, HistoryImport, Tenancy
+from app.models import User
 from app.models.common import utcnow
 from app.schemas.evidence import EvidenceResponse, EvidenceReviewDecisionRequest
 from app.schemas.history_import import HistoryImportResponse, HistoryImportReviewDecisionRequest
-from app.schemas.internal import InternalAccessResponse
+from app.schemas.internal import (
+    InternalAccessResponse,
+    InternalUserResponse,
+    WorkspaceRolesUpdateRequest,
+)
 from app.schemas.tenancy import TenancyResponse, TenancyReviewDecisionRequest
 from app.services.evidence import build_evidence_response, format_evidence_document_type_label
 from app.services.history_imports import build_history_import_response
 from app.services.tenancies import build_tenancy_response
 from app.services.trust_events import append_tenancy_events, append_user_event
 from trustledger_domain import (
+    AccountWorkspaceRole,
     EvidenceReviewStatus,
     HistoryImportStatus,
     SystemRole,
@@ -26,6 +33,20 @@ from trustledger_domain import (
 
 
 router = APIRouter(prefix="/internal", tags=["internal"])
+
+
+def build_internal_user_response(user: User) -> InternalUserResponse:
+    return InternalUserResponse(
+        id=user.id,
+        email=user.email,
+        full_name=user.full_name,
+        system_role=user.system_role,
+        workspace_roles=user.workspace_roles,
+        is_active=user.is_active,
+        email_verified=user.email_verified,
+        last_login_at=user.last_login_at,
+        created_at=user.created_at,
+    )
 
 
 @router.get(
@@ -41,6 +62,70 @@ def get_internal_access_status(
         system_role=current_user.system_role,
         can_manage_platform=current_user.system_role.can_manage_platform,
     )
+
+
+@router.get(
+    "/users",
+    response_model=list[InternalUserResponse],
+)
+def list_internal_users(
+    session: SessionDep,
+    query: str | None = None,
+    limit: int = 25,
+    current_user=Depends(require_system_roles(SystemRole.ADMIN)),
+) -> list[InternalUserResponse]:
+    statement = select(User).order_by(User.created_at.desc())
+    if query and query.strip():
+        normalized_query = query.strip()
+        statement = (
+            select(User)
+            .where(
+                or_(
+                    User.email.ilike(f"%{normalized_query}%"),
+                    User.full_name.ilike(f"%{normalized_query}%"),
+                )
+            )
+            .order_by(User.created_at.desc())
+        )
+    users = session.exec(statement).all()[: max(1, min(limit, 100))]
+    return [build_internal_user_response(user) for user in users]
+
+
+@router.patch(
+    "/users/{user_id}/workspace-roles",
+    response_model=InternalUserResponse,
+)
+def update_user_workspace_roles(
+    user_id: UUID,
+    payload: WorkspaceRolesUpdateRequest,
+    session: SessionDep,
+    current_user: User = Depends(require_system_roles(SystemRole.ADMIN)),
+) -> InternalUserResponse:
+    user = session.get(User, user_id)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found.",
+        )
+
+    requested_roles = list(payload.workspace_roles)
+    if user.id == current_user.id and AccountWorkspaceRole.INTERNAL not in requested_roles:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="You cannot remove your own admin workspace role while signed in.",
+        )
+
+    user.set_workspace_roles(requested_roles)
+    user.system_role = (
+        SystemRole.ADMIN
+        if AccountWorkspaceRole.INTERNAL in user.workspace_roles
+        else SystemRole.USER
+    )
+    user.updated_at = utcnow()
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+    return build_internal_user_response(user)
 
 
 @router.get(

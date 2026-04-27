@@ -82,6 +82,8 @@ Rules:
 - HTTPS-only production deployment.
 - Secure cookies in production.
 - RBAC on every protected route.
+- Explicit account workspace-role entitlements control tenant, landlord, agent, and admin workspace visibility.
+- Record access still requires the relevant tenancy/property participation, agency membership, or internal system privilege.
 - Consent checks for every agency trust check and report view.
 - Signed/private access for sensitive files.
 - Full audit trail for verification, consent, and score-impacting actions.

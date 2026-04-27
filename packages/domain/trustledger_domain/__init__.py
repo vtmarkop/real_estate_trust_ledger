@@ -1,6 +1,12 @@
 """Shared domain enums and access primitives for Trust Ledger."""
 
-from .access import ConsentScope, OrganizationMembershipRole, OrganizationType, SystemRole
+from .access import (
+    AccountWorkspaceRole,
+    ConsentScope,
+    OrganizationMembershipRole,
+    OrganizationType,
+    SystemRole,
+)
 from .trust import (
     ApplicationStatus,
     AuditActionType,
@@ -33,6 +39,7 @@ from .trust import (
 
 __all__ = [
     "ApplicationStatus",
+    "AccountWorkspaceRole",
     "AuditActionType",
     "AuditOutcomeStatus",
     "AutomationTaskStatus",

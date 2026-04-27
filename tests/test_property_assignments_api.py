@@ -23,6 +23,7 @@ from app.core.db import create_engine_from_url, get_session  # noqa: E402
 from app.core.security import hash_password  # noqa: E402
 from app.main import create_app  # noqa: E402
 from app.models import Property, User  # noqa: E402
+from trustledger_domain import AccountWorkspaceRole  # noqa: E402
 
 
 class PropertyAssignmentApiTests(unittest.TestCase):
@@ -56,6 +57,7 @@ class PropertyAssignmentApiTests(unittest.TestCase):
         email: str,
         full_name: str,
         password: str,
+        workspace_roles: tuple[AccountWorkspaceRole, ...] | None = None,
     ) -> User:
         with Session(self.engine) as session:
             user = User(
@@ -63,6 +65,8 @@ class PropertyAssignmentApiTests(unittest.TestCase):
                 full_name=full_name,
                 password_hash=hash_password(password),
             )
+            if workspace_roles is not None:
+                user.set_workspace_roles(workspace_roles)
             session.add(user)
             session.commit()
             session.refresh(user)
@@ -94,11 +98,13 @@ class PropertyAssignmentApiTests(unittest.TestCase):
             email="landlord@example.com",
             full_name="Landlord User",
             password="landlord-password-123",
+            workspace_roles=(AccountWorkspaceRole.LANDLORD,),
         )
         agent = self.seed_user(
             email="agent@example.com",
             full_name="Agency Agent",
             password="agent-password-123",
+            workspace_roles=(AccountWorkspaceRole.AGENCY,),
         )
         tenant = self.seed_user(
             email="tenant@example.com",
@@ -163,11 +169,13 @@ class PropertyAssignmentApiTests(unittest.TestCase):
             email="landlord2@example.com",
             full_name="Landlord Two",
             password="landlord-password-123",
+            workspace_roles=(AccountWorkspaceRole.LANDLORD,),
         )
         agent = self.seed_user(
             email="agent2@example.com",
             full_name="Agency Agent Two",
             password="agent-password-123",
+            workspace_roles=(AccountWorkspaceRole.AGENCY,),
         )
 
         agency_payload = self.create_agency(
@@ -224,6 +232,7 @@ class PropertyAssignmentApiTests(unittest.TestCase):
             email="landlord3@example.com",
             full_name="Landlord Three",
             password="landlord-password-123",
+            workspace_roles=(AccountWorkspaceRole.LANDLORD,),
         )
         tenant = self.seed_user(
             email="tenant3@example.com",
@@ -257,11 +266,13 @@ class PropertyAssignmentApiTests(unittest.TestCase):
             email="landlord4@example.com",
             full_name="Landlord Four",
             password="landlord-password-123",
+            workspace_roles=(AccountWorkspaceRole.LANDLORD,),
         )
         agent = self.seed_user(
             email="agent4@example.com",
             full_name="Agent Four",
             password="agent-password-123",
+            workspace_roles=(AccountWorkspaceRole.AGENCY,),
         )
 
         agency_payload = self.create_agency(

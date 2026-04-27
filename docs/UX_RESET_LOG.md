@@ -283,3 +283,33 @@ For each slice of this reset:
   - `npm test`
   - `npm run build`
   - `git diff --check`
+
+### 2026-04-27 - Slice 8: Explicit account role entitlements and clean reset
+
+- Problem:
+  - tenant/admin and agent accounts could not be represented cleanly by the old `system_role` plus organization-membership model
+  - frontend role availability still risked inferring personas too broadly, which made tenant-only review feel polluted by unrelated landlord, agency, or admin surfaces
+  - local review needed a clean four-user state with no demo properties, tenancies, organizations, or history data
+- Rebuilt files changed:
+  - `packages/domain/trustledger_domain/access.py`
+  - `apps/api/app/models/user.py`
+  - `apps/api/app/api/deps.py`
+  - `apps/api/app/api/routes/internal.py`
+  - tenant, landlord, agency, property, listing, payment, deposit, and maintenance route guards
+  - `apps/web/src/app/session.js`
+  - `apps/web/src/pages/InternalOperationsPage.js`
+  - `apps/api/dev_reset_minimal_users.py`
+  - role-related tests and continuity docs
+- What changed:
+  - `User.workspace_roles` now stores explicit account entitlements for tenant, landlord, agent/agency, and admin/internal visibility
+  - `/auth/me` returns those entitlements, and the frontend only offers assigned roles at sign-in and in the shell
+  - `Review Center > Roles` lets an admin add or remove account workspace-role entitlements while keeping at least one role
+  - tenant, landlord, and agency backend routes now check the matching workspace entitlement in addition to record participation or organization membership
+  - `dev_reset_minimal_users.py` wipes local data and creates only the requested four accounts
+- Verification:
+  - `.\.venv\Scripts\python -m unittest discover tests`
+  - `node --check apps\web\src\pages\InternalOperationsPage.js`
+  - `node --test apps\web\tests\navigation.test.mjs`
+- Next likely slice:
+  - visually review the clean four-account role matrix in the browser
+  - continue workflow continuity audit from the role-specific surfaces that still feel too dense or too implicit

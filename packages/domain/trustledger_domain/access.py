@@ -3,6 +3,13 @@ from __future__ import annotations
 from enum import Enum
 
 
+class AccountWorkspaceRole(str, Enum):
+    TENANT = "tenant"
+    LANDLORD = "landlord"
+    AGENCY = "agency"
+    INTERNAL = "internal"
+
+
 class SystemRole(str, Enum):
     USER = "user"
     REVIEWER = "reviewer"

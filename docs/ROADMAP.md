@@ -120,7 +120,7 @@ Private GitHub publication and machine-to-machine bootstrap hardening for reliab
 
 ### Post-Sprint-20 Archive-Alignment UX Reset
 
-Object-first repair work on the rebuilt presentation layer: active workspace-role scoping, selected-property operations, create-new versus existing-record separation, compact payment/issue targeting, strict separation between daily actions and read-only timelines, role-wide history/log lane separation, and clearer role-specific score wording.
+Object-first repair work on the rebuilt presentation layer: selected-property operations, create-new versus existing-record separation, compact payment/issue targeting, strict separation between daily actions and read-only timelines, role-wide history/log lane separation, explicit account workspace-role entitlements for tenant/landlord/agent/admin visibility, a local account-only reset path, and clearer role-specific score wording.
 
 ### Sprint 21: Motion, Accessibility, And Release Polish
 

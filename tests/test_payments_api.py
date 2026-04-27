@@ -24,7 +24,7 @@ from app.core.db import create_engine_from_url, get_session  # noqa: E402
 from app.core.security import hash_password  # noqa: E402
 from app.main import create_app  # noqa: E402
 from app.models import PaymentRecord, StoredArtifact, TrustEvent, TrustScoreSnapshot, User  # noqa: E402
-from trustledger_domain import SystemRole  # noqa: E402
+from trustledger_domain import AccountWorkspaceRole, SystemRole  # noqa: E402
 
 
 class PaymentsApiTests(unittest.TestCase):
@@ -59,6 +59,7 @@ class PaymentsApiTests(unittest.TestCase):
         full_name: str,
         password: str,
         system_role: SystemRole = SystemRole.USER,
+        workspace_roles: tuple[AccountWorkspaceRole, ...] | None = None,
     ) -> User:
         with Session(self.engine) as session:
             user = User(
@@ -67,6 +68,8 @@ class PaymentsApiTests(unittest.TestCase):
                 password_hash=hash_password(password),
                 system_role=system_role,
             )
+            if workspace_roles is not None:
+                user.set_workspace_roles(workspace_roles)
             session.add(user)
             session.commit()
             session.refresh(user)
@@ -136,6 +139,7 @@ class PaymentsApiTests(unittest.TestCase):
             email="landlord@example.com",
             full_name="Landlord User",
             password="landlord-password-123",
+            workspace_roles=(AccountWorkspaceRole.LANDLORD,),
         )
         tenancy_id = self.create_tenancy(tenant=tenant, landlord=landlord)
 
@@ -210,6 +214,7 @@ class PaymentsApiTests(unittest.TestCase):
             email="landlord2@example.com",
             full_name="Landlord Two",
             password="landlord-password-123",
+            workspace_roles=(AccountWorkspaceRole.LANDLORD,),
         )
         self.seed_user(
             email="outsider@example.com",
@@ -307,6 +312,7 @@ class PaymentsApiTests(unittest.TestCase):
             email="landlord3@example.com",
             full_name="Landlord Three",
             password="landlord-password-123",
+            workspace_roles=(AccountWorkspaceRole.LANDLORD,),
         )
         tenancy_id = self.create_tenancy(tenant=tenant, landlord=landlord)
         artifact = self.seed_artifact(
@@ -348,12 +354,14 @@ class PaymentsApiTests(unittest.TestCase):
             email="landlord4@example.com",
             full_name="Landlord Four",
             password="landlord-password-123",
+            workspace_roles=(AccountWorkspaceRole.LANDLORD,),
         )
         reviewer = self.seed_user(
             email="reviewer@example.com",
             full_name="Reviewer User",
             password="reviewer-password-123",
             system_role=SystemRole.REVIEWER,
+            workspace_roles=(AccountWorkspaceRole.INTERNAL,),
         )
         tenancy_id = self.create_tenancy(tenant=tenant, landlord=landlord)
 

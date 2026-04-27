@@ -24,7 +24,11 @@ from app.core.security import hash_password  # noqa: E402
 from app.main import create_app  # noqa: E402
 from app.models import AgencyTrustCheck, TrustReportConsent, User  # noqa: E402
 from app.models.common import utcnow  # noqa: E402
-from trustledger_domain import OrganizationMembershipRole, SystemRole  # noqa: E402
+from trustledger_domain import (  # noqa: E402
+    AccountWorkspaceRole,
+    OrganizationMembershipRole,
+    SystemRole,
+)
 
 
 class ConsentTrustChecksApiTests(unittest.TestCase):
@@ -59,6 +63,7 @@ class ConsentTrustChecksApiTests(unittest.TestCase):
         full_name: str,
         password: str,
         system_role: SystemRole = SystemRole.USER,
+        workspace_roles: tuple[AccountWorkspaceRole, ...] | None = None,
     ) -> User:
         with Session(self.engine) as session:
             user = User(
@@ -67,6 +72,8 @@ class ConsentTrustChecksApiTests(unittest.TestCase):
                 password_hash=hash_password(password),
                 system_role=system_role,
             )
+            if workspace_roles is not None:
+                user.set_workspace_roles(workspace_roles)
             session.add(user)
             session.commit()
             session.refresh(user)
@@ -115,6 +122,7 @@ class ConsentTrustChecksApiTests(unittest.TestCase):
             email="owner@agency.example",
             full_name="Agency Owner",
             password="owner-password-123",
+            workspace_roles=(AccountWorkspaceRole.AGENCY,),
         )
 
         owner_client = self.new_client()
@@ -218,6 +226,7 @@ class ConsentTrustChecksApiTests(unittest.TestCase):
             email="owner@agency.example",
             full_name="Agency Owner",
             password="owner-password-123",
+            workspace_roles=(AccountWorkspaceRole.AGENCY,),
         )
 
         owner_client = self.new_client()
@@ -258,11 +267,13 @@ class ConsentTrustChecksApiTests(unittest.TestCase):
             email="member@agency.example",
             full_name="Agency Member",
             password="member-password-123",
+            workspace_roles=(AccountWorkspaceRole.AGENCY,),
         )
         self.seed_user(
             email="owner@agency.example",
             full_name="Agency Owner",
             password="owner-password-123",
+            workspace_roles=(AccountWorkspaceRole.AGENCY,),
         )
         self.seed_user(
             email="tenant@example.com",
@@ -309,11 +320,13 @@ class ConsentTrustChecksApiTests(unittest.TestCase):
             email="agent@agency.example",
             full_name="Agency Agent",
             password="agent-password-123",
+            workspace_roles=(AccountWorkspaceRole.AGENCY,),
         )
         self.seed_user(
             email="owner@agency.example",
             full_name="Agency Owner",
             password="owner-password-123",
+            workspace_roles=(AccountWorkspaceRole.AGENCY,),
         )
         self.seed_user(
             email="tenant@example.com",
@@ -376,6 +389,7 @@ class ConsentTrustChecksApiTests(unittest.TestCase):
             email="owner@agency.example",
             full_name="Agency Owner",
             password="owner-password-123",
+            workspace_roles=(AccountWorkspaceRole.AGENCY,),
         )
         self.seed_user(
             email="tenant@example.com",
@@ -449,6 +463,7 @@ class ConsentTrustChecksApiTests(unittest.TestCase):
             email="owner@agency.example",
             full_name="Agency Owner",
             password="owner-password-123",
+            workspace_roles=(AccountWorkspaceRole.AGENCY,),
         )
         self.seed_user(
             email="tenant@example.com",

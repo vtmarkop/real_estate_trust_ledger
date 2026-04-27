@@ -7,7 +7,7 @@ from fastapi import APIRouter
 from sqlalchemy import or_
 from sqlmodel import select
 
-from app.api.deps import CurrentUserDep, SessionDep
+from app.api.deps import CurrentUserDep, SessionDep, require_workspace_role_for_user
 from app.models import Organization, OrganizationMembership, Property, Tenancy, User
 from app.models.common import utcnow
 from app.schemas.property import PropertyCreateRequest, PropertyResponse, PropertyUpdateRequest
@@ -15,7 +15,7 @@ from app.services.properties import (
     build_property_response,
     serialize_property_tags,
 )
-from trustledger_domain import OrganizationType, PropertyManagementMode
+from trustledger_domain import AccountWorkspaceRole, OrganizationType, PropertyManagementMode
 
 
 router = APIRouter(prefix="/properties", tags=["properties"])
@@ -211,6 +211,15 @@ def create_property(
     current_user: CurrentUserDep,
     session: SessionDep,
 ) -> PropertyResponse:
+    if (
+        AccountWorkspaceRole.LANDLORD not in current_user.workspace_roles
+        and AccountWorkspaceRole.AGENCY not in current_user.workspace_roles
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Your account does not have a landlord or agent role for property setup.",
+        )
+
     property_record = Property(
         property_label=payload.property_label.strip(),
         address_line1=payload.address_line1.strip(),
@@ -279,12 +288,18 @@ def update_property(
         or (agency_membership is not None and agency_membership.role.can_run_trust_checks)
     )
 
-    if current_user.system_role.can_manage_platform:
-        pass
-    elif property_record.created_by_user_id == current_user.id:
-        pass
+    if property_record.created_by_user_id == current_user.id:
+        require_workspace_role_for_user(
+            user=current_user,
+            role=AccountWorkspaceRole.LANDLORD,
+            detail="Your account does not have the landlord role for property setup.",
+        )
     elif is_tag_only_update and can_manage_assigned_agency_property_tags:
-        pass
+        require_workspace_role_for_user(
+            user=current_user,
+            role=AccountWorkspaceRole.AGENCY,
+            detail="Your account does not have the agent role for agency property updates.",
+        )
     else:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -350,19 +365,29 @@ def list_my_properties(
     current_user: CurrentUserDep,
     session: SessionDep,
 ) -> list[PropertyResponse]:
-    direct_properties = session.exec(
-        select(Property)
-        .where(Property.created_by_user_id == current_user.id)
-        .order_by(Property.created_at.desc())
-    ).all()
+    can_use_landlord_properties = AccountWorkspaceRole.LANDLORD in current_user.workspace_roles
+    can_use_tenant_properties = AccountWorkspaceRole.TENANT in current_user.workspace_roles
+    can_use_agency_properties = AccountWorkspaceRole.AGENCY in current_user.workspace_roles
+    if not any([can_use_landlord_properties, can_use_tenant_properties, can_use_agency_properties]):
+        return []
+
+    direct_properties = (
+        session.exec(
+            select(Property)
+            .where(Property.created_by_user_id == current_user.id)
+            .order_by(Property.created_at.desc())
+        ).all()
+        if can_use_landlord_properties
+        else []
+    )
+    tenancy_filters = []
+    if can_use_tenant_properties:
+        tenancy_filters.append(Tenancy.tenant_user_id == current_user.id)
+    if can_use_landlord_properties:
+        tenancy_filters.append(Tenancy.landlord_user_id == current_user.id)
     participant_tenancies = session.exec(
-        select(Tenancy).where(
-            or_(
-                Tenancy.tenant_user_id == current_user.id,
-                Tenancy.landlord_user_id == current_user.id,
-            )
-        )
-    ).all()
+        select(Tenancy).where(or_(*tenancy_filters))
+    ).all() if tenancy_filters else []
     agency_membership_organization_ids = {
         membership.organization_id
         for membership in session.exec(
@@ -371,18 +396,22 @@ def list_my_properties(
                 OrganizationMembership.is_active == True,  # noqa: E712
             )
         ).all()
-    }
+    } if can_use_agency_properties else set()
+    assignment_filters = []
+    if can_use_tenant_properties:
+        assignment_filters.append(Property.assigned_tenant_user_id == current_user.id)
+    if can_use_agency_properties:
+        assignment_filters.append(Property.assigned_agency_user_id == current_user.id)
+        assignment_filters.append(
+            Property.assigned_agency_organization_id.in_(agency_membership_organization_ids)
+            if agency_membership_organization_ids
+            else False
+        )
     assignment_properties = session.exec(
         select(Property).where(
-            or_(
-                Property.assigned_tenant_user_id == current_user.id,
-                Property.assigned_agency_user_id == current_user.id,
-                Property.assigned_agency_organization_id.in_(agency_membership_organization_ids)
-                if agency_membership_organization_ids
-                else False,
-            )
+            or_(*assignment_filters)
         )
-    ).all()
+    ).all() if assignment_filters else []
 
     property_ids = {property_record.id for property_record in direct_properties}
     related_property_ids = {

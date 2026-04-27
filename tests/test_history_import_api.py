@@ -22,7 +22,7 @@ from app.core.db import create_engine_from_url, get_session  # noqa: E402
 from app.core.security import hash_password  # noqa: E402
 from app.main import create_app  # noqa: E402
 from app.models import HistoryImport, TrustEvent, User  # noqa: E402
-from trustledger_domain import SystemRole  # noqa: E402
+from trustledger_domain import AccountWorkspaceRole, SystemRole  # noqa: E402
 
 
 class HistoryImportApiTests(unittest.TestCase):
@@ -57,6 +57,7 @@ class HistoryImportApiTests(unittest.TestCase):
         full_name: str,
         password: str,
         system_role: SystemRole = SystemRole.USER,
+        workspace_roles: tuple[AccountWorkspaceRole, ...] | None = None,
     ) -> User:
         with Session(self.engine) as session:
             user = User(
@@ -65,6 +66,8 @@ class HistoryImportApiTests(unittest.TestCase):
                 password_hash=hash_password(password),
                 system_role=system_role,
             )
+            if workspace_roles is not None:
+                user.set_workspace_roles(workspace_roles)
             session.add(user)
             session.commit()
             session.refresh(user)
@@ -99,17 +102,20 @@ class HistoryImportApiTests(unittest.TestCase):
             email="landlord@example.com",
             full_name="Landlord User",
             password="landlord-password-123",
+            workspace_roles=(AccountWorkspaceRole.LANDLORD,),
         )
         self.seed_user(
             email="reviewer@example.com",
             full_name="Reviewer User",
             password="reviewer-password-123",
             system_role=SystemRole.REVIEWER,
+            workspace_roles=(AccountWorkspaceRole.INTERNAL,),
         )
         self.seed_user(
             email="owner@agency.example",
             full_name="Agency Owner",
             password="owner-password-123",
+            workspace_roles=(AccountWorkspaceRole.AGENCY,),
         )
 
         tenant_client = self.new_client()
@@ -242,6 +248,7 @@ class HistoryImportApiTests(unittest.TestCase):
             email="landlord@example.com",
             full_name="Landlord User",
             password="landlord-password-123",
+            workspace_roles=(AccountWorkspaceRole.LANDLORD,),
         )
         outsider = self.seed_user(
             email="outsider@example.com",

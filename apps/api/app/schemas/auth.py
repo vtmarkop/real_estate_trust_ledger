@@ -5,7 +5,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
-from trustledger_domain import SystemRole
+from trustledger_domain import AccountWorkspaceRole, SystemRole
 
 
 class RegisterRequest(BaseModel):
@@ -26,6 +26,7 @@ class UserResponse(BaseModel):
     email: EmailStr
     full_name: str
     system_role: SystemRole
+    workspace_roles: list[AccountWorkspaceRole]
     is_active: bool
     email_verified: bool
     last_login_at: datetime | None = None

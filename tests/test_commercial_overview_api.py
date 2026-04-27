@@ -35,6 +35,7 @@ from app.models import (  # noqa: E402
 )
 from app.models.common import utcnow  # noqa: E402
 from trustledger_domain import (  # noqa: E402
+    AccountWorkspaceRole,
     ApplicationStatus,
     ConsentScope,
     ListingStatus,
@@ -73,6 +74,7 @@ class CommercialOverviewApiTests(unittest.TestCase):
         email: str,
         full_name: str,
         password: str,
+        workspace_roles: tuple[AccountWorkspaceRole, ...] | None = None,
     ) -> User:
         with Session(self.engine) as session:
             user = User(
@@ -80,6 +82,8 @@ class CommercialOverviewApiTests(unittest.TestCase):
                 full_name=full_name,
                 password_hash=hash_password(password),
             )
+            if workspace_roles is not None:
+                user.set_workspace_roles(workspace_roles)
             session.add(user)
             session.commit()
             session.refresh(user)
@@ -97,11 +101,13 @@ class CommercialOverviewApiTests(unittest.TestCase):
             email="owner@example.com",
             full_name="Agency Owner",
             password="owner-password-123",
+            workspace_roles=(AccountWorkspaceRole.AGENCY,),
         )
         agent = self.seed_user(
             email="agent@example.com",
             full_name="Agency Agent",
             password="agent-password-123",
+            workspace_roles=(AccountWorkspaceRole.AGENCY,),
         )
         applicant_one = self.seed_user(
             email="applicant1@example.com",
@@ -252,6 +258,7 @@ class CommercialOverviewApiTests(unittest.TestCase):
             email="owner@example.com",
             full_name="Agency Owner",
             password="owner-password-123",
+            workspace_roles=(AccountWorkspaceRole.AGENCY,),
         )
         self.seed_user(
             email="outsider@example.com",

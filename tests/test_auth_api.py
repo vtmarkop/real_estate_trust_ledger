@@ -24,6 +24,7 @@ from app.core.security import hash_password  # noqa: E402
 from app.main import create_app  # noqa: E402
 from app.models import AuditLog, AuthSession, User  # noqa: E402
 from app.models.common import utcnow  # noqa: E402
+from trustledger_domain import AccountWorkspaceRole, SystemRole  # noqa: E402
 
 
 class AuthApiTests(unittest.TestCase):
@@ -63,6 +64,7 @@ class AuthApiTests(unittest.TestCase):
         register_response = self.client.post("/api/v1/auth/register", json=register_payload)
         self.assertEqual(register_response.status_code, 201)
         self.assertEqual(register_response.json()["email"], "agent@example.com")
+        self.assertEqual(register_response.json()["workspace_roles"], ["tenant"])
 
         duplicate_response = self.client.post("/api/v1/auth/register", json=register_payload)
         self.assertEqual(duplicate_response.status_code, 409)
@@ -80,6 +82,7 @@ class AuthApiTests(unittest.TestCase):
         me_response = self.client.get("/api/v1/auth/me")
         self.assertEqual(me_response.status_code, 200)
         self.assertEqual(me_response.json()["full_name"], "Agency Agent")
+        self.assertEqual(me_response.json()["workspace_roles"], ["tenant"])
 
         with Session(self.engine) as session:
             sessions = session.exec(select(AuthSession)).all()
@@ -277,6 +280,57 @@ class AuthApiTests(unittest.TestCase):
         action_types = [entry["action_type"] for entry in security_events.json()]
         self.assertIn("auth_login_denied", action_types)
         self.assertIn("auth_session_created", action_types)
+
+    def test_admin_can_add_and_remove_independent_workspace_roles(self) -> None:
+        with Session(self.engine) as session:
+            admin = User(
+                email="admin@example.com",
+                full_name="Admin User",
+                password_hash=hash_password("admin-password-123"),
+                system_role=SystemRole.ADMIN,
+            )
+            admin.set_workspace_roles((AccountWorkspaceRole.INTERNAL,))
+            user = User(
+                email="role-user@example.com",
+                full_name="Role User",
+                password_hash=hash_password("user-password-123"),
+            )
+            user.set_workspace_roles((AccountWorkspaceRole.TENANT,))
+            session.add(admin)
+            session.add(user)
+            session.commit()
+            session.refresh(user)
+            user_id = user.id
+
+        login_response = self.client.post(
+            "/api/v1/auth/login",
+            json={
+                "email": "admin@example.com",
+                "password": "admin-password-123",
+            },
+        )
+        self.assertEqual(login_response.status_code, 200, login_response.text)
+
+        users_response = self.client.get("/api/v1/internal/users?query=role-user")
+        self.assertEqual(users_response.status_code, 200, users_response.text)
+        self.assertEqual(len(users_response.json()), 1)
+        self.assertEqual(users_response.json()[0]["workspace_roles"], ["tenant"])
+
+        update_response = self.client.patch(
+            f"/api/v1/internal/users/{user_id}/workspace-roles",
+            json={"workspace_roles": ["landlord", "agency"]},
+        )
+        self.assertEqual(update_response.status_code, 200, update_response.text)
+        self.assertEqual(update_response.json()["workspace_roles"], ["landlord", "agency"])
+        self.assertEqual(update_response.json()["system_role"], "user")
+
+        with Session(self.engine) as session:
+            updated_user = session.get(User, user_id)
+            self.assertIsNotNone(updated_user)
+            self.assertEqual(
+                updated_user.workspace_roles,
+                [AccountWorkspaceRole.LANDLORD, AccountWorkspaceRole.AGENCY],
+            )
 
 
 if __name__ == "__main__":

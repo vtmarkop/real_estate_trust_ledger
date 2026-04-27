@@ -762,8 +762,21 @@ The web app now lets a signed-in user choose an active workspace role:
 - tenant,
 - landlord,
 - agency,
-- reviewer.
+- internal/admin.
 
 The selected role controls which menus, routes, and role-relevant frontend records are shown. It does not grant permissions by itself.
 
-Reason: this gives users strong separation of concerns without violating D007. Tenant and landlord remain business personas derived from domain participation, while agency and reviewer access still come from organization membership and system role checks enforced by the backend.
+Reason: this gives users strong separation of concerns without violating D007. Role selection narrows the workspace the user is currently operating in; record-level authorization still comes from the backend checks documented in D098.
+
+## D098: Account Workspace Roles Are Explicit Entitlements
+
+The roles a user can open in the shell are now stored as account-level workspace-role entitlements:
+
+- `tenant`,
+- `landlord`,
+- `agency`,
+- `internal`.
+
+These entitlements decide which workspace roles appear at sign-in and in the shell. They can be changed from the admin workspace, and at least one workspace role must remain on every account. The `internal` entitlement is synced with the platform admin system role so internal routes remain protected by existing backend RBAC. Agency actions still require both the `agency` entitlement and the relevant agency organization membership. Tenant and landlord actions still require the entitlement plus the relevant tenancy/property participation.
+
+Reason: the old model had only one global `system_role` plus organization memberships, which could not cleanly represent mixed accounts such as tenant/admin or standalone agent visibility. Explicit account entitlements make role visibility independent and editable without weakening record-level authorization.

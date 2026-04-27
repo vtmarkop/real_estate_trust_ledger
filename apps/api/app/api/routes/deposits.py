@@ -5,7 +5,7 @@ from uuid import UUID
 from fastapi import APIRouter, HTTPException, status
 from sqlmodel import select
 
-from app.api.deps import CurrentUserDep, SessionDep
+from app.api.deps import CurrentUserDep, SessionDep, require_tenancy_workspace_access
 from app.models import DepositRecord, StoredArtifact, Tenancy, User
 from app.models.common import utcnow
 from app.schemas.deposit import (
@@ -73,13 +73,9 @@ def ensure_tenancy_access(
     current_user: CurrentUserDep,
     detail: str,
 ) -> None:
-    if (
-        current_user.id in {tenancy.tenant_user_id, tenancy.landlord_user_id}
-        or current_user.system_role.can_manage_platform
-    ):
-        return
-    raise HTTPException(
-        status_code=status.HTTP_403_FORBIDDEN,
+    require_tenancy_workspace_access(
+        tenancy=tenancy,
+        current_user=current_user,
         detail=detail,
     )
 

@@ -27,7 +27,7 @@ from app.models import (  # noqa: E402
     TrustScoreRecalculationRequest,
     User,
 )
-from trustledger_domain import SystemRole  # noqa: E402
+from trustledger_domain import AccountWorkspaceRole, SystemRole  # noqa: E402
 
 
 class InternalScoringApiTests(unittest.TestCase):
@@ -62,6 +62,7 @@ class InternalScoringApiTests(unittest.TestCase):
         full_name: str,
         password: str,
         system_role: SystemRole = SystemRole.USER,
+        workspace_roles: tuple[AccountWorkspaceRole, ...] | None = None,
     ) -> User:
         with Session(self.engine) as session:
             user = User(
@@ -70,6 +71,8 @@ class InternalScoringApiTests(unittest.TestCase):
                 password_hash=hash_password(password),
                 system_role=system_role,
             )
+            if workspace_roles is not None:
+                user.set_workspace_roles(workspace_roles)
             session.add(user)
             session.commit()
             session.refresh(user)
@@ -153,12 +156,14 @@ class InternalScoringApiTests(unittest.TestCase):
             email="landlord@example.com",
             full_name="Landlord User",
             password="landlord-password-123",
+            workspace_roles=(AccountWorkspaceRole.LANDLORD,),
         )
         self.seed_user(
             email="reviewer@example.com",
             full_name="Reviewer User",
             password="reviewer-password-123",
             system_role=SystemRole.REVIEWER,
+            workspace_roles=(AccountWorkspaceRole.INTERNAL,),
         )
         self.seed_user(
             email="outsider@example.com",
@@ -206,12 +211,14 @@ class InternalScoringApiTests(unittest.TestCase):
             email="queued-landlord@example.com",
             full_name="Queued Landlord",
             password="landlord-password-123",
+            workspace_roles=(AccountWorkspaceRole.LANDLORD,),
         )
         reviewer = self.seed_user(
             email="queued-reviewer@example.com",
             full_name="Queued Reviewer",
             password="reviewer-password-123",
             system_role=SystemRole.REVIEWER,
+            workspace_roles=(AccountWorkspaceRole.INTERNAL,),
         )
 
         self.build_verified_tenancy(
@@ -289,6 +296,7 @@ class InternalScoringApiTests(unittest.TestCase):
             full_name="Email Score Reviewer",
             password="reviewer-password-123",
             system_role=SystemRole.REVIEWER,
+            workspace_roles=(AccountWorkspaceRole.INTERNAL,),
         )
 
         reviewer_client = self.new_client()
@@ -320,11 +328,13 @@ class InternalScoringApiTests(unittest.TestCase):
             full_name="Batch Reviewer",
             password="reviewer-password-123",
             system_role=SystemRole.REVIEWER,
+            workspace_roles=(AccountWorkspaceRole.INTERNAL,),
         )
         owner = self.seed_user(
             email="agency-owner@example.com",
             full_name="Agency Owner",
             password="owner-password-123",
+            workspace_roles=(AccountWorkspaceRole.AGENCY,),
         )
         member = self.seed_user(
             email="agency-member@example.com",

@@ -1,3 +1,4 @@
+import json
 import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING, List
@@ -5,7 +6,7 @@ from typing import TYPE_CHECKING, List
 from sqlmodel import Field, Relationship, SQLModel
 
 from app.models.common import TimestampedModel, ensure_utc, utcnow
-from trustledger_domain import SystemRole
+from trustledger_domain import AccountWorkspaceRole, SystemRole
 
 if TYPE_CHECKING:
     from app.models.agency_trust_check import AgencyTrustCheck
@@ -33,6 +34,24 @@ if TYPE_CHECKING:
     from app.models.worker_run import WorkerRun
 
 
+DEFAULT_WORKSPACE_ROLES = (AccountWorkspaceRole.TENANT,)
+
+
+def normalize_workspace_roles(
+    roles: list[str | AccountWorkspaceRole] | tuple[str | AccountWorkspaceRole, ...] | None,
+) -> list[AccountWorkspaceRole]:
+    normalized_roles: list[AccountWorkspaceRole] = []
+    for role in roles or DEFAULT_WORKSPACE_ROLES:
+        try:
+            normalized_role = role if isinstance(role, AccountWorkspaceRole) else AccountWorkspaceRole(str(role))
+        except ValueError:
+            continue
+        if normalized_role not in normalized_roles:
+            normalized_roles.append(normalized_role)
+
+    return normalized_roles or [AccountWorkspaceRole.TENANT]
+
+
 class User(TimestampedModel, table=True):
     __tablename__ = "users"
 
@@ -41,6 +60,7 @@ class User(TimestampedModel, table=True):
     full_name: str = Field(nullable=False, max_length=255)
     password_hash: str = Field(nullable=False, max_length=255)
     system_role: SystemRole = Field(default=SystemRole.USER, nullable=False, max_length=50)
+    workspace_roles_json: str = Field(default='["tenant"]', nullable=False)
     is_active: bool = Field(default=True, nullable=False)
     email_verified: bool = Field(default=False, nullable=False)
     failed_login_attempt_count: int = Field(default=0, nullable=False, ge=0)
@@ -282,6 +302,21 @@ class User(TimestampedModel, table=True):
         back_populates="actor_user",
         sa_relationship_kwargs={"foreign_keys": "TrustEvent.actor_user_id"},
     )
+
+    @property
+    def workspace_roles(self) -> list[AccountWorkspaceRole]:
+        try:
+            parsed_roles = json.loads(self.workspace_roles_json or "[]")
+        except json.JSONDecodeError:
+            parsed_roles = []
+        return normalize_workspace_roles(parsed_roles)
+
+    def set_workspace_roles(
+        self,
+        roles: list[str | AccountWorkspaceRole] | tuple[str | AccountWorkspaceRole, ...],
+    ) -> None:
+        normalized_roles = normalize_workspace_roles(roles)
+        self.workspace_roles_json = json.dumps([role.value for role in normalized_roles])
 
     def is_login_locked(self, *, now: datetime | None = None) -> bool:
         if self.login_locked_until is None:

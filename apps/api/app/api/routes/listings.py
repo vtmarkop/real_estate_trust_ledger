@@ -5,7 +5,12 @@ from uuid import UUID
 from fastapi import APIRouter, HTTPException, status
 from sqlmodel import select
 
-from app.api.deps import CurrentUserDep, OrganizationAgencyOperatorDep, SessionDep
+from app.api.deps import (
+    CurrentUserDep,
+    OrganizationAgencyOperatorDep,
+    SessionDep,
+    require_workspace_role_for_user,
+)
 from app.models import Listing, ListingApplication, Property, TrustEvent
 from app.models.common import utcnow
 from app.schemas.listing import (
@@ -27,7 +32,13 @@ from app.services.listings import (
 )
 from app.services.scoring import calculate_user_trust_scores
 from app.services.trust_events import append_user_event
-from trustledger_domain import ApplicationStatus, ListingStatus, TrustEventType, VerificationStatus
+from trustledger_domain import (
+    AccountWorkspaceRole,
+    ApplicationStatus,
+    ListingStatus,
+    TrustEventType,
+    VerificationStatus,
+)
 
 
 router = APIRouter(tags=["listings"])
@@ -166,6 +177,11 @@ def list_open_listings(
     current_user: CurrentUserDep,
     session: SessionDep,
 ) -> list[ListingResponse]:
+    require_workspace_role_for_user(
+        user=current_user,
+        role=AccountWorkspaceRole.TENANT,
+        detail="Your account does not have the tenant role for listings.",
+    )
     listings = session.exec(
         select(Listing)
         .where(Listing.listing_status == ListingStatus.OPEN)
@@ -185,6 +201,11 @@ def create_listing_application(
     current_user: CurrentUserDep,
     session: SessionDep,
 ) -> ListingApplicationResponse:
+    require_workspace_role_for_user(
+        user=current_user,
+        role=AccountWorkspaceRole.TENANT,
+        detail="Your account does not have the tenant role for applications.",
+    )
     listing = session.get(Listing, listing_id)
     if not listing:
         raise HTTPException(
@@ -254,6 +275,11 @@ def list_my_applications(
     current_user: CurrentUserDep,
     session: SessionDep,
 ) -> list[ListingApplicationResponse]:
+    require_workspace_role_for_user(
+        user=current_user,
+        role=AccountWorkspaceRole.TENANT,
+        detail="Your account does not have the tenant role for applications.",
+    )
     applications = session.exec(
         select(ListingApplication)
         .where(ListingApplication.applicant_user_id == current_user.id)

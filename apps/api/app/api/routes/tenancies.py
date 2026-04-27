@@ -6,7 +6,12 @@ from fastapi import APIRouter, HTTPException, status
 from sqlalchemy import or_
 from sqlmodel import select
 
-from app.api.deps import CurrentUserDep, SessionDep
+from app.api.deps import (
+    CurrentUserDep,
+    SessionDep,
+    require_tenancy_workspace_access,
+    require_workspace_role_for_user,
+)
 from app.models import EvidenceDocument, HistoryImport, Property, Tenancy, User
 from app.models.common import utcnow
 from app.schemas.evidence import EvidenceCreateRequest, EvidenceResponse
@@ -15,7 +20,13 @@ from app.services.artifacts import resolve_attachable_tenancy_artifact
 from app.services.evidence import build_evidence_response, format_evidence_document_type_label
 from app.services.tenancies import build_tenancy_response
 from app.services.trust_events import append_tenancy_events, append_user_event
-from trustledger_domain import EvidenceReviewStatus, HistoryImportStatus, TrustEventType, VerificationStatus
+from trustledger_domain import (
+    AccountWorkspaceRole,
+    EvidenceReviewStatus,
+    HistoryImportStatus,
+    TrustEventType,
+    VerificationStatus,
+)
 
 
 router = APIRouter(prefix="/tenancies", tags=["tenancies"])
@@ -132,13 +143,9 @@ def ensure_tenancy_access(
     current_user: CurrentUserDep,
     detail: str,
 ) -> None:
-    if (
-        current_user.id in {tenancy.tenant_user_id, tenancy.landlord_user_id}
-        or current_user.system_role.can_manage_platform
-    ):
-        return
-    raise HTTPException(
-        status_code=status.HTTP_403_FORBIDDEN,
+    require_tenancy_workspace_access(
+        tenancy=tenancy,
+        current_user=current_user,
         detail=detail,
     )
 
@@ -210,6 +217,20 @@ def create_tenancy(
         session=session,
         payload=payload,
     )
+    if current_user.id == tenant_user.id:
+        require_workspace_role_for_user(
+            user=current_user,
+            role=AccountWorkspaceRole.TENANT,
+            detail="Your account does not have the tenant role.",
+            allow_platform_admin=True,
+        )
+    if current_user.id == landlord_user.id:
+        require_workspace_role_for_user(
+            user=current_user,
+            role=AccountWorkspaceRole.LANDLORD,
+            detail="Your account does not have the landlord role.",
+            allow_platform_admin=True,
+        )
     if (
         current_user.id not in {tenant_user.id, landlord_user.id}
         and not current_user.system_role.can_manage_platform
@@ -379,15 +400,19 @@ def list_my_tenancies(
     current_user: CurrentUserDep,
     session: SessionDep,
 ) -> list[TenancyResponse]:
+    tenancy_filters = []
+    if AccountWorkspaceRole.TENANT in current_user.workspace_roles:
+        tenancy_filters.append(Tenancy.tenant_user_id == current_user.id)
+    if AccountWorkspaceRole.LANDLORD in current_user.workspace_roles:
+        tenancy_filters.append(Tenancy.landlord_user_id == current_user.id)
+    if current_user.system_role.can_manage_platform:
+        tenancy_filters.append(Tenancy.created_by_user_id == current_user.id)
+    if not tenancy_filters:
+        return []
+
     tenancies = session.exec(
         select(Tenancy)
-        .where(
-            or_(
-                Tenancy.tenant_user_id == current_user.id,
-                Tenancy.landlord_user_id == current_user.id,
-                Tenancy.created_by_user_id == current_user.id,
-            )
-        )
+        .where(or_(*tenancy_filters))
         .order_by(Tenancy.created_at.desc())
     ).all()
     return [build_tenancy_response(session=session, tenancy=tenancy) for tenancy in tenancies]

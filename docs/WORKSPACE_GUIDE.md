@@ -10,10 +10,10 @@ The signed-in shell now also supports an active role mode. Choose a role at sign
 
 - `Tenant` shows tenant trust, listings, tenant records, and tenant-side rent/issue work.
 - `Landlord` shows landlord trust, landlord property/tenant records, and landlord-side rent/issue work.
-- `Agency` shows agency tools without personal rental lanes.
-- `Reviewer` shows review-center tools without personal rental lanes.
+- `Agent` shows agency tools without personal rental lanes.
+- `Admin` shows review-center tools without personal rental lanes.
 
-This role mode is a workspace filter, not a permission grant. The backend still decides what the account may access.
+The role choices come from explicit account workspace-role entitlements. An admin can add or remove those entitlements from `Review Center > Roles`. This role mode is a workspace filter, not a permission grant: the backend still checks tenancy participation, property ownership, agency organization membership, and internal privileges before allowing real work.
 
 Most workspaces now also use focused section tabs inside the page itself. Good examples are:
 
@@ -110,15 +110,15 @@ The signed-in workspace uses these menu items, depending on the active role:
 
 - `Agency Tools`
   - Agency-only workspace for properties, listings, applications, and trust checks.
-  - Agency mode only, and only if your account belongs to an agency organization.
+  - Agent mode only. The account also needs agency organization membership before real agency data appears.
 
 - `Account`
   - Sessions and sign-in activity.
   - Use it when you want to review account access and sign out of other devices.
 
 - `Review Center`
-  - Internal-only area for queue reviews, automation, audit logs, and release readiness.
-  - Reviewer mode only, and only if your account has internal access.
+  - Internal-only area for queue reviews, automation, audit logs, release readiness, and account role management.
+  - Admin mode only, and only if your account has internal access.
 
 ## Roles And What They Usually Do
 
@@ -185,6 +185,7 @@ Typical goals:
 - review evidence and history imports,
 - monitor automation and notifications,
 - inspect audit logs,
+- add or remove account workspace-role entitlements,
 - check release readiness.
 
 Best menu order:
@@ -382,6 +383,7 @@ What you can do:
 - inspect notifications,
 - inspect worker runs,
 - inspect audit activity,
+- add or remove account workspace-role entitlements,
 - check release readiness.
 
 When to use it:
@@ -457,6 +459,15 @@ These are the current seeded demo accounts for local use:
 - `Internal Reviewer`: `reviewer@demo.trustledger.app` / `DemoReviewer123!`
 - `Platform Admin`: `admin@demo.trustledger.app` / `DemoAdmin123!`
 
+After the account-only reset, the local accounts are:
+
+- `Tenant + Admin`: `vasilis.markopoulos@trustledger.local` / `VasilisTenantAdmin123!`
+- `Landlord`: `lila.tsoutsoura@trustledger.local` / `LilaLandlord123!`
+- `Agent`: `theodore.tsoutsouras@trustledger.local` / `TheodoreAgent123!`
+- `Tenant + Landlord`: `froso.evangeliadou@trustledger.local` / `FrosoTenantLandlord123!`
+
+That reset intentionally has no properties, tenancies, organizations, or history records.
+
 Seeded sharing values:
 
 - share token: `demo-tenant-share-token`
@@ -470,11 +481,11 @@ Go to `Home`. It now includes a built-in menu guide.
 
 ### I cannot see Agency Tools
 
-Switch the active role to `Agency` from the sidebar. If `Agency` is not available, your account probably is not a member of an agency organization.
+Switch the active role to `Agent` from the sidebar. If `Agent` is not available, an admin has not assigned that workspace role to your account. If `Agent` is available but the page is empty, your account is not attached to an active agency organization yet.
 
 ### I cannot see Review Center
 
-Switch the active role to `Reviewer` from the sidebar. If `Reviewer` is not available, your account does not currently have internal reviewer/admin access.
+Switch the active role to `Admin` from the sidebar. If `Admin` is not available, your account does not currently have internal access.
 
 ### A trust check is denied
 

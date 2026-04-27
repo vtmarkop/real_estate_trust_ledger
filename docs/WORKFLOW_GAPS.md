@@ -111,21 +111,25 @@ This file should stay short, practical, and current. Long explanation belongs in
 
 - Expected behavior:
   - users should choose the role they are working as and see only the menus, routes, score surfaces, tenancy records, property setup, and operational records relevant to that active role
-  - role selection should not grant backend permissions
+  - the roles offered at sign-in should come from explicit account entitlements, not from broad inference
+  - role selection should narrow the workspace but should not bypass backend record permissions
 - Actual behavior:
   - sign-in now includes an intended workspace role
-  - the authenticated shell persists and switches the active workspace role only among roles available to the account
+  - `User.workspace_roles` stores explicit tenant, landlord, agent, and admin/internal workspace entitlements
+  - the admin workspace includes account role management so roles can be added or removed without creating duplicate accounts
+  - the authenticated shell persists and switches the active workspace role only among roles assigned to the account
   - tenant mode shows tenant trust, listings, tenant records, and tenant-side operations
   - landlord mode shows landlord trust, landlord property/tenant records, and landlord-side operations
   - agency mode shows agency tools without personal rental lanes
-  - reviewer mode shows review center without personal rental lanes
-  - backend authorization remains capability-driven through system roles, organization memberships, and domain participation
-- Backend status: unchanged and still authoritative
+  - admin/internal mode shows review center without personal rental lanes
+  - backend list/create/access routes now filter or reject tenant, landlord, and agency workflows when the account lacks the matching workspace entitlement
+  - agency actions still require agency organization membership, and tenancy/property actions still require domain participation
+- Backend status: complete with explicit account workspace-role entitlements and route-level checks
 - Frontend status: complete for shell navigation, route guards, `Home`, `My Trust`, `Rental Records`, and `Rent & Issues`
 - Classification: `complete_and_obvious`
 - Next fix:
-  - visually review seeded tenant, landlord, agency, and reviewer accounts to confirm no role-irrelevant cards remain in the active workspace mode
-  - if future API responses need strict role-scoped data contracts, add backend query filters rather than trusting the frontend role selector as a security boundary
+  - visually review the four clean local accounts to confirm no role-irrelevant cards remain in each active workspace mode
+  - if future API responses expose a new role surface, add backend role-entitlement checks at the route boundary instead of relying only on the frontend role selector
 
 ### Full Workflow Continuity Audit
 

@@ -38,6 +38,7 @@ from app.services.artifacts import LOCAL_STORAGE_BACKEND, get_artifact_storage_r
 from app.services.properties import serialize_property_tags
 from app.services.scoring import refresh_user_trust_score
 from trustledger_domain import (
+    AccountWorkspaceRole,
     ApplicationStatus,
     AuditActionType,
     AuditOutcomeStatus,
@@ -222,6 +223,7 @@ def get_or_create_user(
     full_name: str,
     password: str,
     system_role: SystemRole = SystemRole.USER,
+    workspace_roles: tuple[AccountWorkspaceRole, ...] | None = None,
     legacy_emails: tuple[str, ...] = (),
 ) -> User:
     user = session.exec(select(User).where(User.email == email)).first()
@@ -252,6 +254,12 @@ def get_or_create_user(
         user.failed_login_attempt_count = 0
         user.login_locked_until = None
         user.updated_at = current_time
+    if workspace_roles is None:
+        if system_role in {SystemRole.ADMIN, SystemRole.REVIEWER}:
+            workspace_roles = (AccountWorkspaceRole.INTERNAL,)
+        else:
+            workspace_roles = (AccountWorkspaceRole.TENANT,)
+    user.set_workspace_roles(workspace_roles)
 
     session.add(user)
     session.flush()
@@ -1354,6 +1362,7 @@ def seed_demo_environment(*, session: Session) -> DemoSeedSummary:
         email=DEMO_AGENCY_OWNER.email,
         full_name=DEMO_AGENCY_OWNER.label,
         password=DEMO_AGENCY_OWNER.password,
+        workspace_roles=(AccountWorkspaceRole.AGENCY,),
         legacy_emails=DEMO_AGENCY_OWNER.legacy_emails,
     )
     tenant_user = get_or_create_user(
@@ -1368,6 +1377,7 @@ def seed_demo_environment(*, session: Session) -> DemoSeedSummary:
         email=DEMO_LANDLORD.email,
         full_name=DEMO_LANDLORD.label,
         password=DEMO_LANDLORD.password,
+        workspace_roles=(AccountWorkspaceRole.LANDLORD,),
         legacy_emails=DEMO_LANDLORD.legacy_emails,
     )
 

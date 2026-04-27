@@ -10,7 +10,8 @@ import { buildNavigation, normalizeDensity } from "../src/app/AppShell.js";
 
 test("buildCapabilities exposes agency and internal access separately", function () {
   const user = {
-    system_role: "reviewer"
+    system_role: "reviewer",
+    workspace_roles: ["agency", "internal"]
   };
   const organizations = [
     {
@@ -27,7 +28,8 @@ test("buildCapabilities exposes agency and internal access separately", function
 
 test("buildCapabilities keeps personal workspace tabs for users who also belong to an agency", function () {
   const user = {
-    system_role: "user"
+    system_role: "user",
+    workspace_roles: ["tenant", "agency"]
   };
   const organizations = [
     {
@@ -128,7 +130,8 @@ test("buildNavigation keeps listings tenant-only", function () {
 
 test("workspace role normalization only returns available roles", function () {
   const user = {
-    system_role: "user"
+    system_role: "user",
+    workspace_roles: ["tenant", "agency"]
   };
   const organizations = [
     {
@@ -137,9 +140,24 @@ test("workspace role normalization only returns available roles", function () {
     }
   ];
 
-  assert.deepEqual(getAvailableWorkspaceRoles(user, organizations), ["tenant", "landlord", "agency"]);
+  assert.deepEqual(getAvailableWorkspaceRoles(user, organizations), ["tenant", "agency"]);
   assert.equal(normalizeWorkspaceRole("agency", user, organizations), "agency");
   assert.equal(normalizeWorkspaceRole("internal", user, organizations), "tenant");
+});
+
+test("workspace roles are account entitlements, not inferred personas", function () {
+  const tenantOnlyUser = {
+    system_role: "user",
+    workspace_roles: ["tenant"]
+  };
+  const mixedUser = {
+    system_role: "user",
+    workspace_roles: ["tenant", "landlord"]
+  };
+
+  assert.deepEqual(getAvailableWorkspaceRoles(tenantOnlyUser, []), ["tenant"]);
+  assert.deepEqual(getAvailableWorkspaceRoles(mixedUser, []), ["tenant", "landlord"]);
+  assert.equal(normalizeWorkspaceRole("landlord", tenantOnlyUser, []), "tenant");
 });
 
 test("normalizeDensity keeps the compact toggle strict and safe", function () {

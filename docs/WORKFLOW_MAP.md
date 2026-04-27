@@ -39,7 +39,9 @@ The shell now also applies an active workspace role:
 - `tenant`: tenant trust, listings, tenant records, and tenant-side operations
 - `landlord`: landlord trust, property/tenant records, and landlord-side operations
 - `agency`: agency tools only, plus account controls
-- `internal/reviewer`: review center only, plus account controls
+- `internal/admin`: review center and account role controls, plus account controls
+
+The available roles come from explicit account workspace-role entitlements returned by `/auth/me`. The active role decides what workspace is visible; backend routes still enforce tenancy participation, property ownership, agency organization membership, or internal privileges before allowing real actions.
 
 The dense pages are now intentionally split into tabs or lanes:
 
@@ -73,7 +75,7 @@ This matters because it gives us clearer separation of concerns both in the UI a
 
 Current UX-reset note:
 
-- users now choose an active workspace role at sign-in or from the shell; this scopes visible menus, direct routes, score dimensions, tenancy records, property setup, and operational records without replacing backend authorization
+- users now choose an active workspace role at sign-in or from the shell; role availability comes from explicit account workspace-role entitlements, and the active role scopes visible menus, direct routes, score dimensions, tenancy records, property setup, and operational records without replacing backend authorization
 - the non-dispute `Rent & Issues` lanes now begin with property targeting, so normal tenant/landlord work can stay inside one selected tenancy context instead of requiring cross-property scrolling
 - tenancy metadata in `Rental Records` and `Rent & Issues` now identifies the signed-in user's role and the counterparty instead of repeating generic tenant/landlord labels
 - the selected property now separates `Daily work` from read-only `History`, so forms/actions and timeline browsing are no longer mixed together
@@ -83,23 +85,26 @@ Current UX-reset note:
 
 ## Role Model
 
-The rebuilt product works with capability-driven roles instead of only hard-coded app personas.
+The rebuilt product works with explicit account workspace-role entitlements plus record-level permissions instead of only hard-coded app personas.
 
 - `Personal user`
-  - Can act as tenant, landlord, or both depending on the tenancy/property relationship
+  - Can be entitled for tenant, landlord, or both
+  - Still needs the relevant tenancy/property relationship before backend routes allow record access
   - Chooses an active tenant or landlord workspace mode so the UI only shows that persona's records and actions
 - `Agency member`
-  - Can choose agency workspace mode and use `Agency Tools`
-- `Internal reviewer`
-  - Can choose reviewer workspace mode and use `Review Center`
+  - Needs the agency workspace entitlement to see agency mode
+  - Still needs active agency organization membership before backend agency routes allow work
+- `Internal/admin operator`
+  - Needs the internal workspace entitlement to see `Review Center`
+  - Internal entitlement is synced with the platform admin system role for backend route protection
 - `Platform admin`
-  - Has the broadest internal control surface
+  - Has the broadest internal control surface, including account role management
 
 Important architectural difference from the archive MVP:
 
 - The old `judge` concept is now implemented as the internal `reviewer/admin` lane.
 - This preserves the neutral-verdict business function without exposing a powerful adjudication role as a normal end-user persona.
-- The active workspace role is a UI scoping choice, not a permission grant. Backend access still depends on system roles, organization memberships, and record participation.
+- The active workspace role is a UI scoping choice and entitlement filter, not a record-access grant. Backend access still depends on system roles, organization memberships, and record participation.
 
 ## Workflow 1: Authentication And Session Safety
 
@@ -136,9 +141,10 @@ Important architectural difference from the archive MVP:
 1. User signs in.
 2. Backend creates an opaque session.
 3. Frontend loads `/auth/me` and `/organizations/mine`.
-4. The selected workspace role is normalized against the roles actually available to the account.
+4. The selected workspace role is normalized against `user.workspace_roles`.
 5. Navigation is built from the active role plus backend-derived capabilities.
 6. User can later switch active role from the shell or revoke an older session from `Account`.
+7. A platform admin can add or remove account workspace-role entitlements from `Review Center > Roles`.
 
 ### Example
 

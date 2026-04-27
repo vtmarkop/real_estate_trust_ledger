@@ -1,6 +1,11 @@
 import React from "react";
 
 import {
+  WORKSPACE_ROLE_OPTIONS,
+  getWorkspaceRoleLabel,
+  useSession
+} from "../app/session.js";
+import {
   FactPill,
   HeroStat,
   NoteBlock,
@@ -118,6 +123,7 @@ var auditActionOptions = [
 ];
 
 export function InternalOperationsPage() {
+  var session = useSession();
   var viewState = React.useState({
     status: "loading",
     overview: null,
@@ -197,6 +203,24 @@ export function InternalOperationsPage() {
   });
   var automationAction = automationActionTuple[0];
   var setAutomationAction = automationActionTuple[1];
+  var roleSearchFormTuple = React.useState({
+    query: ""
+  });
+  var roleSearchForm = roleSearchFormTuple[0];
+  var setRoleSearchForm = roleSearchFormTuple[1];
+  var roleSearchResultsTuple = React.useState([]);
+  var roleSearchResults = roleSearchResultsTuple[0];
+  var setRoleSearchResults = roleSearchResultsTuple[1];
+  var roleFormsTuple = React.useState({});
+  var roleForms = roleFormsTuple[0];
+  var setRoleForms = roleFormsTuple[1];
+  var roleActionTuple = React.useState({
+    kind: "",
+    id: "",
+    message: null
+  });
+  var roleAction = roleActionTuple[0];
+  var setRoleAction = roleActionTuple[1];
   var internalSectionTuple = React.useState("overview");
   var internalSection = internalSectionTuple[0];
   var setInternalSection = internalSectionTuple[1];
@@ -208,6 +232,9 @@ export function InternalOperationsPage() {
   }, []);
   var updateFollowUpField = React.useMemo(function buildFollowUpFieldUpdater() {
     return updateNamedField(setFollowUpForm);
+  }, []);
+  var updateRoleSearchField = React.useMemo(function buildRoleSearchFieldUpdater() {
+    return updateNamedField(setRoleSearchForm);
   }, []);
 
   var loadOperationsState = React.useCallback(async function loadOperationsState() {
@@ -782,6 +809,101 @@ export function InternalOperationsPage() {
     }
   }
 
+  async function searchAccountRoles(event) {
+    event.preventDefault();
+    setRoleAction({
+      kind: "role-search",
+      id: "",
+      message: null
+    });
+    try {
+      var path = "/internal/users?limit=25";
+      if (roleSearchForm.query) {
+        path += "&query=" + encodeURIComponent(roleSearchForm.query);
+      }
+      var users = await apiRequest(path);
+      setRoleSearchResults(users);
+      setRoleForms(function syncRoleForms(previous) {
+        var next = Object.assign({}, previous);
+        users.forEach(function ensureRoleForm(user) {
+          next[user.id] = (user.workspace_roles || []).slice();
+        });
+        return next;
+      });
+      setRoleAction({
+        kind: "",
+        id: "",
+        message: users.length
+          ? "Loaded " + String(users.length) + " account(s)."
+          : "No account matched that search."
+      });
+    } catch (error) {
+      setRoleAction({
+        kind: "",
+        id: "",
+        message: error.message || "Unable to search accounts."
+      });
+    }
+  }
+
+  function toggleAccountRole(userId, role, enabled) {
+    setRoleForms(function updateRoles(previous) {
+      var next = Object.assign({}, previous);
+      var currentRoles = (next[userId] || []).slice();
+      if (enabled && currentRoles.indexOf(role) === -1) {
+        currentRoles.push(role);
+      }
+      if (!enabled) {
+        currentRoles = currentRoles.filter(function filterRole(currentRole) {
+          return currentRole !== role;
+        });
+      }
+      next[userId] = currentRoles;
+      return next;
+    });
+  }
+
+  async function saveAccountRoles(user) {
+    var workspaceRoles = roleForms[user.id] || [];
+    setRoleAction({
+      kind: "role-save",
+      id: user.id,
+      message: null
+    });
+    try {
+      var updatedUser = await apiRequest("/internal/users/" + user.id + "/workspace-roles", {
+        method: "PATCH",
+        body: {
+          workspace_roles: workspaceRoles
+        }
+      });
+      setRoleSearchResults(function updateResults(previous) {
+        return previous.map(function replaceUser(candidate) {
+          return candidate.id === updatedUser.id ? updatedUser : candidate;
+        });
+      });
+      setRoleForms(function syncUpdatedRoles(previous) {
+        var next = Object.assign({}, previous);
+        next[updatedUser.id] = (updatedUser.workspace_roles || []).slice();
+        return next;
+      });
+      if (session.user && session.user.id === updatedUser.id) {
+        await session.refreshSession();
+      }
+      setRoleAction({
+        kind: "",
+        id: "",
+        message: "Roles updated for " + updatedUser.full_name + "."
+      });
+    } catch (error) {
+      setRoleAction({
+        kind: "",
+        id: user.id,
+        message: error.message || "Unable to update account roles."
+      });
+    }
+  }
+
   if (state.status === "loading") {
     return e("div", { className: "state-panel" }, [
       e("p", { className: "eyebrow", key: "eyebrow" }, "Review Center"),
@@ -804,6 +926,7 @@ export function InternalOperationsPage() {
 
   var overview = state.overview;
   var releaseReadiness = state.releaseReadiness;
+  var canManageAccountRoles = session.capabilities.canManagePlatform;
   var internalSectionTabs = [
     {
       id: "overview",
@@ -815,6 +938,13 @@ export function InternalOperationsPage() {
       label: "Controls",
       meta: "Score and follow-up controls"
     },
+    canManageAccountRoles
+      ? {
+          id: "roles",
+          label: "Roles",
+          meta: "Account role access"
+        }
+      : null,
     {
       id: "reviews",
       label: "Review queues",
@@ -835,10 +965,11 @@ export function InternalOperationsPage() {
       label: "Audit",
       meta: String(state.auditLogs.length) + " recent events"
     }
-  ];
+  ].filter(Boolean);
   var internalSectionCopyByTab = {
     overview: "Start with the platform picture before acting on any queue or control.",
     controls: "Keep manual controls separate from review decisions so operators do not mix system actions with case work.",
+    roles: "Add or remove account workspace roles here so each person only sees the work assigned to that account.",
     reviews: "Use this lane only for tenancy, evidence, and history review decisions.",
     disputes: "Use this lane for first verdicts and appealed re-reviews. If a case comes back through an appeal, replace the earlier verdict with a fresh one here.",
     runtime: "Use the runtime lane when following automation, notifications, and worker execution.",
@@ -1277,6 +1408,111 @@ export function InternalOperationsPage() {
             )
           : e("p", { className: "empty-copy", key: "empty" }, "No score batches have been queued yet.")
       ])
+    ]) : null,
+    internalSection === "roles" && canManageAccountRoles
+      ? e("section", { className: "detail-panel", key: "role-management" }, [
+      e(SectionHeading, {
+        title: "Account roles",
+        copy:
+          "Use this to add or remove the workspace roles an account can open. Tenant, landlord, agent, and admin roles are independent.",
+        key: "heading"
+      }),
+      e("form", { className: "auth-form", onSubmit: searchAccountRoles, key: "search" }, [
+        e("div", { className: "form-grid", key: "grid" }, [
+          e("label", { className: "field", key: "query" }, [
+            e("span", { className: "field-label", key: "label" }, "Find account"),
+            e("input", {
+              className: "field-input",
+              name: "query",
+              value: roleSearchForm.query,
+              onChange: updateRoleSearchField,
+              placeholder: "name or email"
+            })
+          ]),
+          e(
+            "button",
+            {
+              type: "submit",
+              className: "button button-secondary",
+              disabled: roleAction.kind === "role-search",
+              key: "submit"
+            },
+            roleAction.kind === "role-search" ? "Searching..." : "Search accounts"
+          )
+        ]),
+        roleAction.message
+          ? e("div", { className: "form-alert", key: "message" }, roleAction.message)
+          : null
+      ]),
+      roleSearchResults.length
+        ? e(
+            "div",
+            { className: "list-stack", key: "users" },
+            roleSearchResults.map(function renderRoleUser(user) {
+              var selectedRoles = roleForms[user.id] || [];
+              return e("article", { className: "stack-card", key: user.id }, [
+                e("strong", { className: "stack-card-title", key: "title" }, user.full_name),
+                e("div", { className: "status-row", key: "status" }, [
+                  e(StatusBadge, {
+                    key: "email",
+                    tone: "neutral",
+                    label: user.email
+                  }),
+                  e(StatusBadge, {
+                    key: "system",
+                    tone: user.system_role === "admin" ? "accent" : "neutral",
+                    label: "System: " + user.system_role
+                  })
+                ]),
+                e(
+                  "div",
+                  { className: "fact-grid", key: "roles" },
+                  WORKSPACE_ROLE_OPTIONS.map(function renderRoleOption(option) {
+                    var checked = selectedRoles.indexOf(option.id) !== -1;
+                    return e("label", { className: "field", key: option.id }, [
+                      e("span", { className: "field-label", key: "label" }, option.label),
+                      e("input", {
+                        type: "checkbox",
+                        checked: checked,
+                        onChange: function onChange(event) {
+                          toggleAccountRole(user.id, option.id, event.target.checked);
+                        }
+                      }),
+                      e("span", { className: "field-help", key: "help" }, option.copy)
+                    ]);
+                  })
+                ),
+                e(
+                  "p",
+                  { className: "empty-copy", key: "current" },
+                  "Current roles: " +
+                    ((user.workspace_roles || []).map(getWorkspaceRoleLabel).join(", ") || "None")
+                ),
+                e(
+                  "button",
+                  {
+                    type: "button",
+                    className: "button button-small",
+                    disabled:
+                      !selectedRoles.length ||
+                      (roleAction.kind === "role-save" && roleAction.id === user.id),
+                    onClick: function onClick() {
+                      saveAccountRoles(user);
+                    },
+                    key: "save"
+                  },
+                  roleAction.kind === "role-save" && roleAction.id === user.id
+                    ? "Saving..."
+                    : "Save roles"
+                )
+              ]);
+            })
+          )
+        : e(
+            "p",
+            { className: "empty-copy", key: "empty" },
+            "Search for an account to manage role access."
+          )
     ]) : null,
     internalSection === "reviews"
       ? e("section", { className: "detail-panel", key: "tenancies" }, [

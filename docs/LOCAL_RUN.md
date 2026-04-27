@@ -52,6 +52,17 @@ Pop-Location
 
 The seed is idempotent, so you can run `dev_seed.py` again without duplicating the main demo records.
 
+If you need the clean account-only state requested for role testing, run the destructive reset instead:
+
+```powershell
+Push-Location apps\api
+..\..\.venv\Scripts\python -m alembic upgrade head
+..\..\.venv\Scripts\python dev_reset_minimal_users.py
+Pop-Location
+```
+
+That reset wipes local model data and local private artifacts, then creates only the four requested users. It does not create organizations, properties, tenancies, trust history, operations data, or demo artifacts.
+
 ## Start The API
 
 The safest API start command is now the repo-root launcher:
@@ -136,6 +147,17 @@ If you switch storage backend settings, restart the API before testing uploads a
 - `Internal Reviewer`: `reviewer@demo.trustledger.app` / `DemoReviewer123!`
 - `Platform Admin`: `admin@demo.trustledger.app` / `DemoAdmin123!`
 
+## Minimal Role-Test Accounts
+
+These accounts exist after `dev_reset_minimal_users.py`:
+
+- `Tenant + Admin`: `vasilis.markopoulos@trustledger.local` / `VasilisTenantAdmin123!`
+- `Landlord`: `lila.tsoutsoura@trustledger.local` / `LilaLandlord123!`
+- `Agent`: `theodore.tsoutsouras@trustledger.local` / `TheodoreAgent123!`
+- `Tenant + Landlord`: `froso.evangeliadou@trustledger.local` / `FrosoTenantLandlord123!`
+
+This reset intentionally creates no other data. The agent role can be assigned to an account before that account is attached to an agency organization; agency tools stay empty until membership data exists.
+
 Pre-seeded trust-sharing values:
 
 - share token: `demo-tenant-share-token`
@@ -175,3 +197,5 @@ Then use the reviewer account:
 ## Fast Reset Strategy
 
 If you want a clean local demo database again, delete `apps\api\trust_ledger.db`, rerun the migration command, and rerun `dev_seed.py`.
+
+If you want the clean role-test database, run `dev_reset_minimal_users.py` after migrations instead of `dev_seed.py`.
