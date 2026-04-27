@@ -155,3 +155,33 @@ For each slice of this reset:
 - Next likely slice:
   - visually review `Daily work` and `History` with seeded tenant and landlord accounts
   - continue the broader workflow continuity audit, especially agency-facing score language and remaining dense action forms
+
+### 2026-04-27 - Slice 4: Create versus existing record separation
+
+- Problem:
+  - `Daily work > Payments` still showed the blank create-payment form and an existing saved payment detail in one continuous card
+  - the same pattern existed in maintenance, where a blank report form and existing issue actions lived together
+  - this made old records look like they belonged under creation, which violated the reset goal of strong separation of concerns
+- Archive reference:
+  - the original interaction model kept direct creation, selected saved records, and timelines as separate modes instead of stacking all of them together
+- Rebuilt files changed:
+  - `apps/web/src/pages/OperationsPage.js`
+- What stayed preserved from the rebuild:
+  - selected-property context
+  - `Daily work` versus `History`
+  - compact payment and issue dropdowns
+  - all existing payment and maintenance action rules
+- What changed:
+  - `Payments` now has `Create new` and `Existing records` modes
+  - `Create new` shows only the blank payment form
+  - `Existing records` shows the payment dropdown and the selected saved payment actions
+  - `Maintenance` now has `Report new` and `Existing issues` modes
+  - `Report new` shows only the blank issue form
+  - `Existing issues` shows the issue dropdown and the selected saved issue actions
+- Verification:
+  - `node --check apps/web/src/pages/OperationsPage.js`
+  - `.\.venv\Scripts\python -m unittest tests.test_repo_layout tests.test_web_scaffold`
+  - `npm test`
+  - `npm run build`
+- Next likely slice:
+  - visually review with the seeded `Hillside Studio` and `Harbor Flat` examples to confirm creation, existing-record actions, and history now feel like separate modes

@@ -67,7 +67,7 @@ Current UX-reset note:
 
 - the non-dispute `Rent & Issues` lanes now begin with property targeting, so normal tenant/landlord work can stay inside one selected tenancy context instead of requiring cross-property scrolling
 - the selected property now separates `Daily work` from read-only `History`, so forms/actions and timeline browsing are no longer mixed together
-- inside `Daily work`, `Payments` and `Maintenance` use compact record dropdowns so only one payment or issue detail/action pane is expanded at a time
+- inside `Daily work`, `Payments` and `Maintenance` first split create-new work from existing saved records, then use compact record dropdowns so only one payment or issue detail/action pane is expanded at a time
 - inside `History`, the selected property shows the read-only timeline for the active operational lane, built from existing payment, deposit, or maintenance workflow timestamps
 
 ## Role Model
@@ -479,7 +479,7 @@ Important architectural difference from the archive MVP:
 ### Typical flow
 
 1. User selects the relevant property from the `Rent & Issues` property menu.
-2. User keeps `Daily work` active, then selects the relevant payment from the payment menu or creates a new payment record.
+2. User keeps `Daily work` active, then chooses either `Create new` for a blank payment form or `Existing records` for the payment menu.
 3. Payer attaches proof inside the selected payment detail.
 4. Payee confirms or rejects inside the selected payment detail.
 5. If rejected, the other party may dispute and send the case into reviewer flow.
@@ -559,7 +559,7 @@ Important architectural difference from the archive MVP:
 ### Typical flow
 
 1. User selects the relevant property from the `Rent & Issues` property menu.
-2. User keeps `Daily work` active, then selects the relevant issue from the issue menu or creates a new maintenance ticket.
+2. User keeps `Daily work` active, then chooses either `Report new` for a blank issue form or `Existing issues` for the issue menu.
 3. Tenant reports a problem with evidence.
 4. Landlord acknowledges and resolves with response evidence inside the selected issue detail.
 5. User switches to `History` when they want the read-only payment/deposit/maintenance timeline for the selected property.

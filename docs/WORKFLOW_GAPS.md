@@ -60,6 +60,7 @@ This file should stay short, practical, and current. Long explanation belongs in
   - the first UX-reset slice now adds property search, a property dropdown, and a selected-property history timeline in `Rent & Issues`
   - the second UX-reset slice now adds compact payment and issue dropdowns inside the selected property flow
   - the third UX-reset slice separates selected-property `Daily work` from read-only `History`, so action forms are no longer mixed into timeline browsing
+  - the fourth UX-reset slice separates `Create new` payment work and `Report new` maintenance work from existing saved record detail/actions, so past items no longer appear underneath blank creation forms
   - payment and maintenance detail actions now render one focused record at a time under `Daily work`, closer to the archive's details-modal pattern without weakening rebuilt API rules
   - the page still needs live visual review to confirm the form density feels simple enough for normal tenant/landlord use
 - Backend status: complete
@@ -67,7 +68,7 @@ This file should stay short, practical, and current. Long explanation belongs in
 - Classification: `complete_but_hard_to_understand`
 - Next fix:
   - keep normal user work inside one selected property at a time
-  - visually review the selected property, `Daily work`, `History`, payment menu, and issue menu with seeded demo accounts
+  - visually review the selected property, `Daily work`, `History`, create-vs-existing payment modes, create-vs-existing maintenance modes, payment menu, and issue menu with seeded demo accounts
   - reduce any remaining form density if the live flow still feels heavier than the archive interaction model
 
 ### Tenant-Side Versus Landlord-Side Score Meaning

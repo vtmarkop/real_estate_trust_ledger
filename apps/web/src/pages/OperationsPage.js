@@ -555,6 +555,12 @@ export function OperationsPage() {
   var propertyContextViewTuple = React.useState("daily");
   var propertyContextView = propertyContextViewTuple[0];
   var setPropertyContextView = propertyContextViewTuple[1];
+  var paymentWorkModeTuple = React.useState("create");
+  var paymentWorkMode = paymentWorkModeTuple[0];
+  var setPaymentWorkMode = paymentWorkModeTuple[1];
+  var maintenanceWorkModeTuple = React.useState("create");
+  var maintenanceWorkMode = maintenanceWorkModeTuple[0];
+  var setMaintenanceWorkMode = maintenanceWorkModeTuple[1];
   var tenancySearchTuple = React.useState("");
   var tenancySearch = tenancySearchTuple[0];
   var setTenancySearch = tenancySearchTuple[1];
@@ -974,6 +980,30 @@ export function OperationsPage() {
       id: "history",
       label: "History",
       meta: "Read-only timeline for the selected property"
+    }
+  ];
+  var paymentWorkTabs = [
+    {
+      id: "create",
+      label: "Create new",
+      meta: "Only the blank payment form"
+    },
+    {
+      id: "existing",
+      label: "Existing records",
+      meta: "Use the payment menu and saved record actions"
+    }
+  ];
+  var maintenanceWorkTabs = [
+    {
+      id: "create",
+      label: "Report new",
+      meta: "Only the blank issue form"
+    },
+    {
+      id: "existing",
+      label: "Existing issues",
+      meta: "Use the issue menu and saved record actions"
     }
   ];
 
@@ -1625,7 +1655,14 @@ export function OperationsPage() {
               propertyContextView === "daily" ? e("div", { className: "split-grid", key: "top" }, [
                 operationsFocus === "payments" ? e("article", { className: "stack-card", key: "payments" }, [
                   e("strong", { className: "stack-card-title", key: "title" }, "Payments"),
-                  e("div", { className: "auth-form", key: "create-payment" }, [
+                  e(SegmentedTabs, {
+                    key: "payment-work-mode",
+                    tabs: paymentWorkTabs,
+                    activeTab: paymentWorkMode,
+                    onChange: setPaymentWorkMode,
+                    "aria-label": "Payment create or existing records"
+                  }),
+                  paymentWorkMode === "create" ? e("div", { className: "auth-form", key: "create-payment" }, [
                     e("label", { className: "field", key: "payer" }, [
                       e("span", { className: "field-label", key: "label" }, "Payer"),
                       e(
@@ -1762,6 +1799,7 @@ export function OperationsPage() {
                               });
                               if (createdPayment && createdPayment.id) {
                                 setSelectedPaymentId(createdPayment.id);
+                                setPaymentWorkMode("existing");
                               }
                               setPaymentForms(function resetPaymentForm(previous) {
                                 var next = Object.assign({}, previous);
@@ -1777,8 +1815,9 @@ export function OperationsPage() {
                         ? "Saving..."
                         : "Create payment record"
                     )
-                  ]),
-                  paymentsForTenancy.length
+                  ]) : null,
+                  paymentWorkMode === "existing"
+                    ? (paymentsForTenancy.length
                     ? e(
                         "div",
                         { className: "list-stack", key: "payment-list" },
@@ -2269,7 +2308,13 @@ export function OperationsPage() {
                       )
                     ]
                   )
-                    : e("p", { className: "empty-copy", key: "empty" }, "No payment records yet.")
+                    : e(
+                        "p",
+                        { className: "empty-copy", key: "empty" },
+                        "No payment records yet. Use Create new to add the first payment for this property."
+                      )
+                  )
+                    : null
                 ]) : null,
                 operationsFocus === "deposit" ? e("article", { className: "stack-card", key: "deposit" }, [
                   e("strong", { className: "stack-card-title", key: "title" }, "Deposit"),
@@ -2620,7 +2665,14 @@ export function OperationsPage() {
                 ]) : null,
                 operationsFocus === "maintenance" ? e("article", { className: "stack-card", key: "maintenance" }, [
                   e("strong", { className: "stack-card-title", key: "title" }, "Maintenance"),
-                  e("div", { className: "auth-form", key: "report" }, [
+                  e(SegmentedTabs, {
+                    key: "maintenance-work-mode",
+                    tabs: maintenanceWorkTabs,
+                    activeTab: maintenanceWorkMode,
+                    onChange: setMaintenanceWorkMode,
+                    "aria-label": "Maintenance create or existing issues"
+                  }),
+                  maintenanceWorkMode === "create" ? e("div", { className: "auth-form", key: "report" }, [
                     e("div", { className: "form-grid", key: "top" }, [
                       e("input", {
                         className: "field-input",
@@ -2702,6 +2754,7 @@ export function OperationsPage() {
                               });
                               if (createdTicket && createdTicket.id) {
                                 setSelectedMaintenanceTicketId(createdTicket.id);
+                                setMaintenanceWorkMode("existing");
                               }
                               setMaintenanceForms(function resetMaintenanceForm(previous) {
                                 var next = Object.assign({}, previous);
@@ -2717,8 +2770,9 @@ export function OperationsPage() {
                         ? "Saving..."
                         : "Report issue"
                     )
-                  ]),
-                  maintenanceTickets.length
+                  ]) : null,
+                  maintenanceWorkMode === "existing"
+                    ? (maintenanceTickets.length
                     ? e(
                         "div",
                         { className: "list-stack", key: "maintenance-list" },
@@ -3107,7 +3161,13 @@ export function OperationsPage() {
                       )
                     ]
                   )
-                    : e("p", { className: "empty-copy", key: "empty" }, "No maintenance tickets yet.")
+                    : e(
+                        "p",
+                        { className: "empty-copy", key: "empty" },
+                        "No maintenance tickets yet. Use Report new to create the first issue for this property."
+                      )
+                  )
+                    : null
                 ]) : null
               ]) : null
             ]);

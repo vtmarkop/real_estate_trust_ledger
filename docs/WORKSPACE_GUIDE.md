@@ -299,7 +299,8 @@ When to use it:
 Friendly explanation:
 - Think of this page as the day-to-day "running the rental" page.
 - First choose one property. Then use `Daily work` for actions and `History` for the read-only timeline of what already happened.
-- In `Payments` and `Maintenance`, choose the specific payment or issue from the dropdown before acting.
+- In `Payments`, use `Create new` only for a blank new payment form, or `Existing records` to open the payment dropdown and act on a saved payment.
+- In `Maintenance`, use `Report new` only for a blank new issue form, or `Existing issues` to open the issue dropdown and act on a saved issue.
 - If something goes wrong, use the `Dispute desk` at the top of the page. It gathers open disputes and items that can be disputed right now, so you do not have to search through every record one by one.
 
 ### Agency Tools
