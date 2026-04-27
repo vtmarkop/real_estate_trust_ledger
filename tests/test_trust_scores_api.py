@@ -319,6 +319,15 @@ class TrustScoresApiTests(unittest.TestCase):
         self.assertEqual(profile_preview.json()["landlord_score"], 500)
         self.assertEqual(profile_preview.json()["verification_strength"], 51)
         self.assertEqual(profile_preview.json()["scoring_version"], "v1")
+        self.assertEqual(
+            profile_preview.json()["score_inputs"]["tenant_counterparty_confirmed_tenancies"],
+            1,
+        )
+        self.assertEqual(
+            profile_preview.json()["score_inputs"]["accepted_tenant_counterparty_references"],
+            1,
+        )
+        self.assertEqual(profile_preview.json()["score_inputs"]["accepted_history_imports"], 1)
 
         with Session(self.engine) as session:
             snapshots = session.exec(select(TrustScoreSnapshot)).all()

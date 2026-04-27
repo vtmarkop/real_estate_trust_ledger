@@ -96,6 +96,12 @@ class WebScaffoldTests(unittest.TestCase):
         records_source = (WEB_ROOT / "src" / "pages" / "RecordsPage.js").read_text(encoding="utf-8")
         operations_source = (WEB_ROOT / "src" / "pages" / "OperationsPage.js").read_text(encoding="utf-8")
         trust_source = (WEB_ROOT / "src" / "pages" / "TrustProfilePage.js").read_text(encoding="utf-8")
+        score_transparency_source = (WEB_ROOT / "src" / "lib" / "scoreTransparency.js").read_text(
+            encoding="utf-8"
+        )
+        score_component_source = (
+            WEB_ROOT / "src" / "components" / "ScoreTransparency.js"
+        ).read_text(encoding="utf-8")
 
         self.assertIn('/organizations/mine', workspace_source)
         self.assertIn('/trust-scores/mine', workspace_source)
@@ -176,6 +182,14 @@ class WebScaffoldTests(unittest.TestCase):
         self.assertIn('/organizations/directory/agencies', trust_source)
         self.assertIn('/consents/trust-report', trust_source)
         self.assertIn('/consents/trust-report/access-history', trust_source)
+        self.assertIn("ScoreContributionPanel", trust_source)
+        self.assertIn("ScoreContributionPanel", agency_source)
+        self.assertIn("ScoreFormulaReference", internal_source)
+        self.assertIn("buildScoreContributionRows", score_transparency_source)
+        self.assertIn("buildVerificationContributionRows", score_transparency_source)
+        self.assertIn("score_inputs", score_transparency_source)
+        self.assertIn("ScoreContributionPanel", score_component_source)
+        self.assertIn("Scoring formula reference", score_component_source)
 
     def test_frontend_docs_track_localization_before_visual_redesign(self) -> None:
         readme_source = (ROOT / "README.md").read_text(encoding="utf-8")

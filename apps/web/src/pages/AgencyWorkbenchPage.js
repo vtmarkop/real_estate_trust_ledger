@@ -8,6 +8,7 @@ import {
   SectionHeading,
   StatusBadge
 } from "../components/PageChrome.js";
+import { ScoreContributionPanel } from "../components/ScoreTransparency.js";
 import { SegmentedTabs } from "../components/SegmentedTabs.js";
 import { apiRequest } from "../lib/api.js";
 import { e, getLanguageLocale } from "../lib/i18n.js";
@@ -233,6 +234,78 @@ function updateEntityForm(setter, entityId, name, value) {
     next[entityId] = existing;
     return next;
   });
+}
+
+function getTrustCheckResultProfile(result) {
+  if (!result) {
+    return null;
+  }
+  if (result.profile) {
+    return result.profile;
+  }
+  if (result.tenant_score != null) {
+    return result;
+  }
+  return null;
+}
+
+function renderTrustCheckResult(result) {
+  var profile = getTrustCheckResultProfile(result);
+  if (!result || !profile) {
+    return null;
+  }
+
+  return e("div", { className: "list-stack", key: "result" }, [
+    result.subject_full_name
+      ? e(NoteBlock, {
+          key: "subject",
+          label: "Subject",
+          tone: "accent"
+        }, result.subject_full_name)
+      : null,
+    e("div", { className: "fact-grid", key: "profile" }, [
+      e(FactPill, {
+        key: "tenant",
+        label: "Tenant score",
+        value: String(profile.tenant_score),
+        tone: "accent"
+      }),
+      e(FactPill, {
+        key: "landlord",
+        label: "Landlord score",
+        value: String(profile.landlord_score),
+        tone: "accent"
+      }),
+      e(FactPill, {
+        key: "verification",
+        label: "Verification strength",
+        value: String(profile.verification_strength) + "%",
+        tone: "success"
+      }),
+      e(FactPill, {
+        key: "events",
+        label: profile.verified_tenancies == null ? "Trust events" : "Verified tenancies",
+        value: String(
+          profile.verified_tenancies == null
+            ? profile.trust_event_count || 0
+            : profile.verified_tenancies
+        )
+      })
+    ]),
+    e(
+      NoteBlock,
+      { key: "privacy", label: "Agency preview boundary", tone: "warning" },
+      "This preview shows aggregate score inputs and thresholds only. It does not expose the subject's private payment, deposit, maintenance, or timeline details."
+    ),
+    e(ScoreContributionPanel, {
+      key: "score-contribution",
+      summary: profile,
+      role: "tenant",
+      title: "Tenant score contribution preview",
+      copy:
+        "Listing thresholds use the tenant-side score and verification strength. These rows explain the aggregate score drivers behind the preview."
+    })
+  ]);
 }
 
 var applicationStatusOptions = [
@@ -1431,28 +1504,7 @@ export function AgencyWorkbenchPage() {
                 : "Save trust check"
             )
           ]),
-          trustCheckSubmission.result
-            ? e("div", { className: "list-stack", key: "result" }, [
-                trustCheckSubmission.result.subject_full_name
-                  ? e(NoteBlock, { key: "subject", label: "Subject", tone: "accent" }, trustCheckSubmission.result.subject_full_name)
-                  : null,
-                trustCheckSubmission.result.profile
-                  ? e("div", { className: "fact-grid", key: "profile" }, [
-                      e(FactPill, { key: "tenant", label: "Tenant score", value: String(trustCheckSubmission.result.profile.tenant_score), tone: "accent" }),
-                      e(FactPill, { key: "landlord", label: "Landlord score", value: String(trustCheckSubmission.result.profile.landlord_score), tone: "accent" }),
-                      e(FactPill, { key: "verification", label: "Verification strength", value: String(trustCheckSubmission.result.profile.verification_strength) + "%", tone: "success" }),
-                      e(FactPill, { key: "tenancies", label: "Verified tenancies", value: String(trustCheckSubmission.result.profile.verified_tenancies) })
-                    ])
-                  : trustCheckSubmission.result.tenant_score != null
-                    ? e("div", { className: "fact-grid", key: "preview-profile" }, [
-                        e(FactPill, { key: "tenant", label: "Tenant score", value: String(trustCheckSubmission.result.tenant_score), tone: "accent" }),
-                        e(FactPill, { key: "landlord", label: "Landlord score", value: String(trustCheckSubmission.result.landlord_score), tone: "accent" }),
-                        e(FactPill, { key: "verification", label: "Verification strength", value: String(trustCheckSubmission.result.verification_strength) + "%", tone: "success" }),
-                        e(FactPill, { key: "events", label: "Trust events", value: String(trustCheckSubmission.result.trust_event_count) })
-                      ])
-                    : null
-              ])
-            : null
+          renderTrustCheckResult(trustCheckSubmission.result)
         ])
       ])
     ]) : null,

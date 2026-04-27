@@ -76,7 +76,7 @@ The original launch-critical roadmap is complete through Sprint 16.
 
 This file stays summary-only. Detailed sprint history and checkpoint notes belong in `docs/SPRINTS.md`.
 
-The current roadmap lane is intentionally additive: improve operator clarity, bilingual usability, visual polish, and release readiness without reopening the core trust, scoring, security, or automation architecture.
+The current roadmap lane is intentionally additive: improve operator clarity, bilingual usability, score transparency, visual polish, and release readiness without reopening the core trust, scoring, security, or automation architecture.
 
 ### Sprint 17
 
@@ -120,8 +120,8 @@ Private GitHub publication and machine-to-machine bootstrap hardening for reliab
 
 ### Post-Sprint-20 Archive-Alignment UX Reset
 
-Object-first repair work on the rebuilt presentation layer: selected-property operations, create-new versus existing-record separation, compact payment/issue targeting, strict separation between daily actions and read-only timelines, role-wide history/log lane separation, explicit account workspace-role entitlements for tenant/landlord/agent/admin visibility, sidebar-only role switching after login, a local account-only reset path, and clearer role-specific score wording.
+Object-first repair work on the rebuilt presentation layer: selected-property operations, create-new versus existing-record separation, compact payment/issue targeting, strict separation between daily actions and read-only timelines, role-wide history/log lane separation, explicit account workspace-role entitlements for tenant/landlord/agent/admin visibility, sidebar-only role switching after login, a local account-only reset path, clearer role-specific score wording, and completed v1 score-contribution transparency.
 
-### Sprint 21: Motion, Accessibility, And Release Polish
+### Sprint 21: Motion, Accessibility, Score Transparency, And Release Polish
 
-Motion, accessibility, responsive behavior, design-system documentation, and release-level frontend polish.
+Score-contribution explainability is complete for the first Sprint 21 slice across `My Trust`, agency trust previews, and internal scoring controls. The remaining Sprint 21 lane is motion, accessibility, responsive behavior, design-system documentation, and release-level frontend polish.

@@ -902,7 +902,7 @@ The schema package describes the request and response contracts returned to the 
 - `TrustCheckValidationResponse`
   - Lightweight confirmation that the consent is valid.
 - `TrustProfileSummaryResponse`
-  - Summary profile shared with an agency after consent validation.
+  - Summary profile shared with an agency after consent validation, including aggregate `score_inputs` for contribution transparency.
 - `AgencyTrustCheckResponse`
   - Trust-check record summary.
 - `AgencyTrustCheckResultResponse`
@@ -1201,6 +1201,10 @@ Example:
 - A payment verdict issues a `tenant_score_delta` and `landlord_score_delta`.
 - The dispute queue action triggers a refresh.
 - `calculate_user_trust_scores` recomputes the user scores from all accepted/verified evidence and current adjudication adjustments.
+
+Transparency note:
+
+- Sprint 21 should surface the same contribution vocabulary in `TrustProfilePage.js`, agency trust previews, and internal scoring controls: neutral base score, tenant/landlord contribution rows, verification-strength contribution rows, and reviewer-entered adjudication deltas.
 
 ### `tenancies.py`
 
@@ -1738,6 +1742,35 @@ Definitions:
 - `LanguageProvider`
 - `useLanguage`
 
+#### `lib/scoreTransparency.js`
+
+Purpose:
+
+- frontend mirror of the v1 score contribution vocabulary,
+- builds tenant/landlord score rows, verification-strength rows, signed point labels, and contribution totals for user-facing explanation panels.
+
+Definitions:
+
+- `buildScoreContributionRows`
+- `buildVerificationContributionRows`
+- `formatSignedPoints`
+- `formatContributionRule`
+- `getScoreInputs`
+- `sumContributionRows`
+- `getScoreForRole`
+
+### Shared components
+
+#### `components/ScoreTransparency.js`
+
+- `ScoreFormulaReference`
+- `ScoreContributionPanel`
+
+Purpose:
+
+- renders the same scoring formula and contribution breakdown in `My Trust`, agency trust previews, and internal scoring controls,
+- keeps score explanation out of daily payment, deposit, and maintenance action forms.
+
 ### Pages
 
 #### `pages/LandingPage.js`
@@ -1788,6 +1821,7 @@ Purpose:
 Purpose:
 
 - scores,
+- role-specific score contribution breakdowns,
 - score history,
 - trust events,
 - trust-report consent create/revoke,
@@ -1895,7 +1929,7 @@ Purpose:
 - properties and custom tags,
 - listings and thresholds,
 - applications and decisions,
-- trust checks,
+- trust checks with aggregate score contribution previews,
 - team-access management.
 
 #### `pages/InternalOperationsPage.js`
@@ -1914,7 +1948,7 @@ Purpose:
 - reviewer/admin workspace:
   - tenancy/evidence/history review
   - dispute verdicts
-  - scoring control
+  - scoring control and score formula transparency
   - automation queue control
   - account workspace-role management
   - worker/notification visibility

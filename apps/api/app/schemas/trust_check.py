@@ -5,6 +5,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
+from app.schemas.score import TrustScoreInputsResponse
 from trustledger_domain import ConsentScope
 
 
@@ -47,6 +48,7 @@ class TrustProfileSummaryResponse(BaseModel):
     verification_strength: int
     scoring_version: str
     score_calculated_at: datetime
+    score_inputs: TrustScoreInputsResponse
     active_share_consents: int
     trust_event_count: int
     total_agency_trust_checks: int

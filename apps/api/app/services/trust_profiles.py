@@ -13,6 +13,7 @@ from app.models import (
     TrustReportConsent,
     User,
 )
+from app.schemas.score import TrustScoreInputsResponse
 from app.services.scoring import TrustScoreComputation
 from app.schemas.trust_check import TrustProfileSummaryResponse
 from trustledger_domain import (
@@ -141,6 +142,19 @@ def build_trust_profile_summary(
         verification_strength=score_computation.verification_strength,
         scoring_version=score_computation.scoring_version,
         score_calculated_at=score_computation.calculated_at,
+        score_inputs=TrustScoreInputsResponse(
+            tenant_counterparty_confirmed_tenancies=score_computation.inputs.tenant_counterparty_confirmed_tenancies,
+            tenant_verified_tenancies=score_computation.inputs.tenant_verified_tenancies,
+            landlord_counterparty_confirmed_tenancies=score_computation.inputs.landlord_counterparty_confirmed_tenancies,
+            landlord_verified_tenancies=score_computation.inputs.landlord_verified_tenancies,
+            accepted_tenant_evidence_documents=score_computation.inputs.accepted_tenant_evidence_documents,
+            accepted_landlord_evidence_documents=score_computation.inputs.accepted_landlord_evidence_documents,
+            accepted_tenant_counterparty_references=score_computation.inputs.accepted_tenant_counterparty_references,
+            accepted_landlord_counterparty_references=score_computation.inputs.accepted_landlord_counterparty_references,
+            accepted_history_imports=score_computation.inputs.accepted_history_imports,
+            tenant_adjudication_adjustment=score_computation.inputs.tenant_adjudication_adjustment,
+            landlord_adjudication_adjustment=score_computation.inputs.landlord_adjudication_adjustment,
+        ),
         active_share_consents=active_share_consents,
         trust_event_count=len(trust_events),
         total_agency_trust_checks=len(trust_checks),

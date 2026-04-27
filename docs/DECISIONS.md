@@ -780,3 +780,18 @@ The roles a user can open in the shell are now stored as account-level workspace
 These entitlements decide which workspace roles appear in the signed-in shell. They can be changed from the admin workspace, and at least one workspace role must remain on every account. The `internal` entitlement is synced with the platform admin system role so internal routes remain protected by existing backend RBAC. Agency actions still require both the `agency` entitlement and the relevant agency organization membership. Tenant and landlord actions still require the entitlement plus the relevant tenancy/property participation.
 
 Reason: the old model had only one global `system_role` plus organization memberships, which could not cleanly represent mixed accounts such as tenant/admin or standalone agent visibility. Explicit account entitlements make role visibility independent and editable without weakening record-level authorization.
+
+## D099: Score Transparency Is A Product Requirement, Not A Debug Detail
+
+Trust score surfaces must explain the visible score through user-facing contribution rows:
+
+- neutral base score,
+- tenant-side and landlord-side fixed contribution inputs,
+- verification-strength inputs,
+- reviewer-entered payment, deposit, and maintenance adjudication deltas.
+
+The explanation should use the same vocabulary in `My Trust`, agency trust previews, and internal scoring controls. It should not be scattered through daily payment, deposit, or maintenance action forms, because daily work and score/history explanation are separate concerns.
+
+Reason: trust scores affect screening and user confidence. Users should not need source-code knowledge or staff interpretation to understand why their score changed.
+
+Implementation note: the first Sprint 21 score-transparency checkpoint implements this through shared frontend score-transparency helpers, a reusable score contribution panel, agency preview `score_inputs`, and internal scoring controls that render the same formula vocabulary.

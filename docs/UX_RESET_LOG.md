@@ -335,3 +335,30 @@ For each slice of this reset:
   - `node --test apps\web\tests\navigation.test.mjs`
   - `npm test`
   - `npm run build`
+
+### 2026-04-27 - Slice 10: Score contribution transparency
+
+- Problem:
+  - users could see tenant-side and landlord-side scores but still had to infer how each score was built
+  - agency previews and internal scoring controls did not share the same user-facing vocabulary for base score, fixed inputs, verification strength, and adjudication deltas
+  - score explanation needed to stay in trust/preview/control lanes instead of being mixed into daily payment or ticket action forms
+- Rebuilt files changed:
+  - `apps/api/app/schemas/trust_check.py`
+  - `apps/api/app/services/trust_profiles.py`
+  - `apps/web/src/lib/scoreTransparency.js`
+  - `apps/web/src/components/ScoreTransparency.js`
+  - `apps/web/src/pages/TrustProfilePage.js`
+  - `apps/web/src/pages/AgencyWorkbenchPage.js`
+  - `apps/web/src/pages/InternalOperationsPage.js`
+  - score-transparency tests and continuity docs
+- What changed:
+  - agency trust profile previews now include aggregate score inputs
+  - `My Trust` shows the active tenant or landlord role's point-by-point score contribution breakdown
+  - verification-strength contribution rows are separate from tenant/landlord score rows
+  - agency trust previews show aggregate tenant score drivers with a privacy boundary
+  - internal scoring controls show the formula reference and exact immediate recalculation breakdowns
+- Verification:
+  - `.\.venv\Scripts\python -m unittest tests.test_trust_scores_api tests.test_consent_trust_checks_api tests.test_internal_scoring_api`
+  - `.\.venv\Scripts\python -m unittest tests.test_repo_layout tests.test_web_scaffold`
+  - `npm test`
+  - `npm run build`

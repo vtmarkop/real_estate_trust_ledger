@@ -107,6 +107,28 @@ This file should stay short, practical, and current. Long explanation belongs in
 - Next fix:
   - keep this wording style when agency previews or future score surfaces are audited
 
+### Score Contribution Transparency
+
+- Expected behavior:
+  - users should understand exactly why their current score and verification strength are what they are
+  - `My Trust` should show the neutral base score, fixed contribution rows, verification-strength rows, and any reviewer-entered adjudication deltas
+  - agency previews should explain the score dimensions and thresholds without exposing role-irrelevant private workflow detail
+  - internal scoring controls should make the same scoring inputs inspectable for support and review
+- Actual behavior:
+  - the backend returns score inputs and persists score history, including aggregate score inputs inside consent-based agency trust profile previews
+  - the formula is centralized and deterministic in the scoring service
+  - `My Trust` now shows the selected role's base score, confirmed tenancy, verified tenancy, accepted evidence, accepted reference, and adjudication-adjustment rows
+  - verification-strength contributions are shown separately from tenant/landlord score contributions
+  - agency trust previews show aggregate tenant score drivers with an explicit privacy boundary instead of exposing private payment/deposit/maintenance timelines
+  - internal scoring controls show the same scoring formula reference and immediate recalculation contribution breakdowns
+- Backend status: complete for the v1 transparency slice
+- Frontend status: complete for `My Trust`, agency trust previews, and internal scoring controls
+- Classification: `complete_and_obvious`
+- Next fix:
+  - visually verify the score panels with seeded records that include accepted evidence, references, verified tenancies, and final dispute verdict deltas
+  - keep score explanation separate from daily payment, deposit, and maintenance action forms in future UI work
+  - use the same shared score-transparency helper if new score surfaces are added
+
 ### Active Workspace Role Scoping
 
 - Expected behavior:
@@ -148,7 +170,7 @@ This file should stay short, practical, and current. Long explanation belongs in
     - property ownership and management assignment
     - tenancy setup and confirmation
     - artifact creation, library, and reference requests
-    - agency-facing score explanation outside live dispute cards
+    - agency-facing score explanation and point-by-point contribution transparency outside live dispute cards
     - agency screening and application movement
     - trust sharing, consent revoke, and access history
     - cross-role history and next-step framing after reviewer decisions
@@ -160,8 +182,9 @@ These are not yet confirmed as gaps, but they are the right places to inspect fi
 1. Property owner-managed versus agency-managed setup clarity
 2. Prospective tenant assignment versus activated tenancy transition
 3. Artifact upload versus artifact review/library separation
-4. Agency-facing score explanation outside live dispute cards and reviewer queues
+4. Visual verification of agency-facing score explanation outside live dispute cards and reviewer queues
 5. Agency screening next-step guidance after a trust-check result
 6. Consent/share-token lifecycle clarity for end users
 7. Cross-role history and timeline clarity after reviewer decisions
 8. Remaining action-form density versus archive interaction clarity in `Rent & Issues`
+9. Visual verification of the completed score contribution breakdowns in `My Trust`, agency previews, and internal scoring controls

@@ -2,6 +2,7 @@ import React from "react";
 
 import { useSession } from "../app/session.js";
 import { SegmentedTabs } from "../components/SegmentedTabs.js";
+import { ScoreContributionPanel } from "../components/ScoreTransparency.js";
 import {
   FactPill,
   HeroStat,
@@ -373,7 +374,17 @@ export function TrustProfilePage() {
           ? "This lane evaluates you as a landlord or property owner. It is not showing tenant-side application behavior."
           : "This lane evaluates you as a renter. It is not a rating for your current landlord."
       ),
-      e("div", { className: "fact-grid", key: "inputs" }, roleInputCards)
+      e("div", { className: "fact-grid", key: "inputs" }, roleInputCards),
+      e(ScoreContributionPanel, {
+        key: "score-contribution",
+        summary: summary,
+        role: isLandlordWorkspace ? "landlord" : "tenant",
+        title: isLandlordWorkspace
+          ? "Why my landlord-side score is this number"
+          : "Why my tenant-side score is this number",
+        copy:
+          "The score starts from a neutral base and then adds accepted, confirmed, verified, or adjudicated signals. These rows show the current contribution totals."
+      })
     ])
       : null,
     trustSection === "sharing"
@@ -574,7 +585,12 @@ export function TrustProfilePage() {
                     key: "reason",
                     label: "Calculation reason",
                     tone: "accent"
-                  }, formatLabel(entry.calculation_reason))
+                  }, formatLabel(entry.calculation_reason)),
+                  e(NoteBlock, {
+                    key: "source-explanation",
+                    label: "Source categories",
+                    tone: "warning"
+                  }, "The snapshot reflects accepted evidence, verified or confirmed tenancies, history imports, and final adjudication deltas available at calculation time. The Overview lane shows the current point-by-point totals.")
                 ]
               });
             })

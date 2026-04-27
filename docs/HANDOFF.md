@@ -5,20 +5,18 @@ This file is the current resume point for any new device, new Codex thread, or i
 ## Current Checkpoint
 
 - Program state: completed through Sprint 20
-- Latest non-sprint checkpoint: archive-alignment UX reset in progress, with selected-property operations, compact payment/issue targeting, daily/history separation, create-vs-existing action separation, role-wide history lane separation, backend-backed explicit account workspace-role entitlements, sidebar-only role switching after login, account role management, a local account-only reset path, tenancy role/counterparty clarity, and score-role clarity completed
+- Latest non-sprint checkpoint: archive-alignment UX reset in progress, with selected-property operations, compact payment/issue targeting, daily/history separation, create-vs-existing action separation, role-wide history lane separation, backend-backed explicit account workspace-role entitlements, sidebar-only role switching after login, account role management, a local account-only reset path, tenancy role/counterparty clarity, score-role clarity, and the first Sprint 21 score-contribution transparency slice completed
 - Next planned sprint: Sprint 21
-- Recommended immediate focus: visually review the four clean local accounts role by role, confirm the tenant/admin and tenant/landlord mixed accounts only expose their assigned workspaces at a time, then continue the broader workflow continuity audit across the remaining role surfaces
+- Recommended immediate focus: visually review the four clean local accounts role by role, confirm the tenant/admin and tenant/landlord mixed accounts only expose their assigned workspaces at a time, continue the broader workflow continuity audit, and then continue the remaining Sprint 21 frontend release polish around motion, accessibility, responsive behavior, and design-system documentation
 - Repository bootstrap state: published to GitHub as `real_estate_trust_ledger` and ready to clone on a new machine
 
 ## Current Git Sync State
 
 - Active branch: `codex/archive-ux-reset`
-- Latest pushed checkpoint commit: see the current tip of `origin/codex/archive-ux-reset`
-- Remote branch status: pushed to `origin/codex/archive-ux-reset`
+- Latest local checkpoint commit: see the current local tip of `codex/archive-ux-reset` after the score-transparency checkpoint commit
+- Remote branch status: may be ahead of `origin/codex/archive-ux-reset` until the latest checkpoint is pushed
 - Pull request shortcut:
   - `https://github.com/vtmarkop/real_estate_trust_ledger/pull/new/codex/archive-ux-reset`
-- Intentional local-only leftover:
-  - `apps/web/package-lock.json` is still locally modified and was not included in the UX reset checkpoint push because it looked like unrelated lockfile churn
 
 ## Last Completed Work
 
@@ -57,6 +55,7 @@ The newest UX-reset checkpoint added:
 - active workspace-role scoping now happens after authentication from the shell, not from a pre-login dropdown, and hides role-irrelevant navigation, direct routes, score dimensions, tenancy records, property setup, and operations records in the main tenant/landlord workspaces
 - follow-up runtime fix bound the `My Trust` page to the session hook so role-scoped trust score rendering no longer crashes with `session is not defined`
 - score presentation in `Home` and `My Trust` now clarifies that landlord-side score is the signed-in user's own landlord/property-owner dimension, not the score of a tenant's current landlord
+- the score-transparency slice now exposes contribution breakdowns in `My Trust`, agency trust-check previews, and internal scoring controls, using the same base-score, contribution, verification-strength, and adjudication-delta vocabulary everywhere
 - explicit account workspace-role entitlements now live on `User.workspace_roles`, are returned from `/auth/me`, drive the shell role menu, and are editable from `Review Center > Roles` by platform admins
 - tenant, landlord, and agency backend routes now check the matching workspace entitlement in addition to existing tenancy/property/membership permissions, so a visible role and a record permission are separate requirements
 - the current local database was reset with the destructive account-only script; it wipes local data and creates only the four requested accounts:
@@ -80,7 +79,7 @@ That means the highest-value continuation work is not "add random new capability
 
 - verify every important workflow end to end
 - confirm each role sees the minimum necessary surface
-- confirm score, dispute, appeal, and review state changes are obvious to users
+- confirm score, score-contribution, dispute, appeal, and review state changes are obvious to users
 - fix any workflow that is technically implemented but operationally confusing
 
 ## Latest Audit Outcome
@@ -123,18 +122,24 @@ Record active findings in `docs/WORKFLOW_GAPS.md`.
    - property creation and assignment
    - tenancy creation and activation
    - evidence upload and review
-   - score side effects outside the live dispute cards
+   - score side effects and score-contribution transparency outside the live dispute cards
    - consent and trust-sharing flows
    - agency screening and application review flows
    - reviewer-facing history and next-step clarity after non-dispute decisions
-4. For each workflow, decide whether the gap is:
+4. Visually verify the completed Sprint 21 score-transparency slice:
+   - confirm `My Trust` shows the neutral base score and each active contribution for the selected tenant or landlord role
+   - confirm verification-strength contributions stay separate from tenant and landlord score contributions
+   - confirm reviewer-entered payment, deposit, and maintenance verdict deltas are labeled as adjudication adjustments
+   - confirm agency previews explain aggregate score drivers without exposing role-irrelevant private workflow history
+   - confirm internal scoring controls use the same vocabulary as user and agency surfaces
+5. For each workflow, decide whether the gap is:
    - backend logic
    - frontend visibility
    - wording/status clarity
    - role/handoff continuity
-5. Treat the dispute and appeal re-review flow as the reference model for clear role handoffs
-6. Fix gaps by extending the existing architecture, not by creating parallel flows
-7. Update:
+6. Treat the dispute and appeal re-review flow as the reference model for clear role handoffs
+7. Fix gaps by extending the existing architecture, not by creating parallel flows
+8. Update:
    - `docs/WORKFLOW_GAPS.md`
    - `docs/WORKFLOW_MAP.md`
    - `docs/WORKFLOW_DIAGRAMS.md`
@@ -169,5 +174,5 @@ Continue the Trust Ledger rebuild from the current repo state.
 
 Read README.md, AGENTS.md, docs/HANDOFF.md, docs/WORKFLOW_GAPS.md, docs/SPRINTS.md, docs/ROADMAP.md, docs/DECISIONS.md, docs/WORKFLOW_MAP.md, and docs/WORKFLOW_DIAGRAMS.md first.
 
-We are currently on branch codex/archive-ux-reset, post-Sprint-20. The dispute and appeal handoff pass is complete, and the active checkpoint is the archive-alignment UX reset with selected-property targeting, Daily work versus History separation, create-vs-existing payment/issue modes, selected payment/issue detail focus, role-wide history/log lane separation, explicit account workspace-role entitlements, sidebar-only role switching after login, account role management, local account-only reset support, tenancy role/counterparty clarity, and score-role clarity complete.
+We are currently on branch codex/archive-ux-reset, post-Sprint-20. The dispute and appeal handoff pass is complete, and the active checkpoint is the archive-alignment UX reset with selected-property targeting, Daily work versus History separation, create-vs-existing payment/issue modes, selected payment/issue detail focus, role-wide history/log lane separation, explicit account workspace-role entitlements, sidebar-only role switching after login, account role management, local account-only reset support, tenancy role/counterparty clarity, score-role clarity, and the first Sprint 21 score-contribution transparency slice complete.
 ```

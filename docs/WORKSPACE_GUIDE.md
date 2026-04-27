@@ -235,6 +235,9 @@ Friendly explanation:
 - `Tenant-side score` evaluates you as a renter.
 - `Landlord-side score` evaluates the same account only when you act as a landlord or property owner. It is not a score for your current landlord.
 - The active workspace role decides which score dimension is shown first.
+- The score breakdown starts from a neutral `500`, then shows exactly what was added by confirmed tenancies, reviewer-verified tenancies, accepted evidence, accepted references, and final reviewer adjudication adjustments.
+- Verification strength is shown separately from the trust score. It measures confidence in the record and is capped at `100%`.
+- A verified tenancy also counts as counterparty-confirmed, so one verified tenancy contributes to both rows.
 
 ### Listings
 

@@ -68,6 +68,7 @@ Outputs:
 - `tenant_score`
 - `landlord_score`
 - `verification_strength`
+- aggregate score contribution inputs for explainability surfaces
 
 Rules:
 
@@ -75,6 +76,7 @@ Rules:
 - Verified history matters more than self-reported history.
 - Disputes do not create permanent trust damage until confirmed or resolved.
 - Score mutations must be written through structured audit events.
+- User-facing score surfaces must explain the contribution model, including base score, accepted verification signals, and reviewer-entered adjudication deltas.
 
 ## Security Baseline
 

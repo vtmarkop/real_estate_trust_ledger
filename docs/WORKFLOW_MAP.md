@@ -83,6 +83,7 @@ Current UX-reset note:
 - inside `Daily work`, `Payments` and `Maintenance` first split create-new work from existing saved records, then use compact record dropdowns so only one payment or issue detail/action pane is expanded at a time
 - inside `History`, the selected property shows the read-only timeline and saved proof/notes/verdict details for the active operational lane, built from existing payment, deposit, or maintenance workflow timestamps
 - agency `Screening` is now action-only, while saved trust checks live in `Screening history`
+- score transparency now uses one contribution vocabulary across `My Trust`, agency trust previews, and internal scoring controls instead of hiding the scoring formula in source code or daily action forms
 
 ## Role Model
 
@@ -667,9 +668,17 @@ Important architectural difference from the archive MVP:
 
 1. Score is viewed from `My Trust`.
 2. The personal UI labels tenant-side score as the user's renter dimension and landlord-side score as the user's own landlord/property-owner dimension.
-3. Internal reviewer can queue a refresh or batch recalculation.
-4. Worker/runtime processes queued items.
-5. Score history remains visible to the subject user with tenant-side and landlord-side labels.
+3. The Overview lane shows base score, role-specific contribution rows, verification-strength contribution rows, and adjudication adjustments.
+4. Internal reviewer can queue a refresh or batch recalculation.
+5. Worker/runtime processes queued items.
+6. Score history remains visible to the subject user with tenant-side and landlord-side labels.
+
+### Score contribution transparency
+
+- `My Trust` shows the neutral base score, fixed tenant/landlord contribution rows, verification-strength contribution rows, and reviewer-entered adjudication deltas for the active role.
+- Agency trust previews explain aggregate tenant-side score drivers and verification strength without exposing role-irrelevant private workflow history.
+- Internal scoring controls use the same contribution vocabulary so support can explain the same numbers users see.
+- This explanation belongs in trust, preview, and scoring-control surfaces, not inside daily payment/deposit/maintenance action forms.
 
 ## Workflow 15: Automation, Notifications, Worker Runs
 
@@ -773,6 +782,7 @@ Important architectural difference from the archive MVP:
    - trust events
    - sharing/access history
 3. If the account has no landlord-side inputs yet, the UI explains that the landlord-side score is inactive/neutral and is not a score for the user's current landlord.
+4. The Overview lane shows the point-by-point contribution explanation so users can see how the base score, accepted evidence, references, verified tenancies, history imports, and reviewer verdict deltas affect the visible score.
 
 ## Workflow 18: Demo Data Scenarios
 

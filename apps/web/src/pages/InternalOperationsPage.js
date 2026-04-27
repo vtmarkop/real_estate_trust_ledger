@@ -14,6 +14,10 @@ import {
   StatusBadge,
   TimelineEntry
 } from "../components/PageChrome.js";
+import {
+  ScoreContributionPanel,
+  ScoreFormulaReference
+} from "../components/ScoreTransparency.js";
 import { SegmentedTabs } from "../components/SegmentedTabs.js";
 import {
   buildDisputeLifecycle,
@@ -170,7 +174,8 @@ export function InternalOperationsPage() {
   var scoreRequestActionTuple = React.useState({
     kind: "",
     id: "",
-    message: null
+    message: null,
+    result: null
   });
   var scoreRequestAction = scoreRequestActionTuple[0];
   var setScoreRequestAction = scoreRequestActionTuple[1];
@@ -546,7 +551,8 @@ export function InternalOperationsPage() {
     setScoreRequestAction({
       kind: runImmediately ? "score-now" : "score-queue",
       id: "",
-      message: null
+      message: null,
+      result: null
     });
     try {
       var payload = {
@@ -555,7 +561,7 @@ export function InternalOperationsPage() {
       if (scoreRequestForm.scheduled_for) {
         payload.scheduled_for = scoreRequestForm.scheduled_for;
       }
-      await apiRequest(
+      var scoreResult = await apiRequest(
         runImmediately ? "/internal/scoring/recalculate" : "/internal/scoring/requests",
         {
           method: "POST",
@@ -572,13 +578,15 @@ export function InternalOperationsPage() {
         id: "",
         message: runImmediately
           ? "Score recalculated immediately."
-          : "Score refresh request queued."
+          : "Score refresh request queued.",
+        result: runImmediately ? scoreResult : null
       });
     } catch (error) {
       setScoreRequestAction({
         kind: "",
         id: "",
-        message: error.message || "Unable to queue the score refresh request."
+        message: error.message || "Unable to queue the score refresh request.",
+        result: null
       });
     }
   }
@@ -587,7 +595,8 @@ export function InternalOperationsPage() {
     setScoreRequestAction({
       kind: "score-process",
       id: request.id,
-      message: null
+      message: null,
+      result: null
     });
     try {
       await apiRequest("/internal/scoring/requests/" + request.id + "/process", {
@@ -597,13 +606,15 @@ export function InternalOperationsPage() {
       setScoreRequestAction({
         kind: "",
         id: "",
-        message: "Score request processed."
+        message: "Score request processed.",
+        result: null
       });
     } catch (error) {
       setScoreRequestAction({
         kind: "",
         id: "",
-        message: error.message || "Unable to process this score request."
+        message: error.message || "Unable to process this score request.",
+        result: null
       });
     }
   }
@@ -1153,6 +1164,7 @@ export function InternalOperationsPage() {
           { className: "empty-copy", key: "copy" },
           "Queue a score refresh by user email, run an immediate recalculation, or schedule a batch refresh for an agency organization."
         ),
+        e(ScoreFormulaReference, { key: "score-formula" }),
         e("div", { className: "auth-form", key: "request-form" }, [
           e("div", { className: "form-grid", key: "request-grid" }, [
             e("label", { className: "field", key: "email" }, [
@@ -1207,6 +1219,27 @@ export function InternalOperationsPage() {
           ]),
           scoreRequestAction.message
             ? e("div", { className: "form-alert", key: "message" }, scoreRequestAction.message)
+            : null,
+          scoreRequestAction.result
+            ? e("div", { className: "list-stack", key: "direct-result" }, [
+                e(ScoreContributionPanel, {
+                  key: "tenant-result",
+                  summary: scoreRequestAction.result,
+                  role: "tenant",
+                  title: "Immediate tenant-side contribution result",
+                  copy:
+                    "This is the exact contribution breakdown returned by the direct recalculation."
+                }),
+                e(ScoreContributionPanel, {
+                  key: "landlord-result",
+                  summary: scoreRequestAction.result,
+                  role: "landlord",
+                  showVerification: false,
+                  title: "Immediate landlord-side contribution result",
+                  copy:
+                    "This uses the same scoring vocabulary for the user's landlord/property-owner dimension."
+                })
+              ])
             : null
         ]),
         e("div", { className: "auth-form", key: "batch-form" }, [

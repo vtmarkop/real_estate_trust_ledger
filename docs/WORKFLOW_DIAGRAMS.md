@@ -362,6 +362,7 @@ flowchart TD
     H --> I["TrustScore updated"]
     H --> J["TrustScoreHistory appended"]
     I --> K["My Trust shows current score"]
+    I --> M["My Trust / agency / internal show contribution rows"]
     J --> L["My Trust shows history"]
 ```
 
@@ -370,6 +371,8 @@ flowchart TD
 The scoring effect is not distributed randomly across route files anymore. The routes trigger workflows, but the trust-score computation is centralized in the scoring service.
 
 Score-role note: `tenant_score` and `landlord_score` are both dimensions of the signed-in user's own trust profile. The landlord-side score is not a rating for a tenant's current landlord; it only becomes active when that same account acts as a landlord or property owner.
+
+Sprint 21 transparency note: score calculation is now visible in trust surfaces through the neutral base score, active contribution rows, verification-strength inputs, and reviewer-entered adjudication deltas. This stays in `My Trust`, agency previews, and internal scoring controls rather than being scattered into daily operations forms.
 
 ## Diagram 11: Demo Scenario Coverage
 
