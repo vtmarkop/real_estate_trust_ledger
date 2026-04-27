@@ -67,6 +67,7 @@ This matters because it gives us clearer separation of concerns both in the UI a
 Current UX-reset note:
 
 - the non-dispute `Rent & Issues` lanes now begin with property targeting, so normal tenant/landlord work can stay inside one selected tenancy context instead of requiring cross-property scrolling
+- tenancy metadata in `Rental Records` and `Rent & Issues` now identifies the signed-in user's role and the counterparty instead of repeating generic tenant/landlord labels
 - the selected property now separates `Daily work` from read-only `History`, so forms/actions and timeline browsing are no longer mixed together
 - inside `Daily work`, `Payments` and `Maintenance` first split create-new work from existing saved records, then use compact record dropdowns so only one payment or issue detail/action pane is expanded at a time
 - inside `History`, the selected property shows the read-only timeline and saved proof/notes/verdict details for the active operational lane, built from existing payment, deposit, or maintenance workflow timestamps

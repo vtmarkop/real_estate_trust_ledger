@@ -94,6 +94,33 @@ function buildReferenceRequestForm(sessionUserId, tenancy) {
   return null;
 }
 
+function buildTenancyPartyContext(tenancy, userId) {
+  if (userId === tenancy.tenant_user_id) {
+    return {
+      role: "Tenant",
+      counterpartyLabel: "Landlord",
+      counterpartyName: tenancy.landlord_full_name || "Landlord"
+    };
+  }
+
+  if (userId === tenancy.landlord_user_id) {
+    return {
+      role: "Landlord",
+      counterpartyLabel: "Tenant",
+      counterpartyName: tenancy.tenant_full_name || "Tenant"
+    };
+  }
+
+  return {
+    role: "Participant",
+    counterpartyLabel: "Other party",
+    counterpartyName: [
+      tenancy.tenant_full_name || "Tenant",
+      tenancy.landlord_full_name || "Landlord"
+    ].join(" / ")
+  };
+}
+
 function buildReferenceFulfillmentForm() {
   return {
     artifact_name: "",
@@ -1720,6 +1747,7 @@ export function RecordsPage() {
               tenancy.verification_status !== "reviewed" &&
               tenancy.verification_status !== "verified" &&
               !tenancy.review_requested_at;
+            var tenancyPartyContext = buildTenancyPartyContext(tenancy, session.user.id);
 
             return e("section", { className: "detail-panel", key: tenancy.id }, [
               e("h2", { className: "detail-title", key: "title" }, tenancy.property_label),
@@ -1743,9 +1771,15 @@ export function RecordsPage() {
               e("div", { className: "fact-grid", key: "meta" }, [
                 e(FactPill, { key: "city", label: "City", value: tenancy.city }),
                 e(FactPill, {
-                  key: "parties",
-                  label: "Parties",
-                  value: tenancy.tenant_full_name + " and " + tenancy.landlord_full_name,
+                  key: "role",
+                  label: "Your role",
+                  value: tenancyPartyContext.role,
+                  tone: "accent"
+                }),
+                e(FactPill, {
+                  key: "counterparty",
+                  label: tenancyPartyContext.counterpartyLabel,
+                  value: tenancyPartyContext.counterpartyName,
                   tone: "accent"
                 })
               ]),

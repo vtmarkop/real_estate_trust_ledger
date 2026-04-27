@@ -67,6 +67,8 @@ flowchart TD
 - `Rental Records > Tenancy records`
 - `Review Center > Reviews`
 
+UX clarity note: tenancy cards now show the signed-in user's role and the relevant tenant/landlord counterparty instead of a generic `Parties` label.
+
 ### Backend surface
 
 - properties routes

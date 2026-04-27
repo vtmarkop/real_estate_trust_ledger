@@ -270,6 +270,7 @@ When to use it:
 Friendly explanation:
 - This is the best place to start if you want to "build your file."
 - You do not need to know internal IDs. The app now lets you create a tenancy by using the other person's email.
+- Tenancy cards show your role and the actual counterparty, not a generic parties label.
 - Your uploaded documents are stored privately. Depending on the environment, that storage may be local private storage or S3-compatible object storage such as MinIO, but the app keeps the same safe download flow either way.
 
 ### Rent & Issues
@@ -298,7 +299,8 @@ When to use it:
 
 Friendly explanation:
 - Think of this page as the day-to-day "running the rental" page.
-- First choose one property. Then use `Daily work` for actions and `History` for the read-only timeline of what already happened.
+- First choose one property. The property summary shows your role in that tenancy and the counterparty you are dealing with.
+- Then use `Daily work` for actions and `History` for the read-only timeline of what already happened.
 - In `Payments`, use `Create new` only for a blank new payment form, or `Existing records` to open the payment dropdown and act on a saved payment.
 - In `Maintenance`, use `Report new` only for a blank new issue form, or `Existing issues` to open the issue dropdown and act on a saved issue.
 - Use `History` for saved proof files, old notes, dispute context, verdict details, and timelines. Those details are intentionally not repeated inside action cards.

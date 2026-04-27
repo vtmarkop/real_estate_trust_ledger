@@ -62,6 +62,7 @@ This file should stay short, practical, and current. Long explanation belongs in
   - the third UX-reset slice separates selected-property `Daily work` from read-only `History`, so action forms are no longer mixed into timeline browsing
   - the fourth UX-reset slice separates `Create new` payment work and `Report new` maintenance work from existing saved record detail/actions, so past items no longer appear underneath blank creation forms
   - the fifth UX-reset slice removes read-only proof, notes, dispute, verdict, and evidence history from operation action cards; those details now live in the selected lane's `History` view
+  - tenancy metadata in `Rental Records` and `Rent & Issues` now shows the signed-in user's role and the counterparty instead of the vague `Parties: Tenant and Landlord` label
   - payment and maintenance detail actions now render one focused record at a time under `Daily work`, closer to the archive's details-modal pattern without weakening rebuilt API rules
   - the page still needs live visual review to confirm the form density feels simple enough for normal tenant/landlord use
 - Backend status: complete

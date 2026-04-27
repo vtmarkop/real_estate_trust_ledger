@@ -213,3 +213,23 @@ For each slice of this reset:
   - `npm run build`
 - Next likely slice:
   - visually review tenant, landlord, agency, and reviewer demo accounts for any smaller inline read-only history blocks that should move into explicit history/log lanes
+
+### 2026-04-27 - Slice 6: Tenancy role and counterparty clarity
+
+- Problem:
+  - tenancy metadata showed `Parties: Tenant and Landlord`, which looked like a tab but did not explain what the current user should do with that information
+  - in demo data, the generic names made the pill especially pointless
+- Rebuilt files changed:
+  - `apps/web/src/pages/RecordsPage.js`
+  - `apps/web/src/pages/OperationsPage.js`
+- What changed:
+  - tenancy metadata now shows `Your role`
+  - tenancy metadata now shows the relevant `Tenant` or `Landlord` counterparty name
+  - the `Rent & Issues` property dropdown now describes the current user's relationship to the counterparty instead of listing both parties as a generic pair
+  - the vague `Parties` pill was removed from `Rental Records`, the `Rent & Issues` property picker, and the selected-property header
+- Verification:
+  - `node --check apps/web/src/pages/RecordsPage.js`
+  - `node --check apps/web/src/pages/OperationsPage.js`
+  - `.\.venv\Scripts\python -m unittest tests.test_repo_layout tests.test_web_scaffold`
+  - `npm test`
+  - `npm run build`

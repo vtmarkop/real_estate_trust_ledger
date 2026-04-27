@@ -1781,6 +1781,7 @@ Purpose:
 - `buildPropertyCreateForm`
 - `buildPropertyEditForm`
 - `buildReferenceRequestForm`
+- `buildTenancyPartyContext`
 - `buildReferenceFulfillmentForm`
 - `updateEntityForm`
 - `updateSimpleForm`
@@ -1797,6 +1798,7 @@ Purpose:
 - evidence upload,
 - history imports,
 - reference requests,
+- role/counterparty clarity on tenancy cards,
 - property tagging.
 
 This is one of the most important pages because it covers the "build the trust record" lane.
@@ -1815,6 +1817,7 @@ This is one of the most important pages because it covers the "build the trust r
 - `buildDepositDisputeForm`
 - `buildMaintenanceForm`
 - `buildSimpleNotesForm`
+- `buildTenancyPartyContext`
 - `formatArtifactMeta`
 - `OperationsPage`
 
@@ -1826,6 +1829,7 @@ Purpose:
   - maintenance
   - disputes
   - appeals
+- selected-property role/counterparty context
 
 This page is the closest equivalent to the practical "active tenancy operations desk."
 
