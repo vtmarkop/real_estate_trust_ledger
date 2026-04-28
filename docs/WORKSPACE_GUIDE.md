@@ -2,9 +2,9 @@
 
 This guide explains the rebuilt Trust Ledger app in plain language.
 
-The rebuilt frontend now supports both English and Greek. Use the floating `EN` / `ΕΛ` language switch in the bottom-right corner of the web app to move between languages at any time. The switch now updates the live workspace immediately, so you should not need to refresh the page after changing language.
+The rebuilt frontend now supports both English and Greek. Use the floating `EN` / `ΕΛ` language switch in the bottom-right corner of the web app to move between languages at any time. The switch now updates the live workspace immediately, so you should not need to refresh the page after changing language. The current Greek pass covers the likely visible app copy across the public page, signed-in shell, tenant/landlord workspaces, agency tools, internal review center, score explanations, and reset operations flows; names, uploaded filenames, emails, and user-entered notes remain exactly as entered.
 
-The rebuilt frontend also now supports `Comfort` and `Compact` density modes. Use the density control in the top-right area of the signed-in shell when you want heavier workspaces like `Agency Tools` or `Review Center` to show more information with less spacing.
+The signed-in workspace now uses the compact layout by default. The earlier `Comfort` / `Compact` density choice was removed because it behaved too much like a simple zoom control instead of a meaningful workflow mode. If a future density option returns, it should create an obvious layout difference rather than slightly changing spacing.
 
 The signed-in shell now also supports an active role mode. Sign in with email and password first, then switch assigned roles from the sidebar when your account has more than one role:
 

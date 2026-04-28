@@ -1726,6 +1726,14 @@ Important detail:
 Purpose:
 
 - English/Greek translation layer for the rebuilt frontend.
+- merges the baseline dictionary with `lib/i18n-extra.js`, where the post-reset Greek patch dictionary now carries most visible product copy added after Sprint 18.
+- translates complete text nodes, selected visible props, and guarded dynamic phrases such as role-only shell status, selected-property history phrases, score contribution breakdown titles, contribution-point rules, tenancy-status labels, and listing-application status messages.
+
+Maintenance note:
+
+- When adding visible copy, prefer a complete dictionary entry in `EL_PATCH_TRANSLATIONS`.
+- If the visible phrase is composed from runtime data, add a narrow dynamic rule in `translateCore` and cover it in `apps/web/tests/i18n.test.mjs`.
+- Do not translate user-entered data, uploaded filenames, email addresses, or organization/property names by dictionary.
 
 Definitions:
 

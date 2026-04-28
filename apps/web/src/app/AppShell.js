@@ -9,7 +9,7 @@ import {
   useSession
 } from "./session.js";
 
-var DENSITY_STORAGE_KEY = "trustledger.workspace-density";
+export var WORKSPACE_DENSITY = "compact";
 
 function formatRoleLabel(value) {
   return String(value || "")
@@ -18,18 +18,6 @@ function formatRoleLabel(value) {
     .replace(/\b\w/g, function capitalize(character) {
       return character.toUpperCase();
     });
-}
-
-export function normalizeDensity(value) {
-  return value === "compact" ? "compact" : "comfortable";
-}
-
-export function resolveInitialDensity() {
-  if (typeof window === "undefined") {
-    return "comfortable";
-  }
-
-  return normalizeDensity(window.localStorage.getItem(DENSITY_STORAGE_KEY));
 }
 
 export function buildNavigation(session) {
@@ -127,29 +115,24 @@ export function AppShell() {
   var logoutState = React.useState(false);
   var isLoggingOut = logoutState[0];
   var setIsLoggingOut = logoutState[1];
-  var densityTuple = React.useState(resolveInitialDensity);
-  var density = densityTuple[0];
-  var setDensity = densityTuple[1];
   var navigation = buildNavigation(session);
   var activeWorkspaceRole = session.activeWorkspaceRole || "tenant";
   var activeWorkspaceLabel = getWorkspaceRoleLabel(activeWorkspaceRole);
   var activeWorkspaceCopy = getWorkspaceRoleCopy(activeWorkspaceRole);
 
-  React.useEffect(function syncDensityPreference() {
-    if (typeof window === "undefined" || typeof document === "undefined") {
+  React.useEffect(function syncFixedWorkspaceDensity() {
+    if (typeof document === "undefined") {
       return undefined;
     }
 
-    var normalizedDensity = normalizeDensity(density);
-    window.localStorage.setItem(DENSITY_STORAGE_KEY, normalizedDensity);
-    document.documentElement.setAttribute("data-density", normalizedDensity);
+    document.documentElement.setAttribute("data-density", WORKSPACE_DENSITY);
 
-    return function cleanupDensityPreference() {
-      if (document.documentElement.getAttribute("data-density") === normalizedDensity) {
+    return function cleanupFixedWorkspaceDensity() {
+      if (document.documentElement.getAttribute("data-density") === WORKSPACE_DENSITY) {
         document.documentElement.removeAttribute("data-density");
       }
     };
-  }, [density]);
+  }, []);
 
   async function handleLogout() {
     setIsLoggingOut(true);
@@ -166,7 +149,7 @@ export function AppShell() {
     navigate("/app");
   }
 
-  return e("div", { className: "app-shell", "data-density": density }, [
+  return e("div", { className: "app-shell", "data-density": WORKSPACE_DENSITY }, [
     e("aside", { className: "app-sidebar", key: "sidebar" }, [
       e("div", { className: "brand-lockup", key: "brand" }, [
         e("div", { className: "brand-mark", key: "mark" }, "TL"),
@@ -248,37 +231,6 @@ export function AppShell() {
           )
         ]),
         e("div", { className: "topbar-controls", key: "controls" }, [
-          e("div", { className: "density-switch", key: "density" }, [
-            e("span", { className: "density-label", key: "label" }, "Density"),
-            e(
-              "button",
-              {
-                type: "button",
-                className:
-                  density === "comfortable"
-                    ? "density-button is-active"
-                    : "density-button",
-                onClick: function onClick() {
-                  setDensity("comfortable");
-                },
-                key: "comfortable"
-              },
-              "Comfort"
-            ),
-            e(
-              "button",
-              {
-                type: "button",
-                className:
-                  density === "compact" ? "density-button is-active" : "density-button",
-                onClick: function onClick() {
-                  setDensity("compact");
-                },
-                key: "compact"
-              },
-              "Compact"
-            )
-          ]),
           e(
             "div",
             { className: "status-chip", key: "status" },

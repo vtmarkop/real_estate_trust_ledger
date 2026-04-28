@@ -6,7 +6,7 @@ import {
   getAvailableWorkspaceRoles,
   normalizeWorkspaceRole
 } from "../src/app/session.js";
-import { buildNavigation, normalizeDensity } from "../src/app/AppShell.js";
+import { buildNavigation, WORKSPACE_DENSITY } from "../src/app/AppShell.js";
 
 test("buildCapabilities exposes agency and internal access separately", function () {
   const user = {
@@ -160,9 +160,6 @@ test("workspace roles are account entitlements, not inferred personas", function
   assert.equal(normalizeWorkspaceRole("landlord", tenantOnlyUser, []), "tenant");
 });
 
-test("normalizeDensity keeps the compact toggle strict and safe", function () {
-  assert.equal(normalizeDensity("compact"), "compact");
-  assert.equal(normalizeDensity("comfortable"), "comfortable");
-  assert.equal(normalizeDensity("dense"), "comfortable");
-  assert.equal(normalizeDensity(null), "comfortable");
+test("workspace shell uses compact density as the fixed layout", function () {
+  assert.equal(WORKSPACE_DENSITY, "compact");
 });

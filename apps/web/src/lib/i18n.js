@@ -35,9 +35,6 @@ var EL_TRANSLATIONS = {
   "Reviewer tools available": "Διαθέσιμα εργαλεία ελεγκτή",
   "Agency workspace available": "Διαθέσιμος χώρος πρακτορείου",
   "Personal workspace": "Προσωπικός χώρος",
-  Density: "Πυκνότητα",
-  Comfort: "Άνεση",
-  Compact: "Συμπαγές",
   "Evidence-backed leasing workflows with cleaner operational lanes.":
     "Ροές μίσθωσης με τεκμήρια και καθαρότερους λειτουργικούς διαδρόμους.",
   "internal review": "εσωτερική αξιολόγηση",
@@ -565,6 +562,11 @@ function translateCore(value, language) {
     }
   }
 
+  var alreadyAppliedEarlyMatch = value.match(/^You already applied to this listing\. Current status: (.+)$/);
+  if (alreadyAppliedEarlyMatch) {
+    return "Έχεις ήδη κάνει αίτηση σε αυτή την αγγελία. Τρέχουσα κατάσταση: " + translateCore(alreadyAppliedEarlyMatch[1], language);
+  }
+
   if (value.indexOf(" to ") !== -1) {
     var relationshipSegments = value.split(" to ");
     if (relationshipSegments.length === 2) {
@@ -651,6 +653,103 @@ function translateCore(value, language) {
   var requestedByMatch = value.match(/^Requested by (.+)$/);
   if (requestedByMatch) {
     return "Ζητήθηκε από " + requestedByMatch[1];
+  }
+
+  var rolesUpdatedMatch = value.match(/^Roles updated for (.+)$/);
+  if (rolesUpdatedMatch) {
+    return "Οι ρόλοι ενημερώθηκαν για " + rolesUpdatedMatch[1];
+  }
+
+  var roleInfoOnlyMatch = value.match(/^(.+) info only$/);
+  if (roleInfoOnlyMatch) {
+    return translateCore(roleInfoOnlyMatch[1], language) + " μόνο για ενημέρωση";
+  }
+
+  var loadedMatch = value.match(/^Loaded (.+)$/);
+  if (loadedMatch) {
+    return "Φορτώθηκαν " + translateCore(loadedMatch[1], language);
+  }
+
+  var showingMatch = value.match(/^Showing (.+)$/);
+  if (showingMatch) {
+    return "Εμφάνιση " + translateCore(showingMatch[1], language);
+  }
+
+  var versionMatch = value.match(/^Version (.+)$/);
+  if (versionMatch) {
+    return "Έκδοση " + versionMatch[1];
+  }
+
+  var homeForMatch = value.match(/^(.+) home for (.+)$/);
+  if (homeForMatch) {
+    return translateCore(homeForMatch[1], language) + " αρχική για " + homeForMatch[2];
+  }
+
+  var scoreContributionBreakdownMatch = value.match(/^(.+) score contribution breakdown$/);
+  if (scoreContributionBreakdownMatch) {
+    return "Ανάλυση συνεισφοράς βαθμολογίας " + translateCore(scoreContributionBreakdownMatch[1], language).toLowerCase();
+  }
+
+  var tenancyStatusMatch = value.match(/^Tenancy (.+)$/);
+  if (tenancyStatusMatch) {
+    return "Μίσθωση " + translateCore(tenancyStatusMatch[1], language).toLowerCase();
+  }
+
+  var contributionRuleMatch = value.match(/^([0-9]+(?:[.,][0-9]+)?) x ([-+]?[0-9]+(?:[.,][0-9]+)?) pts$/);
+  if (contributionRuleMatch) {
+    return contributionRuleMatch[1] + " x " + contributionRuleMatch[2] + " πόντοι";
+  }
+
+  var movedCaseMatch = value.match(/^(.+) moved this case into reviewer flow\.$/);
+  if (movedCaseMatch) {
+    return movedCaseMatch[1] + " μετέφερε αυτή την υπόθεση στη ροή ελέγχου.";
+  }
+
+  var movedIssueMatch = value.match(/^(.+) moved this issue into reviewer flow\.$/);
+  if (movedIssueMatch) {
+    return movedIssueMatch[1] + " μετέφερε αυτό το ζήτημα στη ροή ελέγχου.";
+  }
+
+  var sentDepositMatch = value.match(/^(.+) sent this deposit case to review\.$/);
+  if (sentDepositMatch) {
+    return sentDepositMatch[1] + " έστειλε την υπόθεση εγγύησης για έλεγχο.";
+  }
+
+  var requestedReferenceMatch = value.match(/^(.+) requested your reference$/);
+  if (requestedReferenceMatch) {
+    return requestedReferenceMatch[1] + " ζήτησε τη σύστασή σου";
+  }
+
+  var historyTimelineMatch = value.match(/^(.+) history timeline$/);
+  if (historyTimelineMatch) {
+    return "Χρονολόγιο ιστορικού " + translateCore(historyTimelineMatch[1], language).toLowerCase();
+  }
+
+  var readOnlyHistoryMatch = value.match(
+    /^Read-only (.+) handoffs for this selected property in time order\.$/
+  );
+  if (readOnlyHistoryMatch) {
+    return (
+      "Χρονολογημένες, μόνο για ανάγνωση, μεταβιβάσεις για " +
+      translateCore(readOnlyHistoryMatch[1], language).toLowerCase() +
+      " στο επιλεγμένο ακίνητο."
+    );
+  }
+
+  var noHistoryMatch = value.match(
+    /^No (.+) history has been recorded for this property yet\.$/
+  );
+  if (noHistoryMatch) {
+    return (
+      "Δεν έχει καταγραφεί ακόμη ιστορικό " +
+      translateCore(noHistoryMatch[1], language).toLowerCase() +
+      " για αυτό το ακίνητο."
+    );
+  }
+
+  var issueReportedMatch = value.match(/^Issue reported: (.+)$/);
+  if (issueReportedMatch) {
+    return "Αναφέρθηκε ζήτημα: " + issueReportedMatch[1];
   }
 
   return value;

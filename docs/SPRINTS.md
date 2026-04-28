@@ -11,6 +11,7 @@
 - Post-Sprint-20 dispute continuity checkpoint: complete
 - Post-Sprint-20 archive-alignment UX reset checkpoint: in progress
 - Sprint 21 score-transparency checkpoint: complete
+- Sprint 21 Greek localization quality checkpoint: complete
 - Next planned delivery lane: remaining Sprint 21 frontend experience track for motion, accessibility, responsive behavior, design-system documentation, and release-level frontend refinement
 - Sprint 17 outcome: the rebuilt app now has substantially fuller frontend parity for core operator and review actions, clearer dispute handling, visible evidence upload/storage behavior, and better day-to-day agency portfolio management
 - Post-Sprint-17 remediation outcome: archive-parity audit completed, operational document uploads now reach payments/deposits/maintenance in the web app, single-session revoke is available, internal automation cleanup actions are surfaced, and regression coverage was expanded around operational artifact links
@@ -18,12 +19,12 @@
 - Pre-Sprint-19 documentation checkpoint outcome: the repo now includes a full technical codebase reference, corrected operator-guide wording, aligned runtime status markers, and stronger source-of-truth coverage before the visual/frontend polish track
 - Post-Sprint-18 workflow simplification checkpoint outcome: the heaviest frontend workspaces now run in focused lanes, agency and review pages are split by concern, and the repo includes a dedicated workflow map that traces the main business paths from backend logic to frontend usage
 - Post-Sprint-18 workflow diagram checkpoint outcome: the repo now includes Mermaid diagrams for the implemented product flows, covering workspace access, property-to-tenancy setup, artifacts/evidence, listings/applications, trust sharing, disputes, review queues, scoring, and demo scenarios
-- Sprint 19 outcome: the rebuilt frontend now has a darker cinematic design system, variable-driven density tokens, a real compact workspace mode in the shell, stronger panel/nav hierarchy, and a more production-grade visual foundation for the page-by-page conversion sprint
+- Sprint 19 outcome: the rebuilt frontend now has a darker cinematic design system, variable-driven density tokens, a compact workspace foundation in the shell, stronger panel/nav hierarchy, and a more production-grade visual foundation for the page-by-page conversion sprint
 - Sprint 20 outcome: the rebuilt frontend now applies the cinematic system across the main pages with richer hero summaries, clearer section framing, additional lane separation on trust, marketplace, and security surfaces, a completed localization refactor that fixes the live language switch and materially expands English/Greek coverage on the Sprint 20 pages, and a surgical UI-semantics pass that distinguishes statuses, facts, notes, and timeline activity far more clearly across the heavier operational cards
 - Post-Sprint-20 cross-device continuity checkpoint outcome: the repo now includes a durable handoff system with repo-wide agent instructions, a live handoff file, a workflow-gap tracker, and a daily workstation sync guide so work can continue safely across devices and new Codex threads
 - Post-Sprint-20 GitHub bootstrap checkpoint outcome: the repo is now prepared for a first private GitHub publish as `real_estate_trust_ledger`, with local-only databases and artifact storage excluded from version control and the full first-push plus home/work sync procedure documented in-project
 - Post-Sprint-20 dispute continuity checkpoint outcome: payment, deposit, and maintenance dispute flows now surface explicit appeal and re-review handoffs in both the user dispute desk and `Review Center > Disputes`, and the payment counterparty decision path is blocked once a case has moved into reviewer flow
-- Post-Sprint-20 archive-alignment UX reset status: the reset is underway on branch `codex/archive-ux-reset`, with the first slices restoring property targeting, strict `Daily work` versus read-only `History` separation, create-new versus existing-record separation inside payments and maintenance, compact payment/issue detail dropdowns in `Rent & Issues`, agency `Screening history` separation, tenancy role/counterparty clarity, explicit account workspace-role entitlements for tenant/landlord/agent/admin visibility, sidebar-only role switching after login, a local account-only reset path, clearer tenant-side versus landlord-side score wording, and completed score-contribution transparency across `My Trust`, agency previews, and internal scoring controls while preserving the rebuilt dispute/reviewer/scoring architecture
+- Post-Sprint-20 archive-alignment UX reset status: the reset is underway on branch `codex/archive-ux-reset`, with the first slices restoring property targeting, strict `Daily work` versus read-only `History` separation, create-new versus existing-record separation inside payments and maintenance, compact payment/issue detail dropdowns in `Rent & Issues`, agency `Screening history` separation, tenancy role/counterparty clarity, explicit account workspace-role entitlements for tenant/landlord/agent/admin visibility, sidebar-only role switching after login, fixed compact shell density, a local account-only reset path, clearer tenant-side versus landlord-side score wording, completed score-contribution transparency across `My Trust`, agency previews, and internal scoring controls, and completed Greek localization quality coverage for likely visible reset workspace copy while preserving the rebuilt dispute/reviewer/scoring architecture
 - Remaining planned launch track: none
 - Remaining planned post-pilot experience track: Sprint 21
 
@@ -1381,14 +1382,14 @@ Next slice:
 - verify accessibility for contrast, focus, keyboard use, and responsive breakpoints,
 - add role-specific score contribution transparency so users can see base score, fixed score inputs, verification-strength inputs, and reviewer-entered dispute deltas,
 - make score history explain which accepted, verified, or adjudicated source changed the score without mixing that explanation into daily payment or ticket action forms,
-- document the upgraded design system and compact-mode rules,
+- document the upgraded design system and fixed compact shell rules,
 - finish with a polished frontend release candidate on top of the existing stable backend.
 
 ### Planned Exit Criteria
 
 - the upgraded interface is visually stronger without regressing usability or accessibility,
 - score and verification-strength changes are understandable from `My Trust`, agency score previews, and internal scoring controls without reading source code,
-- compact mode and cinematic styling are documented and maintainable,
+- fixed compact shell behavior and cinematic styling are documented and maintainable,
 - the frontend is ready for a controlled visual-release push.
 
 ### Current Progress
@@ -1401,6 +1402,21 @@ Completed in the score-transparency checkpoint:
 - internal scoring controls now include the formula reference and show exact tenant/landlord contribution panels after an immediate recalculation,
 - regression coverage now checks the frontend helper math, agency preview score-input serialization, and scaffold wiring for the shared score-transparency surfaces.
 
+Completed in the Greek localization quality checkpoint:
+
+- the visible frontend copy was scanned across app shell, shared components, page surfaces, dispute workflow helpers, and score-transparency helpers for likely untranslated Greek strings,
+- `EL_PATCH_TRANSLATIONS` now covers the newer archive-reset and Sprint 21 score-transparency copy across role-scoped home, trust, records, operations, agency, internal, and security surfaces,
+- dynamic translation handling now covers role-only shell status, selected-property history phrases, score contribution breakdown titles, contribution-point rules, tenancy-status labels, account role updates, loaded/showing messages, and listing-application status confirmations,
+- the earlier dispute/review patch block that reintroduced English strings is now overridden by a final Greek block,
+- frontend localization tests now pin key workspace labels, UX-reset copy, score-transparency copy, and dynamic operational phrases.
+
+Completed in the fixed compact density checkpoint:
+
+- the weak `Comfort` / `Compact` density switch was removed from the signed-in shell,
+- signed-in workspaces now always use the compact shell density,
+- navigation tests now pin compact density as a fixed shell contract instead of a user preference,
+- docs now state that future density choices should only return if they create an obvious layout difference.
+
 ### Current Deliverables
 
 - `apps/api/app/schemas/trust_check.py`
@@ -1410,7 +1426,10 @@ Completed in the score-transparency checkpoint:
 - `apps/web/src/pages/TrustProfilePage.js`
 - `apps/web/src/pages/AgencyWorkbenchPage.js`
 - `apps/web/src/pages/InternalOperationsPage.js`
+- `apps/web/src/app/AppShell.js`
+- `apps/web/src/styles/index.css`
 - `apps/web/tests/scoreTransparency.test.mjs`
+- `apps/web/tests/navigation.test.mjs`
 - `tests/test_trust_scores_api.py`
 - `tests/test_web_scaffold.py`
 
@@ -1419,5 +1438,6 @@ Completed in the score-transparency checkpoint:
 Continue the remaining Sprint 21 release-polish lane:
 
 - visually review the score panels with seeded data that includes evidence, references, verified tenancies, and final dispute verdict deltas,
+- visually review the Greek UI with the minimal four-account reset and the rich demo seed to catch any awkward copy that only appears with real user data,
 - complete accessibility, focus, responsive, and motion checks across the reset workspaces,
-- document compact-mode and visual-system rules before considering the frontend release candidate complete.
+- document fixed compact shell and visual-system rules before considering the frontend release candidate complete.

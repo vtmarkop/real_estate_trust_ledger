@@ -91,6 +91,21 @@ This file should stay short, practical, and current. Long explanation belongs in
   - visually review tenant, landlord, agency, and reviewer demo accounts for any remaining inline read-only history blocks
   - keep current actions and read-only history separated in future UI changes
 
+### Shell Density Choice
+
+- Expected behavior:
+  - workspace display options should create an obvious workflow benefit
+  - if a control only changes spacing like a weak zoom setting, it should not distract users from role and task choices
+- Actual behavior:
+  - the old `Comfort` / `Compact` switch did not create a clear enough product difference
+  - signed-in workspaces now use fixed compact density, which is the more useful view for the current operational pages
+  - the shell no longer renders a density control
+- Backend status: not applicable
+- Frontend status: complete
+- Classification: `complete_and_obvious`
+- Next fix:
+  - only reintroduce a density option if it produces a visibly different layout model, not just slightly different spacing
+
 ### Tenant-Side Versus Landlord-Side Score Meaning
 
 - Expected behavior:
@@ -128,6 +143,26 @@ This file should stay short, practical, and current. Long explanation belongs in
   - visually verify the score panels with seeded records that include accepted evidence, references, verified tenancies, and final dispute verdict deltas
   - keep score explanation separate from daily payment, deposit, and maintenance action forms in future UI work
   - use the same shared score-transparency helper if new score surfaces are added
+
+### Greek Localization Coverage
+
+- Expected behavior:
+  - switching the web app to Greek should translate visible product copy across public, tenant, landlord, agency, and internal workspaces
+  - workflow-critical wording should read as real product Greek, not partial literal labels mixed with English fallback text
+  - dynamic UI phrases should translate as whole product phrases where possible, especially role scoping, selected-property history, score contribution explanations, tenancy status labels, and application status confirmations
+- Actual behavior:
+  - the localization layer already existed from Sprint 18, but later UX-reset copy and score-transparency copy had outgrown the original dictionary
+  - a later patch block also reintroduced several dispute/review strings in English, which made the Greek UI look inconsistent on the very workflows under active review
+  - the current pass extends the Greek patch dictionary across visible reset surfaces, fixes the English dispute/review overrides with a final Greek override block, and adds dynamic translation rules for role-only shell status, score contribution breakdown titles, contribution-point rules, tenancy-status labels, and listing-application status messages
+  - a focused static scan of likely visible frontend strings now reports no likely untranslated visible strings after filtering out code-only tokens, storage keys, API paths, and intentional placeholder names
+  - user-entered data, uploaded filenames, email addresses, organization/property names, and API-provided free text remain untranslated by design
+- Backend status: not applicable
+- Frontend status: complete for the current visible app copy pass, with regression coverage for key labels and dynamic phrases
+- Classification: `complete_and_obvious`
+- Next fix:
+  - visually review the app in Greek with both the minimal four-account reset and the richer demo seed
+  - when adding new visible copy, extend `EL_PATCH_TRANSLATIONS` or a dynamic translation rule in the same change
+  - avoid using concatenated fragments for user-facing sentences unless the composed final string is still translated by `translateText`
 
 ### Active Workspace Role Scoping
 

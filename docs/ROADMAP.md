@@ -104,7 +104,7 @@ Mermaid diagrams for the implemented workflows so role handoffs and review paths
 
 ### Sprint 19: Compact Workspace And Cinematic Visual System
 
-Compact mode, density tokens, and a cinematic visual system with stronger hierarchy and heavier operational clarity.
+Compact workspace foundations, density tokens, and a cinematic visual system with stronger hierarchy and heavier operational clarity.
 
 ### Sprint 20: Page-by-page Visual Conversion
 
@@ -120,8 +120,8 @@ Private GitHub publication and machine-to-machine bootstrap hardening for reliab
 
 ### Post-Sprint-20 Archive-Alignment UX Reset
 
-Object-first repair work on the rebuilt presentation layer: selected-property operations, create-new versus existing-record separation, compact payment/issue targeting, strict separation between daily actions and read-only timelines, role-wide history/log lane separation, explicit account workspace-role entitlements for tenant/landlord/agent/admin visibility, sidebar-only role switching after login, a local account-only reset path, clearer role-specific score wording, and completed v1 score-contribution transparency.
+Object-first repair work on the rebuilt presentation layer: selected-property operations, create-new versus existing-record separation, compact payment/issue targeting, strict separation between daily actions and read-only timelines, role-wide history/log lane separation, explicit account workspace-role entitlements for tenant/landlord/agent/admin visibility, sidebar-only role switching after login, fixed compact shell density, a local account-only reset path, clearer role-specific score wording, and completed v1 score-contribution transparency.
 
 ### Sprint 21: Motion, Accessibility, Score Transparency, And Release Polish
 
-Score-contribution explainability is complete for the first Sprint 21 slice across `My Trust`, agency trust previews, and internal scoring controls. The remaining Sprint 21 lane is motion, accessibility, responsive behavior, design-system documentation, and release-level frontend polish.
+Score-contribution explainability is complete for the first Sprint 21 slice across `My Trust`, agency trust previews, and internal scoring controls. A Greek localization quality pass is also complete for likely visible web workspace copy, including the archive-reset role, history, score, operations, agency, and internal surfaces. The remaining Sprint 21 lane is motion, accessibility, responsive behavior, design-system documentation, live Greek/English visual review with seeded data, and release-level frontend polish.

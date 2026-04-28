@@ -362,3 +362,60 @@ For each slice of this reset:
   - `.\.venv\Scripts\python -m unittest tests.test_repo_layout tests.test_web_scaffold`
   - `npm test`
   - `npm run build`
+
+### 2026-04-28 - Slice 11: Greek localization quality pass
+
+- Problem:
+  - the Greek UI had become uneven after the UX reset and score-transparency work because newer visible strings were not consistently covered by the Sprint 18 dictionary
+  - one later patch block also overrode several dispute/review Greek strings back into English
+  - dynamic phrases such as role-only shell status, score contribution breakdown titles, selected-property history text, tenancy status labels, and application status confirmations needed whole-phrase translation rather than fragment-by-fragment fallback
+- Rebuilt files changed:
+  - `apps/web/src/lib/i18n.js`
+  - `apps/web/src/lib/i18n-extra.js`
+  - `apps/web/tests/i18n.test.mjs`
+  - continuity docs
+- What stayed preserved from the rebuild:
+  - the existing `LanguageProvider`, `translateText`, and `e(...)` wrapper architecture
+  - English source copy as the canonical UI source language
+  - role/workflow behavior, backend APIs, and score logic
+- What changed:
+  - the Greek patch dictionary now covers the likely visible app copy across public, shell, tenant, landlord, agency, internal, score, history, and operations reset surfaces
+  - the final Greek override block fixes the dispute/review strings that had been reintroduced in English
+  - dynamic translation rules now cover role-only shell status, loaded/showing messages, account role updates, score contribution breakdown labels, contribution-point rules, tenancy-status labels, selected-property history phrases, and listing-application status confirmations
+  - localization tests now pin newer UX-reset and score-transparency copy in addition to the older Sprint 18 coverage
+- Verification:
+  - `node --check apps\web\src\lib\i18n.js`
+  - `node --check apps\web\src\lib\i18n-extra.js`
+  - focused static scan of likely visible frontend strings returned zero likely untranslated visible strings after filtering code-only tokens and intentional data placeholders
+  - `npm test`
+- Next likely slice:
+  - visually review the Greek UI with both the minimal account-only reset and the rich demo seed
+  - continue Sprint 21 accessibility, responsive, motion, and design-system documentation work
+
+### 2026-04-28 - Slice 12: Fixed compact workspace density
+
+- Problem:
+  - the `Comfort` / `Compact` density switch did not create a meaningful enough layout difference
+  - the control felt like another choice for users while mostly acting like a weak zoom/spacing toggle
+  - the compact view is currently the clearer view for data-heavy tenant, landlord, agency, and internal workspaces
+- Rebuilt files changed:
+  - `apps/web/src/app/AppShell.js`
+  - `apps/web/src/styles/index.css`
+  - `apps/web/src/lib/i18n.js`
+  - `apps/web/src/lib/i18n-extra.js`
+  - `apps/web/tests/navigation.test.mjs`
+  - continuity docs
+- What changed:
+  - signed-in workspaces now always set the shell density to `compact`
+  - the topbar density switch was removed
+  - unused Greek dictionary entries for the removed density labels were removed
+  - stale local density preferences are ignored by the shell contract
+  - docs now state that future density options should only return if they create an obvious workflow/layout difference
+- Verification:
+  - `node --check apps\web\src\app\AppShell.js`
+  - `node --check apps\web\src\lib\i18n.js`
+  - `node --check apps\web\src\lib\i18n-extra.js`
+  - stale density switch scan found no old shell helpers or CSS controls
+  - `npm test`
+  - `npm run build`
+  - `.\.venv\Scripts\python -m unittest tests.test_repo_layout tests.test_web_scaffold`
