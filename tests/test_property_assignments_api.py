@@ -164,6 +164,184 @@ class PropertyAssignmentApiTests(unittest.TestCase):
         self.assertEqual(len(tenant_properties.json()), 1)
         self.assertEqual(tenant_properties.json()[0]["assigned_tenant_user_email"], tenant.email)
 
+    def test_agency_can_create_assigned_inventory_visible_in_agency_workspace(self) -> None:
+        agent = self.seed_user(
+            email="agent-inventory@example.com",
+            full_name="Inventory Agent",
+            password="agent-password-123",
+            workspace_roles=(AccountWorkspaceRole.AGENCY,),
+        )
+
+        agency_payload = self.create_agency(
+            owner_email=agent.email,
+            owner_password="agent-password-123",
+        )
+
+        agent_client = self.new_client()
+        self.login(agent_client, email=agent.email, password="agent-password-123")
+        create_property = agent_client.post(
+            "/api/v1/properties",
+            json={
+                "property_label": "Agency Inventory Flat",
+                "address_line1": "15 Operator Street",
+                "city": "Athens",
+                "country_code": "GR",
+                "management_mode": "agency_managed",
+                "assigned_agency_organization_id": agency_payload["id"],
+                "assigned_agency_user_email": agent.email,
+                "custom_tags": ["listing-ready"],
+            },
+        )
+        self.assertEqual(create_property.status_code, 201, create_property.text)
+        property_payload = create_property.json()
+        self.assertEqual(property_payload["management_mode"], "agency_managed")
+        self.assertEqual(property_payload["assigned_agency_organization_name"], "Blue Key Realty")
+        self.assertEqual(property_payload["assigned_agency_user_full_name"], "Inventory Agent")
+
+        my_properties = agent_client.get("/api/v1/properties/mine")
+        self.assertEqual(my_properties.status_code, 200, my_properties.text)
+        self.assertEqual(len(my_properties.json()), 1)
+        self.assertEqual(my_properties.json()[0]["id"], property_payload["id"])
+
+        save_tags = agent_client.patch(
+            f"/api/v1/properties/{property_payload['id']}",
+            json={"custom_tags": ["listing-ready", "agency-inventory"]},
+        )
+        self.assertEqual(save_tags.status_code, 200, save_tags.text)
+        self.assertEqual(save_tags.json()["custom_tags"], ["listing-ready", "agency-inventory"])
+
+        denied_core_edit = agent_client.patch(
+            f"/api/v1/properties/{property_payload['id']}",
+            json={"property_label": "Renamed By Agency"},
+        )
+        self.assertEqual(denied_core_edit.status_code, 403, denied_core_edit.text)
+
+    def test_agency_can_assign_created_inventory_to_existing_landlord(self) -> None:
+        agent = self.seed_user(
+            email="agent-owner-link@example.com",
+            full_name="Owner Link Agent",
+            password="agent-password-123",
+            workspace_roles=(AccountWorkspaceRole.AGENCY,),
+        )
+        landlord = self.seed_user(
+            email="assigned-landlord@example.com",
+            full_name="Assigned Landlord",
+            password="landlord-password-123",
+            workspace_roles=(AccountWorkspaceRole.LANDLORD,),
+        )
+        tenant = self.seed_user(
+            email="tenant-owner-link@example.com",
+            full_name="Owner Link Tenant",
+            password="tenant-password-123",
+        )
+
+        agency_payload = self.create_agency(
+            owner_email=agent.email,
+            owner_password="agent-password-123",
+        )
+
+        agent_client = self.new_client()
+        self.login(agent_client, email=agent.email, password="agent-password-123")
+        create_property = agent_client.post(
+            "/api/v1/properties",
+            json={
+                "property_label": "Landlord Assigned Inventory",
+                "address_line1": "18 Owner Street",
+                "city": "Athens",
+                "country_code": "GR",
+                "management_mode": "agency_managed",
+                "assigned_agency_organization_id": agency_payload["id"],
+                "assigned_agency_user_email": agent.email,
+            },
+        )
+        self.assertEqual(create_property.status_code, 201, create_property.text)
+        property_payload = create_property.json()
+        self.assertIsNone(property_payload["owner_landlord_user_email"])
+
+        assign_landlord = agent_client.patch(
+            f"/api/v1/properties/{property_payload['id']}",
+            json={"owner_landlord_email": landlord.email},
+        )
+        self.assertEqual(assign_landlord.status_code, 200, assign_landlord.text)
+        assigned_payload = assign_landlord.json()
+        self.assertEqual(assigned_payload["owner_landlord_user_id"], str(landlord.id))
+        self.assertEqual(assigned_payload["owner_landlord_user_full_name"], "Assigned Landlord")
+        self.assertEqual(assigned_payload["owner_landlord_user_email"], landlord.email)
+
+        landlord_client = self.new_client()
+        self.login(landlord_client, email=landlord.email, password="landlord-password-123")
+        landlord_properties = landlord_client.get("/api/v1/properties/mine")
+        self.assertEqual(landlord_properties.status_code, 200, landlord_properties.text)
+        self.assertEqual(len(landlord_properties.json()), 1)
+        self.assertEqual(landlord_properties.json()[0]["id"], property_payload["id"])
+
+        renamed = landlord_client.patch(
+            f"/api/v1/properties/{property_payload['id']}",
+            json={"property_label": "Landlord Accepted Inventory"},
+        )
+        self.assertEqual(renamed.status_code, 200, renamed.text)
+        self.assertEqual(renamed.json()["property_label"], "Landlord Accepted Inventory")
+
+        tenancy = landlord_client.post(
+            "/api/v1/tenancies",
+            json={
+                "property_id": property_payload["id"],
+                "lease_start_date": "2026-05-01",
+                "lease_end_date": "2027-04-30",
+                "monthly_rent_minor": 90000,
+                "deposit_minor": 180000,
+                "currency_code": "EUR",
+                "tenant_user_id": str(tenant.id),
+                "landlord_user_id": str(landlord.id),
+            },
+        )
+        self.assertEqual(tenancy.status_code, 201, tenancy.text)
+        self.assertEqual(tenancy.json()["property_label"], "Landlord Accepted Inventory")
+
+    def test_property_owner_assignment_requires_landlord_role(self) -> None:
+        agent = self.seed_user(
+            email="agent-owner-reject@example.com",
+            full_name="Owner Reject Agent",
+            password="agent-password-123",
+            workspace_roles=(AccountWorkspaceRole.AGENCY,),
+        )
+        tenant = self.seed_user(
+            email="not-a-landlord@example.com",
+            full_name="Not A Landlord",
+            password="tenant-password-123",
+        )
+
+        agency_payload = self.create_agency(
+            owner_email=agent.email,
+            owner_password="agent-password-123",
+        )
+
+        agent_client = self.new_client()
+        self.login(agent_client, email=agent.email, password="agent-password-123")
+        create_property = agent_client.post(
+            "/api/v1/properties",
+            json={
+                "property_label": "Reject Owner Inventory",
+                "address_line1": "19 Owner Street",
+                "city": "Athens",
+                "country_code": "GR",
+                "management_mode": "agency_managed",
+                "assigned_agency_organization_id": agency_payload["id"],
+                "assigned_agency_user_email": agent.email,
+            },
+        )
+        self.assertEqual(create_property.status_code, 201, create_property.text)
+
+        assign_landlord = agent_client.patch(
+            f"/api/v1/properties/{create_property.json()['id']}",
+            json={"owner_landlord_email": tenant.email},
+        )
+        self.assertEqual(assign_landlord.status_code, 409, assign_landlord.text)
+        self.assertEqual(
+            assign_landlord.json()["detail"],
+            "The selected property owner does not have the landlord role.",
+        )
+
     def test_assigned_agency_operator_can_update_tags_but_not_core_property_fields(self) -> None:
         landlord = self.seed_user(
             email="landlord2@example.com",

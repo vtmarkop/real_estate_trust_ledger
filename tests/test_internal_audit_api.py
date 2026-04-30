@@ -92,12 +92,12 @@ class InternalAuditApiTests(unittest.TestCase):
         self.assertEqual(response.status_code, 201, response.text)
         return response.json()
 
-    def test_reviewer_can_read_audit_logs_for_consent_and_trust_check_flows(self) -> None:
+    def test_admin_can_read_audit_logs_for_consent_and_trust_check_flows(self) -> None:
         self.seed_user(
             email="reviewer@example.com",
             full_name="Reviewer User",
             password="reviewer-password-123",
-            system_role=SystemRole.REVIEWER,
+            system_role=SystemRole.ADMIN,
             workspace_roles=(AccountWorkspaceRole.INTERNAL,),
         )
         self.seed_user(
@@ -184,12 +184,12 @@ class InternalAuditApiTests(unittest.TestCase):
         self.assertEqual(consent_logs.json()[0]["organization_id"], agency["id"])
         self.assertEqual(consent_logs.json()[0]["subject_user_email"], "tenant@example.com")
 
-    def test_reviewer_can_read_audit_logs_for_automation_operations(self) -> None:
+    def test_admin_can_read_audit_logs_for_automation_operations(self) -> None:
         self.seed_user(
             email="reviewer@example.com",
             full_name="Reviewer User",
             password="reviewer-password-123",
-            system_role=SystemRole.REVIEWER,
+            system_role=SystemRole.ADMIN,
             workspace_roles=(AccountWorkspaceRole.INTERNAL,),
         )
         subject = self.seed_user(
@@ -267,7 +267,7 @@ class InternalAuditApiTests(unittest.TestCase):
             email="reviewer@example.com",
             full_name="Reviewer User",
             password="reviewer-password-123",
-            system_role=SystemRole.REVIEWER,
+            system_role=SystemRole.ADMIN,
             workspace_roles=(AccountWorkspaceRole.INTERNAL,),
         )
         self.seed_user(

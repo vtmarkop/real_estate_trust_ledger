@@ -17,7 +17,8 @@ Read these files first, in this order, before making product, architectural, or 
 7. `docs/ARCHITECTURE.md`
 8. `docs/WORKFLOW_MAP.md`
 9. `docs/WORKFLOW_DIAGRAMS.md`
-10. `docs/CODEBASE_REFERENCE.md`
+10. `docs/WORKFLOW_QA_PLAN.md`
+11. `docs/CODEBASE_REFERENCE.md`
 
 If the work is operational or local-run related, also read:
 

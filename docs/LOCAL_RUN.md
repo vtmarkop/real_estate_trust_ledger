@@ -207,3 +207,17 @@ Then use the reviewer account:
 If you want a clean local demo database again, delete `apps\api\trust_ledger.db`, rerun the migration command, and rerun `dev_seed.py`.
 
 If you want the clean role-test database, run `dev_reset_minimal_users.py` after migrations instead of `dev_seed.py`.
+
+## Troubleshooting
+
+### Records Page Shows Internal Server Error After A Pull
+
+If a page such as `Rental Records` suddenly says `Records unavailable` / `Internal Server Error` after new backend model work, first check that the local SQLite database has been migrated to the latest Alembic head:
+
+```powershell
+Push-Location apps\api
+..\..\.venv\Scripts\python -m alembic upgrade head
+Pop-Location
+```
+
+This is non-destructive. It applies schema migrations without wiping the local seed data.

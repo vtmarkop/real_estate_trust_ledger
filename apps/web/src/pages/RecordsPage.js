@@ -11,7 +11,7 @@ import {
 } from "../components/PageChrome.js";
 import { SegmentedTabs } from "../components/SegmentedTabs.js";
 import { apiRequest } from "../lib/api.js";
-import { e } from "../lib/i18n.js";
+import { e, getLanguageLocale } from "../lib/i18n.js";
 
 function buildEvidenceForm(sessionUserId, tenancy) {
   return {
@@ -76,6 +76,26 @@ function buildPropertyEditForm(propertyRecord) {
   };
 }
 
+function buildOwnerListingForm(propertyRecord) {
+  return {
+    title: propertyRecord ? propertyRecord.property_label + " listing" : "",
+    description: "",
+    monthly_rent: "",
+    deposit: "",
+    currency_code: "EUR",
+    minimum_tenant_score: "0",
+    minimum_verification_strength: "0"
+  };
+}
+
+function buildApplicationTenancyForm() {
+  var today = new Date().toISOString().slice(0, 10);
+  return {
+    lease_start_date: today,
+    lease_end_date: ""
+  };
+}
+
 function buildReferenceRequestForm(sessionUserId, tenancy) {
   if (tenancy.tenant_user_id === sessionUserId) {
     return {
@@ -119,6 +139,17 @@ function buildTenancyPartyContext(tenancy, userId) {
       tenancy.landlord_full_name || "Landlord"
     ].join(" / ")
   };
+}
+
+function formatRecordsTenancySelectorLabel(tenancy, userId) {
+  var partyContext = buildTenancyPartyContext(tenancy, userId);
+  return [
+    tenancy.property_label,
+    tenancy.city,
+    partyContext.role + " with " + partyContext.counterpartyLabel + ": " + partyContext.counterpartyName
+  ]
+    .filter(Boolean)
+    .join(" | ");
 }
 
 function matchesWorkspaceRole(tenancy, userId, workspaceRole) {
@@ -166,6 +197,41 @@ function parseMinorAmount(value) {
   return Math.round(Number(value || 0) * 100);
 }
 
+function formatMinorAmount(minorAmount, currencyCode) {
+  return new Intl.NumberFormat(getLanguageLocale(), {
+    style: "currency",
+    currency: currencyCode || "EUR",
+    maximumFractionDigits: 2
+  }).format((minorAmount || 0) / 100);
+}
+
+function inferStatusTone(value) {
+  var normalized = String(value || "").toLowerCase();
+  if (
+    normalized.indexOf("accept") >= 0 ||
+    normalized.indexOf("active") >= 0 ||
+    normalized.indexOf("open") >= 0
+  ) {
+    return "success";
+  }
+  if (
+    normalized.indexOf("review") >= 0 ||
+    normalized.indexOf("pending") >= 0 ||
+    normalized.indexOf("submitted") >= 0 ||
+    normalized.indexOf("paused") >= 0
+  ) {
+    return "warning";
+  }
+  if (
+    normalized.indexOf("reject") >= 0 ||
+    normalized.indexOf("closed") >= 0 ||
+    normalized.indexOf("withdraw") >= 0
+  ) {
+    return "danger";
+  }
+  return "accent";
+}
+
 function parseTagText(value) {
   return String(value || "")
     .split(",")
@@ -193,6 +259,89 @@ function isAgencyManagedProperty(form) {
   return (form && form.management_mode) === "agency_managed";
 }
 
+export function hasAgencyDirectoryOptions(agencies) {
+  return Array.isArray(agencies) && agencies.length > 0;
+}
+
+export function getEffectivePropertyManagementMode(form, agencies, propertyRecord) {
+  var requestedMode = (form && form.management_mode) || "owner_managed";
+  if (
+    requestedMode === "agency_managed" &&
+    !hasAgencyDirectoryOptions(agencies) &&
+    !(propertyRecord && propertyRecord.assigned_agency_organization_id)
+  ) {
+    return "owner_managed";
+  }
+  return requestedMode;
+}
+
+export function getAgencyOperatorsForOrganization(agencyOperatorsByOrganizationId, organizationId) {
+  if (!organizationId || !agencyOperatorsByOrganizationId) {
+    return [];
+  }
+  return agencyOperatorsByOrganizationId[String(organizationId)] || [];
+}
+
+export function applyAgencyOrganizationSelection(form, organizationId, agencyOperatorsByOrganizationId) {
+  var next = Object.assign({}, form);
+  var normalizedOrganizationId = organizationId || "";
+  var operators = getAgencyOperatorsForOrganization(
+    agencyOperatorsByOrganizationId,
+    normalizedOrganizationId
+  );
+  var currentEmail = String(next.assigned_agency_user_email || "").trim().toLowerCase();
+  var currentEmailMatchesOperator = operators.some(function findCurrentOperator(operator) {
+    return String(operator.email || "").trim().toLowerCase() === currentEmail;
+  });
+
+  next.assigned_agency_organization_id = normalizedOrganizationId;
+  if (!normalizedOrganizationId) {
+    next.assigned_agency_user_email = "";
+  } else if (operators.length === 1) {
+    next.assigned_agency_user_email = operators[0].email || "";
+  } else if (!currentEmailMatchesOperator) {
+    next.assigned_agency_user_email = "";
+  }
+  return next;
+}
+
+function getAgencyOperatorOptions(agencyOperatorsByOrganizationId, organizationId, selectedEmail) {
+  var operators = getAgencyOperatorsForOrganization(agencyOperatorsByOrganizationId, organizationId);
+  var normalizedSelectedEmail = String(selectedEmail || "").trim().toLowerCase();
+  if (
+    normalizedSelectedEmail &&
+    !operators.some(function findSelectedOperator(operator) {
+      return String(operator.email || "").trim().toLowerCase() === normalizedSelectedEmail;
+    })
+  ) {
+    return operators.concat([
+      {
+        email: selectedEmail,
+        full_name: "Current assignment",
+        role: "agent"
+      }
+    ]);
+  }
+  return operators;
+}
+
+function formatAgencyOperatorLabel(operator) {
+  var name = operator.full_name || "Agency operator";
+  var email = operator.email || "";
+  return email ? name + " | " + email : name;
+}
+
+function isPropertyOwnedByUser(propertyRecord, userId) {
+  return Boolean(
+    userId &&
+      propertyRecord &&
+      (
+        propertyRecord.created_by_user_id === userId ||
+        propertyRecord.owner_landlord_user_id === userId
+      )
+  );
+}
+
 function getPropertyWorkspaceAccess(options) {
   var propertyCount = Number((options && options.propertyCount) || 0);
   var ownedPropertyCount = Number((options && options.ownedPropertyCount) || 0);
@@ -211,7 +360,10 @@ export function RecordsPage() {
   var stateTuple = React.useState({
     status: "loading",
     agencies: [],
+    agencyOperatorsByOrganizationId: {},
     properties: [],
+    landlordListings: [],
+    landlordApplications: [],
     tenancies: [],
     evidenceByTenancy: {},
     historyImports: [],
@@ -238,6 +390,12 @@ export function RecordsPage() {
   var propertyEditFormsTuple = React.useState({});
   var propertyEditForms = propertyEditFormsTuple[0];
   var setPropertyEditForms = propertyEditFormsTuple[1];
+  var ownerListingFormsTuple = React.useState({});
+  var ownerListingForms = ownerListingFormsTuple[0];
+  var setOwnerListingForms = ownerListingFormsTuple[1];
+  var ownerApplicationTenancyFormsTuple = React.useState({});
+  var ownerApplicationTenancyForms = ownerApplicationTenancyFormsTuple[0];
+  var setOwnerApplicationTenancyForms = ownerApplicationTenancyFormsTuple[1];
   var tenancyFormTuple = React.useState(buildTenancyForm());
   var tenancyForm = tenancyFormTuple[0];
   var setTenancyForm = tenancyFormTuple[1];
@@ -256,6 +414,10 @@ export function RecordsPage() {
   var artifactWorkspaceTuple = React.useState({});
   var artifactWorkspace = artifactWorkspaceTuple[0];
   var setArtifactWorkspace = artifactWorkspaceTuple[1];
+  var selectedArtifactTenancyIdTuple = React.useState("");
+  var selectedArtifactTenancyId = selectedArtifactTenancyIdTuple[0];
+  var setSelectedArtifactTenancyId = selectedArtifactTenancyIdTuple[1];
+  var activeWorkspaceRole = session.activeWorkspaceRole || "tenant";
 
   var loadRecords = React.useCallback(async function loadRecords() {
     setState(function markLoading(previous) {
@@ -264,12 +426,17 @@ export function RecordsPage() {
           previous.tenancies.length ||
           previous.agencies.length ||
           previous.properties.length ||
+          previous.landlordListings.length ||
+          previous.landlordApplications.length ||
           previous.historyImports.length ||
           previous.referenceRequests.length
             ? "refreshing"
             : "loading",
         agencies: previous.agencies,
+        agencyOperatorsByOrganizationId: previous.agencyOperatorsByOrganizationId,
         properties: previous.properties,
+        landlordListings: previous.landlordListings,
+        landlordApplications: previous.landlordApplications,
         tenancies: previous.tenancies,
         evidenceByTenancy: previous.evidenceByTenancy,
         historyImports: previous.historyImports,
@@ -284,14 +451,41 @@ export function RecordsPage() {
           apiRequest("/properties/mine"),
           apiRequest("/tenancies/mine"),
           apiRequest("/history-imports/mine"),
-          apiRequest("/reference-requests/mine")
+          apiRequest("/reference-requests/mine"),
+          activeWorkspaceRole === "landlord"
+            ? apiRequest("/landlord/listings")
+            : Promise.resolve([]),
+          activeWorkspaceRole === "landlord"
+            ? apiRequest("/landlord/applications")
+            : Promise.resolve([])
         ]);
       var agencies = results[0];
       var properties = results[1];
       var tenancies = results[2];
       var historyImports = results[3];
       var referenceRequests = results[4];
+      var landlordListings = results[5];
+      var landlordApplications = results[6];
       var evidenceResults = {};
+      var agencyOperatorPairs = await Promise.all(
+        agencies.map(async function loadAgencyOperators(organization) {
+          try {
+            var operators = await apiRequest(
+              "/organizations/directory/agencies/" + organization.id + "/operators"
+            );
+            return [organization.id, operators];
+          } catch (error) {
+            return [organization.id, []];
+          }
+        })
+      );
+      var agencyOperatorsByOrganizationId = agencyOperatorPairs.reduce(
+        function indexOperators(index, pair) {
+          index[String(pair[0])] = pair[1];
+          return index;
+        },
+        {}
+      );
 
       await Promise.all(
         tenancies.map(async function loadEvidence(tenancy) {
@@ -302,7 +496,10 @@ export function RecordsPage() {
       setState({
         status: "ready",
         agencies: agencies,
+        agencyOperatorsByOrganizationId: agencyOperatorsByOrganizationId,
         properties: properties,
+        landlordListings: landlordListings,
+        landlordApplications: landlordApplications,
         tenancies: tenancies,
         evidenceByTenancy: evidenceResults,
         historyImports: historyImports,
@@ -314,6 +511,30 @@ export function RecordsPage() {
         var next = Object.assign({}, previous);
         properties.forEach(function ensurePropertyForm(propertyRecord) {
           next[propertyRecord.id] = buildPropertyEditForm(propertyRecord);
+        });
+        return next;
+      });
+
+      setOwnerListingForms(function syncOwnerListingForms(previous) {
+        var next = Object.assign({}, previous);
+        properties.forEach(function ensureOwnerListingForm(propertyRecord) {
+          if (!next[propertyRecord.id]) {
+            next[propertyRecord.id] = buildOwnerListingForm(propertyRecord);
+          }
+        });
+        return next;
+      });
+
+      setOwnerApplicationTenancyForms(function syncApplicationTenancyForms(previous) {
+        var next = Object.assign({}, previous);
+        landlordApplications.forEach(function ensureApplicationTenancyForm(application) {
+          if (
+            application.application_status === "accepted" &&
+            !application.tenancy_id &&
+            !next[application.id]
+          ) {
+            next[application.id] = buildApplicationTenancyForm();
+          }
         });
         return next;
       });
@@ -368,7 +589,10 @@ export function RecordsPage() {
       setState({
         status: "error",
         agencies: [],
+        agencyOperatorsByOrganizationId: {},
         properties: [],
+        landlordListings: [],
+        landlordApplications: [],
         tenancies: [],
         evidenceByTenancy: {},
         historyImports: [],
@@ -376,7 +600,7 @@ export function RecordsPage() {
         error: error.message || "Unable to load record-management surfaces."
       });
     }
-  }, [session.user.id]);
+  }, [activeWorkspaceRole, session.user.id]);
 
   React.useEffect(function bootstrapRecords() {
     loadRecords();
@@ -400,6 +624,8 @@ export function RecordsPage() {
   async function handleCreateProperty() {
     setActionState({ kind: "property-create", id: "new", message: null });
     try {
+      var effectiveManagementMode = getEffectivePropertyManagementMode(propertyForm, state.agencies);
+      var shouldAssignAgency = effectiveManagementMode === "agency_managed";
       await apiRequest("/properties", {
         method: "POST",
         body: {
@@ -408,11 +634,11 @@ export function RecordsPage() {
           city: propertyForm.city,
           country_code: propertyForm.country_code,
           custom_tags: parseTagText(propertyForm.custom_tags_text),
-          management_mode: propertyForm.management_mode,
-          assigned_agency_organization_id: isAgencyManagedProperty(propertyForm)
+          management_mode: effectiveManagementMode,
+          assigned_agency_organization_id: shouldAssignAgency
             ? propertyForm.assigned_agency_organization_id || null
             : null,
-          assigned_agency_user_email: isAgencyManagedProperty(propertyForm)
+          assigned_agency_user_email: shouldAssignAgency
             ? propertyForm.assigned_agency_user_email || null
             : null,
           assigned_tenant_email: propertyForm.assigned_tenant_email || null
@@ -438,6 +664,8 @@ export function RecordsPage() {
 
     setActionState({ kind: "property-save", id: propertyRecord.id, message: null });
     try {
+      var effectiveManagementMode = getEffectivePropertyManagementMode(form, state.agencies, propertyRecord);
+      var shouldAssignAgency = effectiveManagementMode === "agency_managed";
       await apiRequest("/properties/" + propertyRecord.id, {
         method: "PATCH",
         body: {
@@ -446,16 +674,16 @@ export function RecordsPage() {
           city: form.city,
           country_code: form.country_code,
           custom_tags: parseTagText(form.custom_tags_text),
-          management_mode: form.management_mode,
-          assigned_agency_organization_id: isAgencyManagedProperty(form)
+          management_mode: effectiveManagementMode,
+          assigned_agency_organization_id: shouldAssignAgency
             ? form.assigned_agency_organization_id || null
             : null,
-          assigned_agency_user_email: isAgencyManagedProperty(form)
+          assigned_agency_user_email: shouldAssignAgency
             ? form.assigned_agency_user_email || null
             : null,
           assigned_tenant_email: form.assigned_tenant_email || null,
           clear_agency_assignment:
-            !isAgencyManagedProperty(form) ||
+            !shouldAssignAgency ||
             !String(form.assigned_agency_organization_id || "").trim() &&
             !String(form.assigned_agency_user_email || "").trim(),
           clear_tenant_assignment: !String(form.assigned_tenant_email || "").trim()
@@ -468,6 +696,105 @@ export function RecordsPage() {
         kind: "",
         id: "",
         message: error.message || "Unable to update this property."
+      });
+    }
+  }
+
+  async function handleCreateOwnerListing(propertyRecord) {
+    var form = ownerListingForms[propertyRecord.id] || buildOwnerListingForm(propertyRecord);
+    setActionState({ kind: "owner-listing-create", id: propertyRecord.id, message: null });
+    try {
+      await apiRequest("/landlord/listings", {
+        method: "POST",
+        body: {
+          property_id: propertyRecord.id,
+          title: form.title,
+          description: form.description,
+          monthly_rent_minor: parseMinorAmount(form.monthly_rent),
+          deposit_minor: parseMinorAmount(form.deposit),
+          currency_code: form.currency_code,
+          minimum_tenant_score: Number(form.minimum_tenant_score || 0),
+          minimum_verification_strength: Number(form.minimum_verification_strength || 0)
+        }
+      });
+      await loadRecords();
+      setOwnerListingForms(function reset(previous) {
+        var next = Object.assign({}, previous);
+        next[propertyRecord.id] = buildOwnerListingForm(propertyRecord);
+        return next;
+      });
+      setActionState({ kind: "", id: "", message: "Owner listing published to tenant Listings." });
+    } catch (error) {
+      setActionState({
+        kind: "",
+        id: "",
+        message: error.message || "Unable to publish this owner-managed listing."
+      });
+    }
+  }
+
+  async function handleOwnerListingStatus(listing, nextStatus) {
+    setActionState({ kind: "owner-listing-status", id: listing.id, message: null });
+    try {
+      await apiRequest("/landlord/listings/" + listing.id, {
+        method: "PATCH",
+        body: { listing_status: nextStatus }
+      });
+      await loadRecords();
+      setActionState({ kind: "", id: "", message: "Owner listing status updated." });
+    } catch (error) {
+      setActionState({
+        kind: "",
+        id: "",
+        message: error.message || "Unable to update this owner listing."
+      });
+    }
+  }
+
+  async function handleOwnerApplicationStatus(application, nextStatus) {
+    setActionState({ kind: "owner-application-status", id: application.id, message: null });
+    try {
+      await apiRequest("/landlord/applications/" + application.id, {
+        method: "PATCH",
+        body: {
+          application_status: nextStatus,
+          status_notes: "Updated by the landlord from Rental Records."
+        }
+      });
+      await loadRecords();
+      setActionState({ kind: "", id: "", message: "Application status updated." });
+    } catch (error) {
+      setActionState({
+        kind: "",
+        id: "",
+        message: error.message || "Unable to update this application."
+      });
+    }
+  }
+
+  async function handleCreateOwnerApplicationTenancy(application) {
+    var form = ownerApplicationTenancyForms[application.id] || buildApplicationTenancyForm();
+    setActionState({ kind: "owner-application-tenancy", id: application.id, message: null });
+    try {
+      await apiRequest("/landlord/applications/" + application.id + "/tenancy", {
+        method: "POST",
+        body: {
+          lease_start_date: form.lease_start_date,
+          lease_end_date: form.lease_end_date || null,
+          tenancy_status: "active"
+        }
+      });
+      await loadRecords();
+      setActionState({
+        kind: "",
+        id: "",
+        message: "Tenancy created from the accepted application."
+      });
+    } catch (error) {
+      setActionState({
+        kind: "",
+        id: "",
+        message: error.message || "Unable to create tenancy from this application."
       });
     }
   }
@@ -669,7 +996,6 @@ export function RecordsPage() {
     }
   }
 
-  var activeWorkspaceRole = session.activeWorkspaceRole || "tenant";
   var roleScopedTenancies = state.tenancies.filter(function filterRoleScopedTenancies(tenancy) {
     return matchesWorkspaceRole(tenancy, session.user.id, activeWorkspaceRole);
   });
@@ -678,6 +1004,11 @@ export function RecordsPage() {
       return tenancy.id;
     })
   );
+  var roleScopedTenancyIdSignature = roleScopedTenancies
+    .map(function mapTenancySignature(tenancy) {
+      return tenancy.id;
+    })
+    .join("|");
   var roleScopedPropertyIds = new Set(
     roleScopedTenancies
       .map(function mapPropertyId(tenancy) {
@@ -689,7 +1020,7 @@ export function RecordsPage() {
     activeWorkspaceRole === "landlord"
       ? state.properties.filter(function filterLandlordProperties(propertyRecord) {
           return (
-            propertyRecord.created_by_user_id === session.user.id ||
+            isPropertyOwnedByUser(propertyRecord, session.user.id) ||
             roleScopedPropertyIds.has(propertyRecord.id)
           );
         })
@@ -699,7 +1030,7 @@ export function RecordsPage() {
   });
   var ownedPropertyCountForAccess = session.user
     ? roleScopedProperties.filter(function countOwnedProperties(propertyRecord) {
-        return propertyRecord.created_by_user_id === session.user.id;
+        return isPropertyOwnedByUser(propertyRecord, session.user.id);
       }).length
     : 0;
   var propertyWorkspaceAccessForHooks = getPropertyWorkspaceAccess({
@@ -708,6 +1039,14 @@ export function RecordsPage() {
     canOperateAgency: false,
     tenancyRole: activeWorkspaceRole
   });
+  var canUseOwnerListingWorkspaceForHooks =
+    activeWorkspaceRole === "landlord" && propertyWorkspaceAccessForHooks.canCreate;
+  var canSelectAgencyManagedProperty = hasAgencyDirectoryOptions(state.agencies);
+  var createAgencyOperatorOptions = getAgencyOperatorOptions(
+    state.agencyOperatorsByOrganizationId,
+    propertyForm.assigned_agency_organization_id,
+    propertyForm.assigned_agency_user_email
+  );
 
   React.useEffect(function syncTenancyFormRoleToWorkspace() {
     if (
@@ -725,12 +1064,37 @@ export function RecordsPage() {
     if (!propertyWorkspaceAccessForHooks.canCreate && propertyWorkspace === "create") {
       setPropertyWorkspace("manage");
     }
+    if (!canUseOwnerListingWorkspaceForHooks && propertyWorkspace === "publish") {
+      setPropertyWorkspace("manage");
+    }
+    if (!roleScopedTenancies.length && selectedArtifactTenancyId) {
+      setSelectedArtifactTenancyId("");
+    }
+    if (
+      roleScopedTenancies.length &&
+      !roleScopedTenancies.some(function matchSelectedArtifactTenancy(tenancy) {
+        return tenancy.id === selectedArtifactTenancyId;
+      })
+    ) {
+      setSelectedArtifactTenancyId(roleScopedTenancies[0].id);
+    }
   }, [
     activeRecordsSection,
+    canUseOwnerListingWorkspaceForHooks,
     propertyWorkspace,
     propertyWorkspaceAccessForHooks.canCreate,
-    propertyWorkspaceAccessForHooks.canSee
+    propertyWorkspaceAccessForHooks.canSee,
+    roleScopedTenancyIdSignature,
+    selectedArtifactTenancyId
   ]);
+
+  React.useEffect(function normalizeAgencyManagedCreateForm() {
+    if (!canSelectAgencyManagedProperty && isAgencyManagedProperty(propertyForm)) {
+      setPropertyForm(function clearUnavailableAgencyMode(previous) {
+        return applyPropertyManagementMode(previous, "owner_managed");
+      });
+    }
+  }, [canSelectAgencyManagedProperty, propertyForm.management_mode]);
 
   if (state.status === "loading") {
     return e("div", { className: "state-panel" }, [
@@ -762,12 +1126,34 @@ export function RecordsPage() {
     return referenceRequest.requested_by_user_id === session.user.id;
   });
   var reusableOwnedProperties = roleScopedProperties.filter(function filterOwnedProperties(propertyRecord) {
-    return propertyRecord.created_by_user_id === session.user.id;
+    return isPropertyOwnedByUser(propertyRecord, session.user.id);
   });
+  var ownerManagedProperties = reusableOwnedProperties.filter(function filterOwnerManagedProperties(propertyRecord) {
+    return propertyRecord.management_mode === "owner_managed";
+  });
+  var landlordListingsByPropertyId = state.landlordListings.reduce(function indexListings(index, listing) {
+    if (!index[listing.property_id]) {
+      index[listing.property_id] = [];
+    }
+    index[listing.property_id].push(listing);
+    return index;
+  }, {});
+  var landlordApplicationsByListingId = state.landlordApplications.reduce(function indexApplications(index, application) {
+    if (!index[application.listing_id]) {
+      index[application.listing_id] = [];
+    }
+    index[application.listing_id].push(application);
+    return index;
+  }, {});
   var totalArtifactCount = roleScopedTenancies.reduce(function sumArtifacts(total, tenancy) {
     var evidenceList = state.evidenceByTenancy[tenancy.id] || [];
     return total + evidenceList.length;
   }, 0);
+  var selectedArtifactTenancy =
+    roleScopedTenancies.find(function findSelectedArtifactTenancy(tenancy) {
+      return tenancy.id === selectedArtifactTenancyId;
+    }) || roleScopedTenancies[0];
+  var artifactTenanciesToRender = selectedArtifactTenancy ? [selectedArtifactTenancy] : [];
   var propertyWorkspaceAccess = getPropertyWorkspaceAccess({
     propertyCount: roleScopedProperties.length,
     ownedPropertyCount: reusableOwnedProperties.length,
@@ -776,11 +1162,20 @@ export function RecordsPage() {
   });
   var canCreatePropertyWorkspace = propertyWorkspaceAccess.canCreate;
   var canSeePropertyWorkspace = propertyWorkspaceAccess.canSee;
+  var canUseOwnerListingWorkspace = activeWorkspaceRole === "landlord" && canCreatePropertyWorkspace;
   var propertyWorkspaceTabs = canCreatePropertyWorkspace
     ? [
         { id: "create", label: "Create property", meta: "New property setup" },
-        { id: "manage", label: "Manage saved properties", meta: String(roleScopedProperties.length) + " records" }
+        { id: "manage", label: "Manage saved properties", meta: String(roleScopedProperties.length) + " records" },
+        canUseOwnerListingWorkspace
+          ? {
+              id: "publish",
+              label: "Publish listing",
+              meta: String(state.landlordListings.length) + " owner listings"
+            }
+          : null
       ]
+        .filter(Boolean)
     : [];
   var effectivePropertyWorkspace = canCreatePropertyWorkspace ? propertyWorkspace : "manage";
   var recordsSectionTabs = [
@@ -830,7 +1225,117 @@ export function RecordsPage() {
     }
   }
 
-  return e("div", { className: "workspace-page" }, [
+  function renderTenancyRecordSummary(tenancy) {
+    var canConfirm =
+      tenancy.created_by_user_id !== session.user.id && tenancy.verification_status === "self_reported";
+    var canRequestReview =
+      !canConfirm &&
+      tenancy.verification_status !== "reviewed" &&
+      tenancy.verification_status !== "verified" &&
+      !tenancy.review_requested_at;
+    var tenancyPartyContext = buildTenancyPartyContext(tenancy, session.user.id);
+
+    return e("article", { className: "stack-card", key: tenancy.id }, [
+      e("strong", { className: "stack-card-title", key: "title" }, tenancy.property_label),
+      e("div", { className: "status-row", key: "status-row" }, [
+        e(StatusBadge, {
+          key: "verification",
+          tone:
+            tenancy.verification_status === "verified" || tenancy.verification_status === "reviewed"
+              ? "success"
+              : tenancy.verification_status === "self_reported"
+                ? "warning"
+                : "accent",
+          label: "Verification " + tenancy.verification_status
+        }),
+        e(StatusBadge, {
+          key: "status",
+          tone: "accent",
+          label: "Tenancy " + tenancy.tenancy_status
+        })
+      ]),
+      e("div", { className: "fact-grid", key: "meta" }, [
+        e(FactPill, { key: "city", label: "City", value: tenancy.city || "No city recorded" }),
+        e(FactPill, {
+          key: "role",
+          label: "Your role",
+          value: tenancyPartyContext.role,
+          tone: "accent"
+        }),
+        e(FactPill, {
+          key: "counterparty",
+          label: tenancyPartyContext.counterpartyLabel,
+          value: tenancyPartyContext.counterpartyName,
+          tone: "accent"
+        }),
+        e(FactPill, {
+          key: "rent",
+          label: "Monthly rent",
+          value: formatMinorAmount(tenancy.monthly_rent_minor, tenancy.currency_code),
+          tone: "accent"
+        }),
+        e(FactPill, {
+          key: "lease",
+          label: "Lease start",
+          value: tenancy.lease_start_date || "Not recorded"
+        })
+      ]),
+      canConfirm || canRequestReview
+        ? e("div", { className: "action-row", key: "actions" }, [
+            canConfirm
+              ? e(
+                  "button",
+                  {
+                    type: "button",
+                    className: "button button-secondary button-small",
+                    disabled: actionState.kind === "confirm" && actionState.id === tenancy.id,
+                    onClick: function onClick() {
+                      handleSimplePost(
+                        "confirm",
+                        tenancy.id,
+                        "/tenancies/" + tenancy.id + "/confirm",
+                        "Counterparty confirmation recorded."
+                      );
+                    },
+                    key: "confirm"
+                  },
+                  actionState.kind === "confirm" && actionState.id === tenancy.id
+                    ? "Saving..."
+                    : "Confirm record"
+                )
+              : null,
+            canRequestReview
+              ? e(
+                  "button",
+                  {
+                    type: "button",
+                    className: "button button-small",
+                    disabled: actionState.kind === "review" && actionState.id === tenancy.id,
+                    onClick: function onClick() {
+                      handleSimplePost(
+                        "review",
+                        tenancy.id,
+                        "/tenancies/" + tenancy.id + "/request-review",
+                        "Review requested successfully."
+                      );
+                    },
+                    key: "review"
+                  },
+                  actionState.kind === "review" && actionState.id === tenancy.id
+                    ? "Saving..."
+                    : "Request review"
+                )
+              : null
+          ])
+        : e(
+            "p",
+            { className: "empty-copy", key: "no-actions" },
+            "No immediate tenancy setup action is waiting on this record."
+          )
+    ]);
+  }
+
+  return e("div", { className: "workspace-page records-page" }, [
     e(PageHero, {
       key: "hero",
       eyebrow: "Rental Records",
@@ -844,6 +1349,7 @@ export function RecordsPage() {
       ],
       stats: [
         e(HeroStat, {
+          key: "tenancies",
           label: "Tenancies",
           value: String(roleScopedTenancies.length),
           copy:
@@ -853,12 +1359,18 @@ export function RecordsPage() {
         }),
         canSeePropertyWorkspace
           ? e(HeroStat, {
+              key: "properties",
               label: "Saved properties",
               value: String(roleScopedProperties.length),
-              copy: String(reusableOwnedProperties.length) + " reusable by you for future tenancy setup."
+              copy:
+                String(roleScopedProperties.length) +
+                " visible in this workspace; " +
+                String(reusableOwnedProperties.length) +
+                " reusable for setup."
             })
           : null,
         e(HeroStat, {
+          key: "artifacts",
           label: "Artifacts & references",
           value: String(totalArtifactCount + roleScopedReferenceRequests.length),
           copy: String(pendingIncomingRequests.length) + " incoming reference requests awaiting action."
@@ -883,8 +1395,10 @@ export function RecordsPage() {
         "aria-label": "Rental records sections"
       })
     ]),
-    e("section", { className: "split-grid", key: "tenancy-create-row", id: "records-section-tenancies" }, [
-      e("article", { className: "detail-panel", key: "tenancy-create" }, [
+    e("section", { className: "guided-workflow", key: "records-active-section", id: "records-section-" + activeRecordsSection }, [
+      activeRecordsSection === "tenancies"
+        ? [
+            e("article", { className: "detail-panel", key: "tenancy-create" }, [
         e("h2", { className: "detail-title", key: "title" }, "Add a tenancy record"),
         e(
           "p",
@@ -961,7 +1475,7 @@ export function RecordsPage() {
               "span",
               { className: "field-help", key: "help" },
               reusableOwnedProperties.length
-                ? "Only properties you created can be reused for a new tenancy record."
+                ? "Only properties you created or own can be reused for a new tenancy record."
                 : "No reusable property records yet. Enter a new address below."
             )
           ]),
@@ -1020,7 +1534,10 @@ export function RecordsPage() {
               e("span", { className: "field-label", key: "label" }, "Lease start date"),
               e("input", {
                 className: "field-input",
-                type: "date",
+                type: "text",
+                inputMode: "numeric",
+                placeholder: "YYYY-MM-DD",
+                pattern: "\\d{4}-\\d{2}-\\d{2}",
                 value: tenancyForm.lease_start_date,
                 onChange: function onChange(event) {
                   updateSimpleForm(setTenancyForm, "lease_start_date", event.target.value);
@@ -1032,7 +1549,10 @@ export function RecordsPage() {
               e("span", { className: "field-label", key: "label" }, "Lease end date"),
               e("input", {
                 className: "field-input",
-                type: "date",
+                type: "text",
+                inputMode: "numeric",
+                placeholder: "YYYY-MM-DD",
+                pattern: "\\d{4}-\\d{2}-\\d{2}",
                 value: tenancyForm.lease_end_date,
                 onChange: function onChange(event) {
                   updateSimpleForm(setTenancyForm, "lease_end_date", event.target.value);
@@ -1115,8 +1635,31 @@ export function RecordsPage() {
           )
         ])
       ]),
-      canSeePropertyWorkspace
-        ? e("article", { className: "detail-panel", key: "property-summary", id: "records-section-properties" }, [
+            roleScopedTenancies.length
+              ? e("article", { className: "detail-panel", key: "tenancy-records" }, [
+                  e(SectionHeading, {
+                    key: "heading",
+                    title: "Existing tenancy records",
+                    copy:
+                      "Use this list for confirmation, review requests, and current tenancy facts. Artifact uploads stay in the Artifacts lane."
+                  }),
+                  e(
+                    "div",
+                    { className: "list-stack", key: "list" },
+                    roleScopedTenancies.map(renderTenancyRecordSummary)
+                  )
+                ])
+              : e(
+                  "p",
+                  { className: "empty-copy", key: "empty-tenancies" },
+                  activeWorkspaceRole === "landlord"
+                    ? "No landlord-side tenancy records are attached to this account yet."
+                    : "No tenant-side tenancy records are attached to this account yet."
+                )
+          ]
+        : null,
+      activeRecordsSection === "properties" && canSeePropertyWorkspace
+        ? e("article", { className: "detail-panel", key: "property-summary" }, [
         e("h2", { className: "detail-title", key: "title" }, "Saved properties"),
         e(
           "p",
@@ -1213,7 +1756,17 @@ export function RecordsPage() {
               },
               [
                 e("option", { value: "owner_managed", key: "owner_managed" }, "I manage this property myself"),
-                e("option", { value: "agency_managed", key: "agency_managed" }, "An agency manages this property")
+                e(
+                  "option",
+                  {
+                    value: "agency_managed",
+                    key: "agency_managed",
+                    disabled: !canSelectAgencyManagedProperty
+                  },
+                  canSelectAgencyManagedProperty
+                    ? "An agency manages this property"
+                    : "Agency-managed setup unavailable"
+                )
               ]
             ),
             e(
@@ -1222,9 +1775,16 @@ export function RecordsPage() {
               propertyForm.management_mode === "agency_managed"
                 ? "Choose the agency and, if available, the agent who should operate the property."
                 : "Keep the property under your own control without assigning it to an agency."
-            )
+            ),
+            !canSelectAgencyManagedProperty
+              ? e(
+                  "span",
+                  { className: "field-help", key: "agency-empty-help" },
+                  "No agency workspace exists yet. Save this property as owner-managed now; you can assign an agency later."
+                )
+              : null
           ]),
-          isAgencyManagedProperty(propertyForm)
+          isAgencyManagedProperty(propertyForm) && canSelectAgencyManagedProperty
             ? e("div", { className: "form-grid", key: "create-agency-grid" }, [
                 e("label", { className: "field", key: "create-agency-organization" }, [
                   e("span", { className: "field-label", key: "label" }, "Managing agency"),
@@ -1234,11 +1794,13 @@ export function RecordsPage() {
                       className: "field-input field-select",
                       value: propertyForm.assigned_agency_organization_id,
                       onChange: function onChange(event) {
-                        updateSimpleForm(
-                          setPropertyForm,
-                          "assigned_agency_organization_id",
-                          event.target.value
-                        );
+                        setPropertyForm(function updateAgency(previous) {
+                          return applyAgencyOrganizationSelection(
+                            previous,
+                            event.target.value,
+                            state.agencyOperatorsByOrganizationId
+                          );
+                        });
                       }
                     },
                     [
@@ -1254,16 +1816,37 @@ export function RecordsPage() {
                   )
                 ]),
                 e("label", { className: "field", key: "create-agency-user" }, [
-                  e("span", { className: "field-label", key: "label" }, "Agent email"),
-                  e("input", {
-                    className: "field-input",
-                    type: "email",
+                  e("span", { className: "field-label", key: "label" }, "Managing agent"),
+                  e(
+                    "select",
+                    {
+                      className: "field-input field-select",
+                      disabled:
+                        !propertyForm.assigned_agency_organization_id ||
+                        !createAgencyOperatorOptions.length,
                     value: propertyForm.assigned_agency_user_email,
                     onChange: function onChange(event) {
                       updateSimpleForm(setPropertyForm, "assigned_agency_user_email", event.target.value);
+                    }
                     },
-                    placeholder: "agent@agency.com"
-                  })
+                    [
+                      e("option", { value: "", key: "none" }, "Let the agency assign later"),
+                      createAgencyOperatorOptions.map(function renderAgencyOperator(operator) {
+                        return e(
+                          "option",
+                          { value: operator.email, key: operator.email },
+                          formatAgencyOperatorLabel(operator)
+                        );
+                      })
+                    ]
+                  ),
+                  e(
+                    "span",
+                    { className: "field-help", key: "help" },
+                    propertyForm.assigned_agency_user_email
+                      ? "Selected agent email: " + propertyForm.assigned_agency_user_email
+                      : "Choose an agency operator to fill the assignment email automatically."
+                  )
                 ])
               ])
             : null,
@@ -1301,9 +1884,16 @@ export function RecordsPage() {
               "div",
               { className: "list-stack", key: "list" },
               roleScopedProperties.map(function renderPropertySummary(propertyRecord) {
-                var isOwner = propertyRecord.created_by_user_id === session.user.id;
+                var isOwner = isPropertyOwnedByUser(propertyRecord, session.user.id);
+                var canSelectAgencyForProperty =
+                  canSelectAgencyManagedProperty || Boolean(propertyRecord.assigned_agency_organization_id);
                 var propertyEditForm =
                   propertyEditForms[propertyRecord.id] || buildPropertyEditForm(propertyRecord);
+                var propertyAgencyOperatorOptions = getAgencyOperatorOptions(
+                  state.agencyOperatorsByOrganizationId,
+                  propertyEditForm.assigned_agency_organization_id,
+                  propertyEditForm.assigned_agency_user_email
+                );
                 return e("article", { className: "stack-card", key: propertyRecord.id }, [
                   e("strong", { className: "stack-card-title", key: "label" }, propertyRecord.property_label),
                   e("div", { className: "status-row", key: "status" }, [
@@ -1321,7 +1911,7 @@ export function RecordsPage() {
                     e(StatusBadge, {
                       key: "owner",
                       tone: "neutral",
-                      label: "Owner: " + propertyRecord.created_by_user_full_name
+                      label: "Owner: " + (propertyRecord.owner_landlord_user_full_name || "Not assigned")
                     })
                   ]),
                   e("div", { className: "fact-grid", key: "facts" }, [
@@ -1457,7 +2047,17 @@ export function RecordsPage() {
                               },
                               [
                                 e("option", { value: "owner_managed", key: "owner_managed" }, "I manage this property myself"),
-                                e("option", { value: "agency_managed", key: "agency_managed" }, "An agency manages this property")
+                                e(
+                                  "option",
+                                  {
+                                    value: "agency_managed",
+                                    key: "agency_managed",
+                                    disabled: !canSelectAgencyForProperty
+                                  },
+                                  canSelectAgencyForProperty
+                                    ? "An agency manages this property"
+                                    : "Agency-managed setup unavailable"
+                                )
                               ]
                             ),
                             e(
@@ -1466,9 +2066,16 @@ export function RecordsPage() {
                               propertyEditForm.management_mode === "agency_managed"
                                 ? "Agency management keeps this property inside agency workflows and lets you name the responsible operator."
                                 : "Owner-managed keeps all day-to-day control with you while still allowing tenant assignment."
-                            )
+                            ),
+                            !canSelectAgencyForProperty
+                              ? e(
+                                  "span",
+                                  { className: "field-help", key: "agency-empty-help" },
+                                  "No agency workspace exists yet. Save this property as owner-managed now; you can assign an agency later."
+                                )
+                              : null
                           ]),
-                          isAgencyManagedProperty(propertyEditForm)
+                          isAgencyManagedProperty(propertyEditForm) && canSelectAgencyForProperty
                             ? e("label", { className: "field", key: "agency-organization" }, [
                             e("span", { className: "field-label", key: "label" }, "Assigned agency"),
                             e(
@@ -1477,12 +2084,15 @@ export function RecordsPage() {
                                 className: "field-input field-select",
                                 value: propertyEditForm.assigned_agency_organization_id,
                                 onChange: function onChange(event) {
-                                  updateEntityForm(
-                                    setPropertyEditForms,
-                                    propertyRecord.id,
-                                    "assigned_agency_organization_id",
-                                    event.target.value
-                                  );
+                                  setPropertyEditForms(function updateAgency(previous) {
+                                    var next = Object.assign({}, previous);
+                                    next[propertyRecord.id] = applyAgencyOrganizationSelection(
+                                      propertyEditForm,
+                                      event.target.value,
+                                      state.agencyOperatorsByOrganizationId
+                                    );
+                                    return next;
+                                  });
                                 }
                               },
                               [
@@ -1500,10 +2110,14 @@ export function RecordsPage() {
                             : null,
                           isAgencyManagedProperty(propertyEditForm)
                             ? e("label", { className: "field", key: "agency-user" }, [
-                            e("span", { className: "field-label", key: "label" }, "Agent email"),
-                            e("input", {
-                              className: "field-input",
-                              type: "email",
+                            e("span", { className: "field-label", key: "label" }, "Managing agent"),
+                            e(
+                              "select",
+                              {
+                                className: "field-input field-select",
+                                disabled:
+                                  !propertyEditForm.assigned_agency_organization_id ||
+                                  !propertyAgencyOperatorOptions.length,
                               value: propertyEditForm.assigned_agency_user_email,
                               onChange: function onChange(event) {
                                 updateEntityForm(
@@ -1512,9 +2126,26 @@ export function RecordsPage() {
                                   "assigned_agency_user_email",
                                   event.target.value
                                 );
+                              }
                               },
-                              placeholder: "agent@agency.com"
-                            })
+                              [
+                                e("option", { value: "", key: "none" }, "Let the agency assign later"),
+                                propertyAgencyOperatorOptions.map(function renderAgencyOperator(operator) {
+                                  return e(
+                                    "option",
+                                    { value: operator.email, key: operator.email },
+                                    formatAgencyOperatorLabel(operator)
+                                  );
+                                })
+                              ]
+                            ),
+                            e(
+                              "span",
+                              { className: "field-help", key: "help" },
+                              propertyEditForm.assigned_agency_user_email
+                                ? "Selected agent email: " + propertyEditForm.assigned_agency_user_email
+                                : "Choose an agency operator to fill the assignment email automatically."
+                            )
                           ])
                             : null,
                           e("label", { className: "field", key: "tenant-email" }, [
@@ -1581,11 +2212,529 @@ export function RecordsPage() {
               { className: "empty-copy", key: "empty" },
               "No saved property records are linked to this account yet."
             )
+          : null,
+        effectivePropertyWorkspace === "publish"
+          ? e("div", { className: "list-stack", key: "owner-listing-workspace" }, [
+              e(NoteBlock, {
+                key: "publish-context",
+                tone: "accent",
+                label: "Owner-managed publishing"
+              }, "Use this lane only for homes you manage yourself. Agency-managed homes stay in Agency Tools so tenant applications route to the agency."),
+              ownerManagedProperties.length
+                ? ownerManagedProperties.map(function renderOwnerPublishing(propertyRecord) {
+                    var ownerListings = landlordListingsByPropertyId[propertyRecord.id] || [];
+                    var ownerListingForm =
+                      ownerListingForms[propertyRecord.id] || buildOwnerListingForm(propertyRecord);
+                    return e("article", { className: "stack-card", key: propertyRecord.id }, [
+                      e("strong", { className: "stack-card-title", key: "title" }, propertyRecord.property_label),
+                      e("div", { className: "status-row", key: "status" }, [
+                        e(StatusBadge, { key: "manager", tone: "success", label: "Listed by landlord" }),
+                        ownerListings.length
+                          ? e(StatusBadge, {
+                              key: "listing-count",
+                              tone: "accent",
+                              label: String(ownerListings.length) + " listing"
+                            })
+                          : e(StatusBadge, { key: "not-listed", tone: "warning", label: "Not listed yet" })
+                      ]),
+                      e("div", { className: "fact-grid", key: "facts" }, [
+                        e(FactPill, {
+                          key: "address",
+                          label: "Address",
+                          value: propertyRecord.address_line1
+                        }),
+                        e(FactPill, {
+                          key: "city",
+                          label: "City",
+                          value: propertyRecord.city
+                        }),
+                        e(FactPill, {
+                          key: "tenant",
+                          label: "Applications",
+                          value: String(
+                            ownerListings.reduce(function countApplications(total, listing) {
+                              return total + (landlordApplicationsByListingId[listing.id] || []).length;
+                            }, 0)
+                          ),
+                          tone: "accent"
+                        })
+                      ]),
+                      ownerListings.length
+                        ? e(
+                            "div",
+                            { className: "list-stack", key: "listings" },
+                            ownerListings.map(function renderOwnerListing(listing) {
+                              var applications = landlordApplicationsByListingId[listing.id] || [];
+                              return e("article", { className: "stack-card", key: listing.id }, [
+                                e("strong", { className: "stack-card-title", key: "listing-title" }, listing.title),
+                                e("div", { className: "status-row", key: "listing-status" }, [
+                                  e(StatusBadge, {
+                                    key: "status",
+                                    tone: inferStatusTone(listing.listing_status),
+                                    label: listing.listing_status
+                                  }),
+                                  e(StatusBadge, {
+                                    key: "source",
+                                    tone: listing.listing_status === "open" ? "success" : "warning",
+                                    label:
+                                      listing.listing_status === "open"
+                                        ? "Visible in tenant Listings"
+                                        : "Hidden from tenant Listings"
+                                  })
+                                ]),
+                                e("div", { className: "fact-grid", key: "listing-facts" }, [
+                                  e(FactPill, {
+                                    key: "rent",
+                                    label: "Rent",
+                                    value: formatMinorAmount(listing.monthly_rent_minor, listing.currency_code),
+                                    tone: "accent"
+                                  }),
+                                  e(FactPill, {
+                                    key: "deposit",
+                                    label: "Deposit",
+                                    value: formatMinorAmount(listing.deposit_minor, listing.currency_code),
+                                    tone: "warning"
+                                  }),
+                                  e(FactPill, {
+                                    key: "score",
+                                    label: "Minimum tenant score",
+                                    value: String(listing.minimum_tenant_score)
+                                  }),
+                                  e(FactPill, {
+                                    key: "verification",
+                                    label: "Verification strength",
+                                    value: String(listing.minimum_verification_strength) + "%",
+                                    tone: "success"
+                                  })
+                                ]),
+                                e("div", { className: "action-row", key: "listing-actions" }, [
+                                  listing.listing_status === "open"
+                                    ? e(
+                                        "button",
+                                        {
+                                          type: "button",
+                                          className: "button button-secondary button-small",
+                                          disabled:
+                                            actionState.kind === "owner-listing-status" &&
+                                            actionState.id === listing.id,
+                                          onClick: function onClick() {
+                                            handleOwnerListingStatus(listing, "paused");
+                                          },
+                                          key: "pause"
+                                        },
+                                        "Pause listing"
+                                      )
+                                    : null,
+                                  listing.listing_status === "paused"
+                                    ? e(
+                                        "button",
+                                        {
+                                          type: "button",
+                                          className: "button button-secondary button-small",
+                                          disabled:
+                                            actionState.kind === "owner-listing-status" &&
+                                            actionState.id === listing.id,
+                                          onClick: function onClick() {
+                                            handleOwnerListingStatus(listing, "open");
+                                          },
+                                          key: "open"
+                                        },
+                                        "Reopen listing"
+                                      )
+                                    : null,
+                                  listing.listing_status !== "closed"
+                                    ? e(
+                                        "button",
+                                        {
+                                          type: "button",
+                                          className: "button button-small",
+                                          disabled:
+                                            actionState.kind === "owner-listing-status" &&
+                                            actionState.id === listing.id,
+                                          onClick: function onClick() {
+                                            handleOwnerListingStatus(listing, "closed");
+                                          },
+                                          key: "close"
+                                        },
+                                        "Close listing"
+                                      )
+                                    : null
+                                ]),
+                                applications.length
+                                  ? e(
+                                      "div",
+                                      { className: "list-stack", key: "applications" },
+                                      applications.map(function renderOwnerApplication(application) {
+                                        var canReview =
+                                          application.application_status === "submitted" ||
+                                          application.application_status === "under_review";
+                                        return e("article", { className: "stack-card", key: application.id }, [
+                                          e("strong", { className: "stack-card-title", key: "applicant" }, application.applicant_full_name),
+                                          e("div", { className: "status-row", key: "application-status" }, [
+                                            e(StatusBadge, {
+                                              key: "status",
+                                              tone: inferStatusTone(application.application_status),
+                                              label: application.application_status
+                                            })
+                                          ]),
+                                          e("div", { className: "fact-grid", key: "application-facts" }, [
+                                            e(FactPill, {
+                                              key: "score",
+                                              label: "Captured tenant score",
+                                              value:
+                                                application.applicant_tenant_score == null
+                                                  ? "N/A"
+                                                  : String(application.applicant_tenant_score),
+                                              tone: "accent"
+                                            }),
+                                            e(FactPill, {
+                                              key: "verification",
+                                              label: "Verification strength",
+                                              value:
+                                                application.applicant_verification_strength == null
+                                                  ? "N/A"
+                                                  : String(application.applicant_verification_strength) + "%",
+                                              tone: "success"
+                                            })
+                                          ]),
+                                          application.applicant_note
+                                            ? e(NoteBlock, {
+                                                key: "applicant-note",
+                                                tone: "accent",
+                                                label: "Applicant note"
+                                              }, application.applicant_note)
+                                            : null,
+                                          canReview
+                                            ? e("div", { className: "action-row", key: "application-actions" }, [
+                                                application.application_status === "submitted"
+                                                  ? e(
+                                                      "button",
+                                                      {
+                                                        type: "button",
+                                                        className: "button button-secondary button-small",
+                                                        disabled:
+                                                          actionState.kind === "owner-application-status" &&
+                                                          actionState.id === application.id,
+                                                        onClick: function onClick() {
+                                                          handleOwnerApplicationStatus(application, "under_review");
+                                                        },
+                                                        key: "review"
+                                                      },
+                                                      "Mark reviewing"
+                                                    )
+                                                  : null,
+                                                e(
+                                                  "button",
+                                                  {
+                                                    type: "button",
+                                                    className: "button button-secondary button-small",
+                                                    disabled:
+                                                      actionState.kind === "owner-application-status" &&
+                                                      actionState.id === application.id,
+                                                    onClick: function onClick() {
+                                                      handleOwnerApplicationStatus(application, "accepted");
+                                                    },
+                                                    key: "accept"
+                                                  },
+                                                  "Accept"
+                                                ),
+                                                e(
+                                                  "button",
+                                                  {
+                                                    type: "button",
+                                                    className: "button button-small",
+                                                    disabled:
+                                                      actionState.kind === "owner-application-status" &&
+                                                      actionState.id === application.id,
+                                                    onClick: function onClick() {
+                                                      handleOwnerApplicationStatus(application, "rejected");
+                                                    },
+                                                    key: "reject"
+                                                  },
+                                                  "Reject"
+                                                )
+                                              ])
+                                            : null,
+                                          application.application_status === "accepted"
+                                            ? e("div", { className: "application-bridge", key: "tenancy-bridge" }, [
+                                                application.tenancy_id
+                                                  ? e(NoteBlock, {
+                                                      key: "created",
+                                                      tone: "success",
+                                                      label: "Tenancy created"
+                                                    }, "This accepted application is now linked to a tenancy record. Use Tenancy records for confirmation, evidence, and review.")
+                                                  : null,
+                                                application.tenancy_id
+                                                  ? e("div", { className: "action-row", key: "open-tenancies" }, [
+                                                      e(
+                                                        "button",
+                                                        {
+                                                          type: "button",
+                                                          className: "button button-secondary button-small",
+                                                          onClick: function onClick() {
+                                                            setActiveRecordsSection("tenancies");
+                                                          },
+                                                          key: "open"
+                                                        },
+                                                        "Open tenancy records"
+                                                      )
+                                                    ])
+                                                  : null,
+                                                !application.tenancy_id
+                                                  ? e(NoteBlock, {
+                                                      key: "next-step",
+                                                      tone: "warning",
+                                                      label: "Next step"
+                                                    }, "Acceptance is only the decision. Create the tenancy record here so the tenant and landlord can operate from the same rental record.")
+                                                  : null,
+                                                !application.tenancy_id
+                                                  ? e("div", { className: "form-grid", key: "lease-dates" }, [
+                                                      e("label", { className: "field", key: "start" }, [
+                                                        e("span", { className: "field-label", key: "label" }, "Lease start date"),
+                                                        e("input", {
+                                                          className: "field-input",
+                                                          type: "text",
+                                                          inputMode: "numeric",
+                                                          placeholder: "YYYY-MM-DD",
+                                                          pattern: "\\d{4}-\\d{2}-\\d{2}",
+                                                          value:
+                                                            (ownerApplicationTenancyForms[application.id] || buildApplicationTenancyForm())
+                                                              .lease_start_date,
+                                                          onChange: function onChange(event) {
+                                                            updateEntityForm(
+                                                              setOwnerApplicationTenancyForms,
+                                                              application.id,
+                                                              "lease_start_date",
+                                                              event.target.value
+                                                            );
+                                                          },
+                                                          required: true
+                                                        })
+                                                      ]),
+                                                      e("label", { className: "field", key: "end" }, [
+                                                        e("span", { className: "field-label", key: "label" }, "Lease end date"),
+                                                        e("input", {
+                                                          className: "field-input",
+                                                          type: "text",
+                                                          inputMode: "numeric",
+                                                          placeholder: "YYYY-MM-DD",
+                                                          pattern: "\\d{4}-\\d{2}-\\d{2}",
+                                                          value:
+                                                            (ownerApplicationTenancyForms[application.id] || buildApplicationTenancyForm())
+                                                              .lease_end_date,
+                                                          onChange: function onChange(event) {
+                                                            updateEntityForm(
+                                                              setOwnerApplicationTenancyForms,
+                                                              application.id,
+                                                              "lease_end_date",
+                                                              event.target.value
+                                                            );
+                                                          }
+                                                        })
+                                                      ])
+                                                    ])
+                                                  : null,
+                                                !application.tenancy_id
+                                                  ? e("div", { className: "action-row", key: "create-tenancy" }, [
+                                                      e(
+                                                        "button",
+                                                        {
+                                                          type: "button",
+                                                          className: "button button-small",
+                                                          disabled:
+                                                            actionState.kind === "owner-application-tenancy" &&
+                                                            actionState.id === application.id,
+                                                          onClick: function onClick() {
+                                                            handleCreateOwnerApplicationTenancy(application);
+                                                          },
+                                                          key: "create"
+                                                        },
+                                                        actionState.kind === "owner-application-tenancy" &&
+                                                          actionState.id === application.id
+                                                          ? "Creating tenancy..."
+                                                          : "Create tenancy"
+                                                      )
+                                                    ])
+                                                  : null
+                                              ])
+                                            : null
+                                        ]);
+                                      })
+                                    )
+                                  : e(
+                                      "p",
+                                      { className: "empty-copy", key: "no-applications" },
+                                      "No tenant applications have arrived for this listing yet."
+                                    )
+                              ]);
+                            })
+                          )
+                        : e("div", { className: "auth-form", key: "owner-listing-form" }, [
+                            e("div", { className: "form-grid", key: "title-row" }, [
+                              e("label", { className: "field", key: "title" }, [
+                                e("span", { className: "field-label", key: "label" }, "Listing title"),
+                                e("input", {
+                                  className: "field-input",
+                                  value: ownerListingForm.title,
+                                  onChange: function onChange(event) {
+                                    updateEntityForm(
+                                      setOwnerListingForms,
+                                      propertyRecord.id,
+                                      "title",
+                                      event.target.value
+                                    );
+                                  },
+                                  minLength: 2,
+                                  maxLength: 255,
+                                  required: true
+                                })
+                              ]),
+                              e("label", { className: "field", key: "description" }, [
+                                e("span", { className: "field-label", key: "label" }, "Short listing description"),
+                                e("input", {
+                                  className: "field-input",
+                                  value: ownerListingForm.description,
+                                  onChange: function onChange(event) {
+                                    updateEntityForm(
+                                      setOwnerListingForms,
+                                      propertyRecord.id,
+                                      "description",
+                                      event.target.value
+                                    );
+                                  },
+                                  maxLength: 1000
+                                })
+                              ])
+                            ]),
+                            e("div", { className: "form-grid", key: "money-row" }, [
+                              e("label", { className: "field", key: "monthly_rent" }, [
+                                e("span", { className: "field-label", key: "label" }, "Monthly rent"),
+                                e("input", {
+                                  className: "field-input",
+                                  type: "number",
+                                  min: "0",
+                                  step: "0.01",
+                                  value: ownerListingForm.monthly_rent,
+                                  onChange: function onChange(event) {
+                                    updateEntityForm(
+                                      setOwnerListingForms,
+                                      propertyRecord.id,
+                                      "monthly_rent",
+                                      event.target.value
+                                    );
+                                  },
+                                  required: true
+                                })
+                              ]),
+                              e("label", { className: "field", key: "deposit" }, [
+                                e("span", { className: "field-label", key: "label" }, "Deposit"),
+                                e("input", {
+                                  className: "field-input",
+                                  type: "number",
+                                  min: "0",
+                                  step: "0.01",
+                                  value: ownerListingForm.deposit,
+                                  onChange: function onChange(event) {
+                                    updateEntityForm(
+                                      setOwnerListingForms,
+                                      propertyRecord.id,
+                                      "deposit",
+                                      event.target.value
+                                    );
+                                  },
+                                  required: true
+                                })
+                              ])
+                            ]),
+                            e("div", { className: "form-grid", key: "threshold-row" }, [
+                              e("label", { className: "field", key: "currency_code" }, [
+                                e("span", { className: "field-label", key: "label" }, "Currency"),
+                                e("input", {
+                                  className: "field-input",
+                                  value: ownerListingForm.currency_code,
+                                  onChange: function onChange(event) {
+                                    updateEntityForm(
+                                      setOwnerListingForms,
+                                      propertyRecord.id,
+                                      "currency_code",
+                                      event.target.value
+                                    );
+                                  },
+                                  minLength: 3,
+                                  maxLength: 3,
+                                  required: true
+                                })
+                              ]),
+                              e("label", { className: "field", key: "minimum_tenant_score" }, [
+                                e("span", { className: "field-label", key: "label" }, "Minimum tenant score"),
+                                e("input", {
+                                  className: "field-input",
+                                  type: "number",
+                                  min: "0",
+                                  max: "1000",
+                                  value: ownerListingForm.minimum_tenant_score,
+                                  onChange: function onChange(event) {
+                                    updateEntityForm(
+                                      setOwnerListingForms,
+                                      propertyRecord.id,
+                                      "minimum_tenant_score",
+                                      event.target.value
+                                    );
+                                  },
+                                  required: true
+                                })
+                              ]),
+                              e("label", { className: "field", key: "minimum_verification_strength" }, [
+                                e("span", { className: "field-label", key: "label" }, "Minimum verification strength"),
+                                e("input", {
+                                  className: "field-input",
+                                  type: "number",
+                                  min: "0",
+                                  max: "100",
+                                  value: ownerListingForm.minimum_verification_strength,
+                                  onChange: function onChange(event) {
+                                    updateEntityForm(
+                                      setOwnerListingForms,
+                                      propertyRecord.id,
+                                      "minimum_verification_strength",
+                                      event.target.value
+                                    );
+                                  },
+                                  required: true
+                                })
+                              ])
+                            ]),
+                            e(
+                              "button",
+                              {
+                                type: "button",
+                                className: "button button-secondary",
+                                disabled:
+                                  actionState.kind === "owner-listing-create" &&
+                                  actionState.id === propertyRecord.id,
+                                onClick: function onClick() {
+                                  handleCreateOwnerListing(propertyRecord);
+                                }
+                              },
+                              actionState.kind === "owner-listing-create" &&
+                                actionState.id === propertyRecord.id
+                                ? "Publishing..."
+                                : "Publish to tenant Listings"
+                            )
+                          ])
+                    ]);
+                  })
+                : e(
+                    "p",
+                    { className: "empty-copy", key: "no-owner-managed" },
+                    "No owner-managed properties are ready to publish yet. Create or switch a property to owner-managed first."
+                  )
+            ])
           : null
       ])
         : null
     ]),
-    e("section", { className: "split-grid", key: "top", id: "records-section-history" }, [
+    activeRecordsSection === "history" ? e("section", { className: "guided-workflow", key: "top", id: "records-section-history" }, [
       e("article", { className: "detail-panel", key: "imports" }, [
         e("h2", { className: "detail-title", key: "title" }, "Past rental history"),
         e("div", { className: "auth-form", key: "form" }, [
@@ -1784,17 +2933,75 @@ export function RecordsPage() {
               "No pending reference requests are waiting for your response."
             )
       ])
-    ]),
-    roleScopedTenancies.length
-      ? e(
-          "div",
-          { className: "list-stack", key: "tenancies", id: "records-section-artifacts" },
-          roleScopedTenancies.map(function renderTenancy(tenancy) {
+    ])
+      : null,
+    activeRecordsSection === "artifacts"
+      ? roleScopedTenancies.length
+        ? e(
+            "section",
+            { className: "guided-workflow", key: "artifacts", id: "records-section-artifacts" },
+            [
+              e("section", { className: "detail-panel", key: "selector" }, [
+                e(SectionHeading, {
+                  title: "Choose one tenancy for artifacts",
+                  copy:
+                    "Upload, review, or request references for one tenancy at a time so supporting files do not become another wall of cards.",
+                  key: "heading"
+                }),
+                e("div", { className: "form-grid", key: "selector-grid" }, [
+                  e("label", { className: "field", key: "select" }, [
+                    e("span", { className: "field-label", key: "label" }, "Active artifact tenancy"),
+                    e(
+                      "select",
+                      {
+                        className: "field-input field-select",
+                        value: selectedArtifactTenancy ? selectedArtifactTenancy.id : "",
+                        onChange: function onChange(event) {
+                          setSelectedArtifactTenancyId(event.target.value);
+                        }
+                      },
+                      roleScopedTenancies.map(function renderArtifactTenancyOption(tenancy) {
+                        return e(
+                          "option",
+                          { value: tenancy.id, key: tenancy.id },
+                          formatRecordsTenancySelectorLabel(tenancy, session.user.id)
+                        );
+                      })
+                    )
+                  ])
+                ]),
+                selectedArtifactTenancy
+                  ? e("div", { className: "fact-grid", key: "facts" }, [
+                      e(FactPill, {
+                        key: "visible",
+                        label: "Visible tenancies",
+                        value: String(roleScopedTenancies.length),
+                        tone: "accent"
+                      }),
+                      e(FactPill, {
+                        key: "city",
+                        label: "City",
+                        value: selectedArtifactTenancy.city || "No city recorded"
+                      }),
+                      e(FactPill, {
+                        key: "files",
+                        label: "Files on this tenancy",
+                        value: String((state.evidenceByTenancy[selectedArtifactTenancy.id] || []).length),
+                        tone: "accent"
+                      })
+                    ])
+                  : null
+              ]),
+              e(
+                "div",
+                { className: "list-stack", key: "tenancies" },
+                artifactTenanciesToRender.map(function renderTenancy(tenancy) {
             var evidenceForm = evidenceForms[tenancy.id] || buildEvidenceForm(session.user.id, tenancy);
             var referenceForm = referenceForms[tenancy.id];
             var canConfirm =
               tenancy.created_by_user_id !== session.user.id && tenancy.verification_status === "self_reported";
             var canRequestReview =
+              !canConfirm &&
               tenancy.verification_status !== "reviewed" &&
               tenancy.verification_status !== "verified" &&
               !tenancy.review_requested_at;
@@ -2122,10 +3329,12 @@ export function RecordsPage() {
                 : null
             ]);
           })
-        )
-      : e(
+              )
+            ]
+          )
+        : e(
           "div",
-          { className: "detail-panel", key: "empty" },
+          { className: "detail-panel", key: "empty", id: "records-section-artifacts" },
           e(
             "p",
             { className: "empty-copy" },
@@ -2134,5 +3343,6 @@ export function RecordsPage() {
               : "No tenant-side tenancy records are attached to this account yet."
           )
         )
+      : null
   ]);
 }

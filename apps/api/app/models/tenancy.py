@@ -8,6 +8,7 @@ from app.models.common import TimestampedModel
 from trustledger_domain import TenancyStatus, VerificationStatus
 
 if TYPE_CHECKING:
+    from app.models.application import ListingApplication
     from app.models.deposit import DepositRecord
     from app.models.evidence import EvidenceDocument
     from app.models.history_import import HistoryImport
@@ -91,6 +92,7 @@ class Tenancy(TimestampedModel, table=True):
     maintenance_tickets: List["MaintenanceTicket"] = Relationship(back_populates="tenancy")
     payment_records: List["PaymentRecord"] = Relationship(back_populates="tenancy")
     reference_requests: List["ReferenceRequest"] = Relationship(back_populates="tenancy")
+    listing_applications: List["ListingApplication"] = Relationship(back_populates="tenancy")
     trust_events: List["TrustEvent"] = Relationship(back_populates="tenancy")
 
     @property

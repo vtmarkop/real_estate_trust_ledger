@@ -1,5 +1,42 @@
 export var EL_PATCH_TRANSLATIONS = {
   Language: "Γλώσσα",
+  "Publish listing": "Δημοσίευση αγγελίας",
+  "Owner-managed publishing": "Δημοσίευση από ιδιοκτήτη",
+  "Use this lane only for homes you manage yourself. Agency-managed homes stay in Agency Tools so tenant applications route to the agency.":
+    "Χρησιμοποίησε αυτή την ενότητα μόνο για ακίνητα που διαχειρίζεσαι ο ίδιος. Τα ακίνητα με μεσιτικό μένουν στα Agency Tools ώστε οι αιτήσεις ενοικιαστών να πηγαίνουν στο μεσιτικό.",
+  "Listed by landlord": "Αγγελία από ιδιοκτήτη",
+  "Listed by agency": "Αγγελία από μεσιτικό",
+  "Not listed yet": "Δεν έχει δημοσιευτεί ακόμη",
+  "Visible in tenant Listings": "Ορατή στις Αγγελίες ενοικιαστή",
+  "Owner listing published to tenant Listings.": "Η αγγελία ιδιοκτήτη δημοσιεύτηκε στις Αγγελίες ενοικιαστή.",
+  "Owner listing status updated.": "Η κατάσταση της αγγελίας ιδιοκτήτη ενημερώθηκε.",
+  "Unable to publish this owner-managed listing.": "Δεν ήταν δυνατή η δημοσίευση αυτής της ιδιοδιαχειριζόμενης αγγελίας.",
+  "Unable to update this owner listing.": "Δεν ήταν δυνατή η ενημέρωση αυτής της αγγελίας ιδιοκτήτη.",
+  "Application status updated.": "Η κατάσταση της αίτησης ενημερώθηκε.",
+  "Unable to update this application.": "Δεν ήταν δυνατή η ενημέρωση αυτής της αίτησης.",
+  "Short listing description": "Σύντομη περιγραφή αγγελίας",
+  "Publish to tenant Listings": "Δημοσίευση στις Αγγελίες ενοικιαστή",
+  "Publishing...": "Δημοσίευση...",
+  "Pause listing": "Παύση αγγελίας",
+  "Reopen listing": "Επανενεργοποίηση αγγελίας",
+  "Close listing": "Κλείσιμο αγγελίας",
+  "Mark reviewing": "Σε αξιολόγηση",
+  "Applicant note": "Σημείωση υποψηφίου",
+  "No tenant applications have arrived for this listing yet.": "Δεν έχουν έρθει ακόμη αιτήσεις ενοικιαστών για αυτή την αγγελία.",
+  "No owner-managed properties are ready to publish yet. Create or switch a property to owner-managed first.":
+    "Δεν υπάρχουν ακόμη ιδιοδιαχειριζόμενα ακίνητα έτοιμα για δημοσίευση. Δημιούργησε ή άλλαξε πρώτα ένα ακίνητο σε ιδιοδιαχείριση.",
+  "Each listing shows who manages it, the rent, deposit, and trust thresholds before you apply.":
+    "Κάθε αγγελία δείχνει ποιος τη διαχειρίζεται, το ενοίκιο, την εγγύηση και τα όρια αξιοπιστίας πριν κάνεις αίτηση.",
+  "Track application status, captured score snapshots, and any notes returned by the listing manager.":
+    "Παρακολούθησε την κατάσταση της αίτησης, τα αποτυπωμένα στιγμιότυπα βαθμολογίας και τυχόν σημειώσεις από τον διαχειριστή της αγγελίας.",
+  "Manager or applicant notes": "Σημειώσεις διαχειριστή ή υποψηφίου",
+  "Listing manager": "Διαχειριστής αγγελίας",
+  "Only owner-managed properties can be published directly by a landlord.":
+    "Μόνο ιδιοδιαχειριζόμενα ακίνητα μπορούν να δημοσιευτούν απευθείας από ιδιοκτήτη.",
+  "Property must belong to the signed-in landlord before publishing.":
+    "Το ακίνητο πρέπει να ανήκει στον συνδεδεμένο ιδιοκτήτη πριν δημοσιευτεί.",
+  "This owner-managed property already has an active landlord listing.":
+    "Αυτό το ιδιοδιαχειριζόμενο ακίνητο έχει ήδη ενεργή αγγελία ιδιοκτήτη.",
   "Workspace sections": "Ενότητες χώρου εργασίας",
   Overview: "Επισκόπηση",
   Sharing: "Κοινοποίηση",
@@ -72,6 +109,9 @@ export var EL_PATCH_TRANSLATIONS = {
   "Owner managed by": "Διαχειρίζεται από τον ιδιοκτήτη",
   "An agency manages this property": "Το ακίνητο το διαχειρίζεται πρακτορείο",
   "I manage this property myself": "Διαχειρίζομαι ο ίδιος το ακίνητο",
+  "Agency-managed setup unavailable": "Η διαχείριση από πρακτορείο δεν είναι ακόμη διαθέσιμη",
+  "No agency workspace exists yet. Save this property as owner-managed now; you can assign an agency later.":
+    "Δεν υπάρχει ακόμη χώρος πρακτορείου. Αποθήκευσε τώρα το ακίνητο ως διαχειριζόμενο από εσένα και μπορείς να αναθέσεις πρακτορείο αργότερα.",
   "Management:": "Διαχείριση:",
   "Managing agency": "Πρακτορείο διαχείρισης",
   "Agency management keeps this property inside agency workflows and lets you name the responsible operator.":
@@ -275,7 +315,7 @@ export var EL_PATCH_TRANSLATIONS = {
   "Switch to sign-in activity when you want to investigate how the account has been used recently.":
     "Πήγαινε στη δραστηριότητα σύνδεσης όταν θέλεις να ερευνήσεις πώς χρησιμοποιήθηκε πρόσφατα ο λογαριασμός.",
   "The current browser session stays protected from self-revoke.":
-    "Η τρέχουσα συνεδρία του browser προστατεύεται από ανάκληση του ίδιου του χρήστη.",
+    "Η τρέχουσα συνεδρία του προγράμματος περιήγησης προστατεύεται από ανάκληση του ίδιου του χρήστη.",
   "Recent security events": "Πρόσφατα συμβάντα ασφάλειας",
   "Recent sign-in outcomes and session-related events.":
     "Πρόσφατα αποτελέσματα συνδέσεων και συμβάντα που σχετίζονται με συνεδρίες.",
@@ -296,6 +336,17 @@ export var EL_PATCH_TRANSLATIONS = {
   "Creating workspace...": "Δημιουργία χώρου πρακτορείου...",
   "Agency workspace created. The agency tools tab is now available.":
     "Ο χώρος πρακτορείου δημιουργήθηκε. Η καρτέλα εργαλείων πρακτορείου είναι πλέον διαθέσιμη.",
+  "Create the agency workspace this agent account will operate. After creation, this account becomes the agency owner and can add teammates from Agency Tools.":
+    "Δημιούργησε τον χώρο πρακτορείου που θα χειρίζεται αυτός ο λογαριασμός agent. Μετά τη δημιουργία, ο λογαριασμός γίνεται ιδιοκτήτης του πρακτορείου και μπορεί να προσθέσει συνεργάτες από τα Εργαλεία Πρακτορείου.",
+  "No agency membership is attached yet. Create an agency workspace below or ask an agency owner to invite this account.":
+    "Δεν υπάρχει ακόμη συμμετοχή σε πρακτορείο. Δημιούργησε παρακάτω έναν χώρο πρακτορείου ή ζήτησε από ιδιοκτήτη πρακτορείου να προσκαλέσει αυτόν τον λογαριασμό.",
+  "No active internal memberships are attached to this account yet.":
+    "Δεν υπάρχουν ακόμη ενεργές εσωτερικές συμμετοχές συνδεδεμένες με αυτόν τον λογαριασμό.",
+  "Your agent role is active, but this account is not attached to an agency organization yet. Create an agency workspace from Home, or ask an agency owner to invite this account.":
+    "Ο ρόλος agent είναι ενεργός, αλλά αυτός ο λογαριασμός δεν είναι ακόμη συνδεδεμένος με οργανισμό πρακτορείου. Δημιούργησε χώρο πρακτορείου από την Αρχική ή ζήτησε από ιδιοκτήτη πρακτορείου να προσκαλέσει αυτόν τον λογαριασμό.",
+  "Open Home to create agency workspace": "Άνοιγμα Αρχικής για δημιουργία χώρου πρακτορείου",
+  "Your account needs the agent role before creating an agency workspace.":
+    "Ο λογαριασμός σου χρειάζεται ρόλο agent πριν δημιουργήσεις χώρο πρακτορείου.",
   "Open agency tools": "Άνοιγμα εργαλείων πρακτορείου",
   "Open review center": "Άνοιγμα κέντρου ελέγχου",
   "Use this area only if you belong to an agency and need listings, screening, or trust checks.":
@@ -314,7 +365,7 @@ export var EL_PATCH_TRANSLATIONS = {
     "Αυτή τη στιγμή εργάζεσαι μόνο στον προσωπικό χώρο εργασίας.",
   "Your role:": "Ο ρόλος σου:",
   "Keep this workspace available like an app shell on supported browsers so repeat access feels faster and more focused.":
-    "Κράτησε αυτόν τον χώρο διαθέσιμο σαν εγκατεστημένη εφαρμογή σε συμβατούς browsers ώστε η επαναλαμβανόμενη πρόσβαση να είναι πιο γρήγορη και πιο συγκεντρωμένη.",
+    "Κράτησε αυτόν τον χώρο διαθέσιμο σαν εγκατεστημένη εφαρμογή σε συμβατά προγράμματα περιήγησης ώστε η επαναλαμβανόμενη πρόσβαση να είναι πιο γρήγορη και πιο συγκεντρωμένη.",
   "Focus on one agency lane": "Εστίασε σε μία ενότητα πρακτορείου τη φορά",
   "Agency workspace sections": "Ενότητες χώρου πρακτορείου",
   "Start here for the agency-wide picture before changing anything.":
@@ -821,7 +872,7 @@ Object.assign(EL_PATCH_TRANSLATIONS, {
   "Welcome back.": "Καλώς ήρθες ξανά.",
   "Sign in": "Σύνδεση",
   "Sign in securely. The app will open the last valid workspace role for this browser, and you can switch assigned roles from the sidebar.":
-    "Συνδέσου με ασφάλεια. Η εφαρμογή θα ανοίξει τον τελευταίο έγκυρο ρόλο αυτού του browser και μπορείς να αλλάξεις τους ανατεθειμένους ρόλους από την πλευρική μπάρα.",
+    "Συνδέσου με ασφάλεια. Η εφαρμογή θα ανοίξει τον τελευταίο έγκυρο ρόλο αυτού του προγράμματος περιήγησης και μπορείς να αλλάξεις τους ανατεθειμένους ρόλους από την πλευρική μπάρα.",
   "Sign in to open your workspace, review your records, and continue from where you left off.":
     "Συνδέσου για να ανοίξεις τον χώρο σου, να δεις τα αρχεία σου και να συνεχίσεις από εκεί που έμεινες.",
   "Create a secure account first. After that, you can build your rental record, share your trust profile, and join organizations.":
@@ -1210,7 +1261,7 @@ Object.assign(EL_PATCH_TRANSLATIONS, {
   "Scheduled for": "Προγραμματισμένο για",
   "No extra audit details recorded.": "Δεν έχουν καταγραφεί επιπλέον λεπτομέρειες audit.",
 
-  "Browser or device": "Browser ή συσκευή",
+  "Browser or device": "Πρόγραμμα περιήγησης ή συσκευή",
   "events": "συμβάντα",
   "Access event": "Συμβάν πρόσβασης",
   "Known session": "Γνωστή συνεδρία",
@@ -1302,7 +1353,7 @@ Object.assign(EL_PATCH_TRANSLATIONS, {
   "The home page is now meant to answer two questions quickly: where am I working, and what should I open next?":
     "Η αρχική σελίδα απαντά γρήγορα σε δύο ερωτήσεις: σε ποιον χώρο δουλεύω και τι πρέπει να ανοίξω μετά;",
   "Keep this workspace available like an app shell on supported browsers so repeat access feels faster and more focused.":
-    "Κράτησε αυτόν τον χώρο διαθέσιμο σαν εφαρμογή σε συμβατούς browser, ώστε η επόμενη πρόσβαση να είναι πιο γρήγορη και συγκεντρωμένη.",
+    "Κράτησε αυτόν τον χώρο διαθέσιμο σαν εφαρμογή σε συμβατά προγράμματα περιήγησης, ώστε η επόμενη πρόσβαση να είναι πιο γρήγορη και συγκεντρωμένη.",
   "Install status": "Κατάσταση εγκατάστασης",
   "Canonical model version currently powering both self-service and agency-facing score reads.":
     "Η τρέχουσα έκδοση του μοντέλου που τροφοδοτεί τις βαθμολογίες αυτοεξυπηρέτησης και τις προβολές μεσιτικών.",
@@ -1420,5 +1471,121 @@ Object.assign(EL_PATCH_TRANSLATIONS, {
   "Create manual follow-up tasks when a reviewer needs to chase missing evidence, contact a user, or track an operational edge case.":
     "Δημιούργησε χειροκίνητες εργασίες παρακολούθησης όταν ένας ελεγκτής πρέπει να αναζητήσει ελλιπή τεκμήρια, να επικοινωνήσει με χρήστη ή να παρακολουθήσει μια λειτουργική εξαίρεση.",
   "Use this lane only for saved trust-check history and audit context.":
-    "Χρησιμοποίησε αυτή την ενότητα μόνο για αποθηκευμένο ιστορικό ελέγχων αξιοπιστίας και πλαίσιο ελέγχου."
+    "Χρησιμοποίησε αυτή την ενότητα μόνο για αποθηκευμένο ιστορικό ελέγχων αξιοπιστίας και πλαίσιο ελέγχου.",
+
+  "Start here": "Ξεκίνα εδώ",
+  "Health and release snapshot": "Υγεία και στιγμιότυπο έκδοσης",
+  "Manual score and follow-up actions": "Χειροκίνητες ενέργειες βαθμολογίας και follow-up",
+  "Who can see which workspace": "Ποιος βλέπει ποιον χώρο εργασίας",
+  "Daily reviews": "Καθημερινοί έλεγχοι",
+  "pending review items": "εκκρεμή στοιχεία ελέγχου",
+  "Dispute decisions": "Αποφάσεις διαφορών",
+  "cases needing verdicts": "υποθέσεις που χρειάζονται απόφαση",
+  "System runtime": "Λειτουργία συστήματος",
+  "automation and worker items": "στοιχεία αυτοματισμού και worker",
+  "History / audit": "Ιστορικό / audit",
+  "Choose one admin job": "Διάλεξε μία εργασία διαχείρισης"
+});
+
+Object.assign(EL_PATCH_TRANSLATIONS, {
+  "Managing agent": "Υπεύθυνος agent",
+  "Selected agent email": "Email επιλεγμένου agent",
+  "Let the agency assign later": "Να το αναθέσει το πρακτορείο αργότερα",
+  "Choose an agency operator to fill the assignment email automatically.":
+    "Επίλεξε συνεργάτη του πρακτορείου για να συμπληρωθεί αυτόματα το email ανάθεσης.",
+  "Property created as agency inventory and ready for listing.":
+    "Το ακίνητο δημιουργήθηκε ως απόθεμα πρακτορείου και είναι έτοιμο για αγγελία.",
+  "Create agency inventory first. It is assigned to this agency and your agent account so it can be listed immediately. If a landlord owns the property, the stricter path is for the landlord to create it and assign the agency.":
+    "Δημιούργησε πρώτα απόθεμα πρακτορείου. Ανατίθεται σε αυτό το πρακτορείο και στον δικό σου agent λογαριασμό ώστε να μπορεί να γίνει άμεσα αγγελία. Αν το ακίνητο ανήκει σε ιδιοκτήτη, η αυστηρότερη ροή είναι να το δημιουργήσει ο ιδιοκτήτης και να αναθέσει το πρακτορείο.",
+  "Property must be assigned to this agency before publishing a listing.":
+    "Το ακίνητο πρέπει να είναι ανατεθειμένο σε αυτό το πρακτορείο πριν δημοσιευτεί αγγελία."
+});
+
+Object.assign(EL_PATCH_TRANSLATIONS, {
+  "Landlord owner email": "Email ιδιοκτήτη",
+  "Landlord owner": "Ιδιοκτήτης ακινήτου",
+  "Landlord owner assignment saved.": "Η ανάθεση ιδιοκτήτη αποθηκεύτηκε.",
+  "Landlord owner assignment cleared.": "Η ανάθεση ιδιοκτήτη αφαιρέθηκε.",
+  "Unable to save landlord owner assignment.": "Δεν ήταν δυνατή η αποθήκευση της ανάθεσης ιδιοκτήτη.",
+  "Save landlord owner": "Αποθήκευση ιδιοκτήτη",
+  "Only properties you created or own can be reused for a new tenancy record.":
+    "Μόνο ακίνητα που δημιούργησες ή σου ανήκουν μπορούν να επαναχρησιμοποιηθούν για νέο αρχείο μίσθωσης.",
+  "Optional. Use an existing landlord account when the agency is preparing a listing for that owner.":
+    "Προαιρετικό. Χρησιμοποίησε υπάρχον λογαριασμό ιδιοκτήτη όταν το μεσιτικό ετοιμάζει αγγελία για αυτόν τον ιδιοκτήτη.",
+  "Existing landlord account only. Leave blank to clear.":
+    "Μόνο υπάρχων λογαριασμός ιδιοκτήτη. Άφησέ το κενό για αφαίρεση.",
+  "Assign this agency-created property to an existing landlord account, or leave blank to clear the owner link.":
+    "Ανάθεσε αυτό το ακίνητο που δημιούργησε το μεσιτικό σε υπάρχον λογαριασμό ιδιοκτήτη ή άφησέ το κενό για να αφαιρεθεί η σύνδεση.",
+  "Landlord owner assignment is handled by the creating or assigned agent for this property.":
+    "Η ανάθεση ιδιοκτήτη γίνεται από τον agent που δημιούργησε ή έχει αναλάβει αυτό το ακίνητο.",
+  "Create agency inventory first. It is assigned to this agency and your agent account so it can be listed immediately. If the property already belongs to a landlord account, add that landlord email here so ownership and agency listing work stay linked.":
+    "Δημιούργησε πρώτα απόθεμα μεσιτικού. Ανατίθεται σε αυτό το μεσιτικό και στον δικό σου agent λογαριασμό ώστε να μπορεί να μπει άμεσα σε αγγελία. Αν το ακίνητο ανήκει ήδη σε λογαριασμό ιδιοκτήτη, πρόσθεσε εδώ το email του για να μείνουν συνδεδεμένα η ιδιοκτησία και η αγγελία.",
+  "The selected property owner does not have the landlord role.":
+    "Ο επιλεγμένος ιδιοκτήτης ακινήτου δεν έχει ρόλο ιδιοκτήτη."
+});
+
+Object.assign(EL_PATCH_TRANSLATIONS, {
+  "Create tenancy": "Δημιουργία μίσθωσης",
+  "Creating tenancy...": "Δημιουργία μίσθωσης...",
+  "Tenancy created": "Η μίσθωση δημιουργήθηκε",
+  "Tenancy bridge": "Σύνδεση μίσθωσης",
+  "Open tenancy records": "Άνοιγμα αρχείων μίσθωσης",
+  "Tenancy created from the accepted application.": "Η μίσθωση δημιουργήθηκε από την αποδεκτή αίτηση.",
+  "Unable to create tenancy from this application.": "Δεν ήταν δυνατή η δημιουργία μίσθωσης από αυτή την αίτηση.",
+  "Only an accepted application can create a tenancy.": "Μόνο μια αποδεκτή αίτηση μπορεί να δημιουργήσει μίσθωση.",
+  "Link a landlord owner to this property before creating a tenancy.":
+    "Σύνδεσε ιδιοκτήτη με αυτό το ακίνητο πριν δημιουργήσεις μίσθωση.",
+  "The landlord owner account is unavailable.": "Ο λογαριασμός του ιδιοκτήτη δεν είναι διαθέσιμος.",
+  "The landlord owner account does not have the landlord role.":
+    "Ο λογαριασμός του ιδιοκτήτη δεν έχει ρόλο ιδιοκτήτη.",
+  "The accepted applicant account is unavailable.": "Ο λογαριασμός του αποδεκτού αιτούντα δεν είναι διαθέσιμος.",
+  "Tenant and landlord must be different users.": "Ο ενοικιαστής και ο ιδιοκτήτης πρέπει να είναι διαφορετικοί χρήστες.",
+  "This accepted application is now linked to a tenancy record. Use Tenancy records for confirmation, evidence, and review.":
+    "Αυτή η αποδεκτή αίτηση έχει συνδεθεί με αρχείο μίσθωσης. Χρησιμοποίησε τα αρχεία μίσθωσης για επιβεβαίωση, τεκμήρια και έλεγχο.",
+  "Acceptance is only the decision. Create the tenancy record here so the tenant and landlord can operate from the same rental record.":
+    "Η αποδοχή είναι μόνο η απόφαση. Δημιούργησε εδώ το αρχείο μίσθωσης ώστε ενοικιαστής και ιδιοκτήτης να δουλεύουν από το ίδιο μισθωτικό αρχείο.",
+  "Acceptance is only the decision. Create the tenancy here after the property has a linked landlord owner, so both parties move into one rental record.":
+    "Η αποδοχή είναι μόνο η απόφαση. Δημιούργησε εδώ τη μίσθωση αφού το ακίνητο έχει συνδεδεμένο ιδιοκτήτη, ώστε και οι δύο πλευρές να περάσουν σε ένα κοινό μισθωτικό αρχείο.",
+  "The listing is closed and the applicant can now operate from the tenancy record.":
+    "Η αγγελία έκλεισε και ο αιτών μπορεί πλέον να λειτουργεί από το αρχείο μίσθωσης.",
+  "Accept this application so the next step can create the tenancy.":
+    "Αποδέξου αυτή την αίτηση ώστε το επόμενο βήμα να δημιουργήσει τη μίσθωση.",
+  "Reject this application and keep it out of the tenancy flow.":
+    "Απόρριψε αυτή την αίτηση ώστε να μη μπει στη ροή μίσθωσης.",
+  "Move this application into review before making a final decision.":
+    "Μετέφερε την αίτηση σε έλεγχο πριν πάρεις τελική απόφαση.",
+  "Create the actual tenancy record from this accepted application.":
+    "Δημιούργησε το πραγματικό αρχείο μίσθωσης από αυτή την αποδεκτή αίτηση.",
+  "Pause this listing so tenants cannot apply until it is reopened.":
+    "Κάνε παύση της αγγελίας ώστε οι ενοικιαστές να μην μπορούν να κάνουν αίτηση μέχρι να ανοίξει ξανά.",
+  "Make this listing visible to tenants again.": "Κάνε την αγγελία ξανά ορατή στους ενοικιαστές.",
+  "Close this listing and stop new tenant applications.":
+    "Κλείσε την αγγελία και σταμάτησε νέες αιτήσεις ενοικιαστών.",
+  "Save this property setup for future tenancy or listing work.":
+    "Αποθήκευσε αυτή τη ρύθμιση ακινήτου για μελλοντική μίσθωση ή αγγελία.",
+  "Save the current property setup changes.": "Αποθήκευσε τις τρέχουσες αλλαγές του ακινήτου.",
+  "Link this agency property to the selected existing landlord account.":
+    "Σύνδεσε αυτό το ακίνητο του μεσιτικού με τον επιλεγμένο υπάρχοντα λογαριασμό ιδιοκτήτη.",
+  "Save these searchable property tags.": "Αποθήκευσε αυτές τις αναζητήσιμες ετικέτες ακινήτου.",
+  "Save the listing description and screening thresholds.":
+    "Αποθήκευσε την περιγραφή της αγγελίας και τα όρια ελέγχου.",
+  "Create a reusable property record.": "Δημιούργησε επαναχρησιμοποιήσιμο αρχείο ακινήτου.",
+  "Create the agency organization this account will operate.":
+    "Δημιούργησε τον οργανισμό μεσιτικού που θα λειτουργεί αυτός ο λογαριασμός.",
+  "Go to Home to create the agency workspace first.":
+    "Πήγαινε στην Αρχική για να δημιουργήσεις πρώτα τον χώρο μεσιτικού.",
+  "End this browser session.": "Τερμάτισε αυτή τη συνεδρία του προγράμματος περιήγησης.",
+  "Create a new Trust Ledger account.": "Δημιούργησε νέο λογαριασμό Trust Ledger.",
+  "Sign in and open your assigned workspace.": "Συνδέσου και άνοιξε τον ανατεθειμένο χώρο εργασίας σου.",
+  "Open tenant listings and applications.": "Άνοιξε τις αγγελίες και τις αιτήσεις ενοικιαστή.",
+  "Open records for properties, tenancies, artifacts, and references.":
+    "Άνοιξε αρχεία για ακίνητα, μισθώσεις, τεκμήρια και συστάσεις.",
+  "Open your trust score, sharing, and history workspace.":
+    "Άνοιξε τον χώρο βαθμολογίας, κοινοποίησης και ιστορικού εμπιστοσύνης.",
+  "This action is currently saving.": "Αυτή η ενέργεια αποθηκεύεται τώρα.",
+  "This action is currently creating the record.": "Αυτή η ενέργεια δημιουργεί τώρα το αρχείο.",
+  "Save the current changes for this item.": "Αποθήκευσε τις τρέχουσες αλλαγές για αυτό το στοιχείο.",
+  "Create a new record from the information entered here.":
+    "Δημιούργησε νέο αρχείο από τα στοιχεία που έχουν συμπληρωθεί εδώ.",
+  "Open this workspace or record.": "Άνοιξε αυτόν τον χώρο εργασίας ή το αρχείο."
 });

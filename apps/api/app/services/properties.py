@@ -7,7 +7,7 @@ from sqlmodel import Session
 
 from app.models import Organization, Property, User
 from app.schemas.property import PropertyResponse
-from trustledger_domain import PropertyManagementMode
+from trustledger_domain import AccountWorkspaceRole, PropertyManagementMode
 
 
 def normalize_property_tags(tags: list[str] | None) -> list[str]:
@@ -55,6 +55,17 @@ def build_property_response(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Property creator is unavailable.",
         )
+    owner_landlord_user = (
+        session.get(User, property_record.owner_landlord_user_id)
+        if property_record.owner_landlord_user_id
+        else None
+    )
+    effective_owner_landlord_user = owner_landlord_user
+    if (
+        effective_owner_landlord_user is None
+        and AccountWorkspaceRole.LANDLORD in created_by_user.workspace_roles
+    ):
+        effective_owner_landlord_user = created_by_user
     assigned_agency_organization = (
         session.get(Organization, property_record.assigned_agency_organization_id)
         if property_record.assigned_agency_organization_id
@@ -80,6 +91,15 @@ def build_property_response(
         management_mode=PropertyManagementMode(property_record.management_mode),
         created_by_user_id=property_record.created_by_user_id,
         created_by_user_full_name=created_by_user.full_name,
+        owner_landlord_user_id=(
+            effective_owner_landlord_user.id if effective_owner_landlord_user else None
+        ),
+        owner_landlord_user_full_name=(
+            effective_owner_landlord_user.full_name if effective_owner_landlord_user else None
+        ),
+        owner_landlord_user_email=(
+            effective_owner_landlord_user.email if effective_owner_landlord_user else None
+        ),
         assigned_agency_organization_id=property_record.assigned_agency_organization_id,
         assigned_agency_organization_name=(
             assigned_agency_organization.name if assigned_agency_organization else None

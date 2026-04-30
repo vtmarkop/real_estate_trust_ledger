@@ -132,7 +132,7 @@ def list_automation_tasks(
     task_type: AutomationTaskType | None = Query(default=None),
     task_status: AutomationTaskStatus | None = Query(default=None),
     due_only: bool = Query(default=False),
-    current_user=Depends(require_system_roles(SystemRole.REVIEWER, SystemRole.ADMIN)),
+    current_user=Depends(require_system_roles(SystemRole.ADMIN)),
 ) -> list[AutomationTaskResponse]:
     query = select(AutomationTask)
     if task_type is not None:
@@ -158,7 +158,7 @@ def list_automation_tasks(
 def get_automation_task(
     task_id: UUID,
     session: SessionDep,
-    current_user=Depends(require_system_roles(SystemRole.REVIEWER, SystemRole.ADMIN)),
+    current_user=Depends(require_system_roles(SystemRole.ADMIN)),
 ) -> AutomationTaskResponse:
     automation_task = get_automation_task_or_404(session=session, task_id=task_id)
     return build_automation_task_response(session=session, automation_task=automation_task)
@@ -171,7 +171,7 @@ def get_automation_task(
 def claim_automation_tasks(
     payload: AutomationTaskClaimRequest,
     session: SessionDep,
-    current_user=Depends(require_system_roles(SystemRole.REVIEWER, SystemRole.ADMIN)),
+    current_user=Depends(require_system_roles(SystemRole.ADMIN)),
 ) -> list[AutomationTaskResponse]:
     automation_tasks = claim_due_automation_tasks(
         session=session,
@@ -209,7 +209,7 @@ def claim_automation_tasks(
 def create_follow_up_task(
     payload: AutomationFollowUpCreateRequest,
     session: SessionDep,
-    current_user=Depends(require_system_roles(SystemRole.REVIEWER, SystemRole.ADMIN)),
+    current_user=Depends(require_system_roles(SystemRole.ADMIN)),
 ) -> AutomationTaskResponse:
     subject_user = resolve_subject_user(
         session=session,
@@ -245,7 +245,7 @@ def create_follow_up_task(
 def cleanup_expired_consent_reminders(
     payload: AutomationCleanupRequest,
     session: SessionDep,
-    current_user=Depends(require_system_roles(SystemRole.REVIEWER, SystemRole.ADMIN)),
+    current_user=Depends(require_system_roles(SystemRole.ADMIN)),
 ) -> AutomationCleanupResponse:
     cleanup_result = cleanup_expired_consent_reminder_tasks(
         session=session,
@@ -275,7 +275,7 @@ def cleanup_expired_consent_reminders(
 def cleanup_stale_follow_ups(
     payload: AutomationCleanupRequest,
     session: SessionDep,
-    current_user=Depends(require_system_roles(SystemRole.REVIEWER, SystemRole.ADMIN)),
+    current_user=Depends(require_system_roles(SystemRole.ADMIN)),
 ) -> AutomationCleanupResponse:
     cleanup_result = cleanup_stale_follow_up_tasks(
         session=session,
@@ -308,7 +308,7 @@ def create_user_score_refresh_automation_task(
     user_id: UUID,
     payload: ScheduledScoreRefreshTaskCreateRequest,
     session: SessionDep,
-    current_user=Depends(require_system_roles(SystemRole.REVIEWER, SystemRole.ADMIN)),
+    current_user=Depends(require_system_roles(SystemRole.ADMIN)),
 ) -> AutomationTaskResponse:
     subject_user = get_user_or_404(session=session, user_id=user_id)
     automation_task = create_user_score_refresh_task(
@@ -331,7 +331,7 @@ def create_organization_score_batch_refresh_automation_task(
     organization_id: UUID,
     payload: ScheduledScoreRefreshTaskCreateRequest,
     session: SessionDep,
-    current_user=Depends(require_system_roles(SystemRole.REVIEWER, SystemRole.ADMIN)),
+    current_user=Depends(require_system_roles(SystemRole.ADMIN)),
 ) -> AutomationTaskResponse:
     organization = get_organization_or_404(session=session, organization_id=organization_id)
     automation_task = create_organization_score_batch_refresh_task(
@@ -352,7 +352,7 @@ def create_organization_score_batch_refresh_automation_task(
 def ensure_consent_expiry_task(
     consent_id: UUID,
     session: SessionDep,
-    current_user=Depends(require_system_roles(SystemRole.REVIEWER, SystemRole.ADMIN)),
+    current_user=Depends(require_system_roles(SystemRole.ADMIN)),
 ) -> AutomationTaskResponse:
     consent = get_consent_or_404(session=session, consent_id=consent_id)
     automation_task = ensure_consent_expiry_reminder(session=session, consent=consent)
@@ -369,7 +369,7 @@ def execute_automation_task_endpoint(
     task_id: UUID,
     session: SessionDep,
     settings: SettingsDep,
-    current_user=Depends(require_system_roles(SystemRole.REVIEWER, SystemRole.ADMIN)),
+    current_user=Depends(require_system_roles(SystemRole.ADMIN)),
 ) -> AutomationTaskResponse:
     automation_task = get_automation_task_or_404(session=session, task_id=task_id)
     automation_task = execute_automation_task(
@@ -406,7 +406,7 @@ def process_automation_task(
     task_id: UUID,
     payload: AutomationTaskProcessRequest,
     session: SessionDep,
-    current_user=Depends(require_system_roles(SystemRole.REVIEWER, SystemRole.ADMIN)),
+    current_user=Depends(require_system_roles(SystemRole.ADMIN)),
 ) -> AutomationTaskResponse:
     automation_task = get_automation_task_or_404(session=session, task_id=task_id)
     automation_task = transition_automation_task(

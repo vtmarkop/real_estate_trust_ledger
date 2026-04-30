@@ -1,6 +1,7 @@
 import uuid
 from typing import TYPE_CHECKING, List, Optional
 
+from sqlalchemy import CheckConstraint
 from sqlmodel import Field, Relationship
 
 from app.models.common import TimestampedModel
@@ -16,9 +17,27 @@ if TYPE_CHECKING:
 
 class Listing(TimestampedModel, table=True):
     __tablename__ = "listings"
+    __table_args__ = (
+        CheckConstraint(
+            "(organization_id IS NOT NULL AND owner_landlord_user_id IS NULL) "
+            "OR (organization_id IS NULL AND owner_landlord_user_id IS NOT NULL)",
+            name="ck_listings_single_manager",
+        ),
+    )
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    organization_id: uuid.UUID = Field(foreign_key="organizations.id", nullable=False, index=True)
+    organization_id: Optional[uuid.UUID] = Field(
+        foreign_key="organizations.id",
+        default=None,
+        nullable=True,
+        index=True,
+    )
+    owner_landlord_user_id: Optional[uuid.UUID] = Field(
+        foreign_key="users.id",
+        default=None,
+        nullable=True,
+        index=True,
+    )
     property_id: uuid.UUID = Field(foreign_key="properties.id", nullable=False, index=True)
     created_by_user_id: uuid.UUID = Field(foreign_key="users.id", nullable=False)
     listing_status: ListingStatus = Field(default=ListingStatus.OPEN, nullable=False, max_length=32)
@@ -32,8 +51,15 @@ class Listing(TimestampedModel, table=True):
     minimum_tenant_score: int = Field(default=0, nullable=False, ge=0, le=1000)
     minimum_verification_strength: int = Field(default=0, nullable=False, ge=0, le=100)
 
-    organization: "Organization" = Relationship(back_populates="listings")
+    organization: Optional["Organization"] = Relationship(back_populates="listings")
+    owner_landlord_user: Optional["User"] = Relationship(
+        back_populates="listings_as_owner_landlord",
+        sa_relationship_kwargs={"foreign_keys": "Listing.owner_landlord_user_id"},
+    )
     property_record: "Property" = Relationship(back_populates="listings")
-    created_by_user: "User" = Relationship(back_populates="listings_created")
+    created_by_user: "User" = Relationship(
+        back_populates="listings_created",
+        sa_relationship_kwargs={"foreign_keys": "Listing.created_by_user_id"},
+    )
     applications: List["ListingApplication"] = Relationship(back_populates="listing")
     trust_events: List["TrustEvent"] = Relationship(back_populates="listing")

@@ -18,6 +18,6 @@ router = APIRouter(prefix="/internal/release-readiness", tags=["internal-release
 def get_release_readiness(
     session: SessionDep,
     settings: SettingsDep,
-    current_user=Depends(require_system_roles(SystemRole.REVIEWER, SystemRole.ADMIN)),
+    current_user=Depends(require_system_roles(SystemRole.ADMIN)),
 ) -> ReleaseReadinessResponse:
     return build_release_readiness(session=session, settings=settings)

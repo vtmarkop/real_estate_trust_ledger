@@ -82,12 +82,12 @@ class InternalNotificationsApiTests(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 200, response.text)
 
-    def test_reviewer_can_list_due_notifications(self) -> None:
+    def test_admin_can_list_due_notifications(self) -> None:
         reviewer = self.seed_user(
             email="reviewer@example.com",
             full_name="Reviewer User",
             password="reviewer-password-123",
-            system_role=SystemRole.REVIEWER,
+            system_role=SystemRole.ADMIN,
         )
         subject = self.seed_user(
             email="subject@example.com",

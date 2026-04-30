@@ -10,6 +10,7 @@ from trustledger_domain import ApplicationStatus
 
 if TYPE_CHECKING:
     from app.models.listing import Listing
+    from app.models.tenancy import Tenancy
     from app.models.user import User
 
 
@@ -38,8 +39,15 @@ class ListingApplication(TimestampedModel, table=True):
     status_notes: Optional[str] = Field(default=None, nullable=True, max_length=1000)
     decided_by_user_id: Optional[uuid.UUID] = Field(foreign_key="users.id", default=None, nullable=True)
     decided_at: Optional[datetime] = Field(default=None, nullable=True)
+    tenancy_id: Optional[uuid.UUID] = Field(
+        foreign_key="tenancies.id",
+        default=None,
+        nullable=True,
+        index=True,
+    )
 
     listing: "Listing" = Relationship(back_populates="applications")
+    tenancy: Optional["Tenancy"] = Relationship(back_populates="listing_applications")
     applicant_user: "User" = Relationship(
         back_populates="applications_as_applicant",
         sa_relationship_kwargs={"foreign_keys": "ListingApplication.applicant_user_id"},

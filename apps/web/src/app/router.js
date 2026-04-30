@@ -128,6 +128,19 @@ function RequirePersonalWorkspace() {
   return e(Outlet);
 }
 
+function TenantMarketplaceRoute() {
+  var session = useSession();
+
+  if (!session.capabilities.canUsePersonalWorkspace || session.activeWorkspaceRole !== "tenant") {
+    return e(Navigate, {
+      to: "/app",
+      replace: true
+    });
+  }
+
+  return e(LazyRoute, { component: MarketplacePage });
+}
+
 function RedirectAuthenticatedHome() {
   var session = useSession();
 
@@ -185,7 +198,7 @@ export function createAppRouter() {
                 },
                 {
                   path: "marketplace",
-                  element: e(LazyRoute, { component: MarketplacePage })
+                  element: e(TenantMarketplaceRoute)
                 },
                 {
                   path: "records",

@@ -105,7 +105,7 @@ class ReleaseReadinessApiTests(unittest.TestCase):
             email="reviewer@example.com",
             full_name="Reviewer User",
             password="reviewer-password-123",
-            system_role=SystemRole.REVIEWER,
+            system_role=SystemRole.ADMIN,
         )
         with Session(self.engine) as session:
             session.add(
@@ -149,7 +149,7 @@ class ReleaseReadinessApiTests(unittest.TestCase):
             email="reviewer@example.com",
             full_name="Reviewer User",
             password="reviewer-password-123",
-            system_role=SystemRole.REVIEWER,
+            system_role=SystemRole.ADMIN,
         )
         self.settings = Settings(
             app_env="staging",

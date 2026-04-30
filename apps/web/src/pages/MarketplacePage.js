@@ -46,6 +46,12 @@ function inferStatusTone(value) {
   return "accent";
 }
 
+function getListingSourceLabel(record) {
+  return record && record.listing_source === "landlord"
+    ? "Listed by landlord"
+    : "Listed by agency";
+}
+
 export function MarketplacePage() {
   var stateTuple = React.useState({
     status: "loading",
@@ -181,7 +187,7 @@ export function MarketplacePage() {
     }
   ];
 
-  return e("div", { className: "workspace-page" }, [
+  return e("div", { className: "workspace-page marketplace-page" }, [
     e(PageHero, {
       key: "hero",
       eyebrow: "Listings",
@@ -233,7 +239,7 @@ export function MarketplacePage() {
       ? e("section", { className: "detail-panel", key: "open-listings" }, [
       e(SectionHeading, {
         title: "Available listings",
-        copy: "Each listing shows the rent, deposit, and trust thresholds before you apply.",
+        copy: "Each listing shows who manages it, the rent, deposit, and trust thresholds before you apply.",
         key: "heading"
       }),
       state.listings.length
@@ -247,6 +253,11 @@ export function MarketplacePage() {
                 e("strong", { className: "stack-card-title", key: "title" }, listing.title),
                 e("div", { className: "status-row", key: "status" }, [
                   e(StatusBadge, { key: "lane", tone: "accent", label: "Open listing" }),
+                  e(StatusBadge, {
+                    key: "source",
+                    tone: listing.listing_source === "landlord" ? "success" : "accent",
+                    label: getListingSourceLabel(listing)
+                  }),
                   existingStatus
                     ? e(StatusBadge, {
                         key: "application",
@@ -257,9 +268,10 @@ export function MarketplacePage() {
                 ]),
                 e("div", { className: "fact-grid", key: "meta" }, [
                   e(FactPill, {
-                    key: "organization",
-                    label: "Agency",
-                    value: listing.organization_name
+                    key: "manager",
+                    label: "Manager",
+                    value: listing.manager_name || listing.organization_name || listing.owner_landlord_full_name || "Listing manager",
+                    tone: listing.listing_source === "landlord" ? "success" : "accent"
                   }),
                   e(FactPill, {
                     key: "property",
@@ -344,7 +356,7 @@ export function MarketplacePage() {
       ? e("section", { className: "detail-panel", key: "applications" }, [
       e(SectionHeading, {
         title: "My applications",
-        copy: "Track application status, captured score snapshots, and any notes returned by the agency.",
+        copy: "Track application status, captured score snapshots, and any notes returned by the listing manager.",
         key: "heading"
       }),
       state.applications.length
@@ -356,13 +368,18 @@ export function MarketplacePage() {
                 e(
                   "strong",
                   { className: "stack-card-title", key: "title" },
-                  application.listing_title + " | " + application.organization_name
+                  application.listing_title + " | " + (application.manager_name || application.organization_name || application.owner_landlord_full_name || "Listing manager")
                 ),
                 e("div", { className: "status-row", key: "status" }, [
                   e(StatusBadge, {
                     key: "application-status",
                     tone: inferStatusTone(application.application_status),
                     label: application.application_status
+                  }),
+                  e(StatusBadge, {
+                    key: "source",
+                    tone: application.listing_source === "landlord" ? "success" : "accent",
+                    label: getListingSourceLabel(application)
                   })
                 ]),
                 e("div", { className: "fact-grid", key: "score" }, [
@@ -387,7 +404,7 @@ export function MarketplacePage() {
                 ]),
                 e(
                   NoteBlock,
-                  { key: "note", label: "Agency or applicant notes", tone: "accent" },
+                  { key: "note", label: "Manager or applicant notes", tone: "accent" },
                   application.status_notes ||
                     application.applicant_note ||
                     "No notes captured."

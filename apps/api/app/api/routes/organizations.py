@@ -15,6 +15,7 @@ from app.api.deps import (
 from app.models import Organization, OrganizationMembership, User
 from app.models.common import utcnow
 from app.schemas.organization import (
+    AgencyOperatorDirectoryResponse,
     CommercialOverviewResponse,
     MembershipCreateRequest,
     MembershipResponse,
@@ -23,7 +24,7 @@ from app.schemas.organization import (
     OrganizationResponse,
 )
 from app.services.commercial_overview import build_commercial_overview
-from trustledger_domain import OrganizationMembershipRole, OrganizationType
+from trustledger_domain import AccountWorkspaceRole, OrganizationMembershipRole, OrganizationType
 
 
 router = APIRouter(prefix="/organizations", tags=["organizations"])
@@ -123,6 +124,15 @@ def create_organization(
     current_user: CurrentUserDep,
     session: SessionDep,
 ) -> OrganizationResponse:
+    if (
+        payload.organization_type == OrganizationType.AGENCY
+        and AccountWorkspaceRole.AGENCY not in current_user.workspace_roles
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Your account needs the agent role before creating an agency workspace.",
+        )
+
     if (
         payload.organization_type == OrganizationType.INTERNAL
         and not current_user.system_role.can_manage_platform
@@ -227,6 +237,61 @@ def list_agency_directory(
         )
         for organization in organizations
     ]
+
+
+@router.get(
+    "/directory/agencies/{organization_id}/operators",
+    response_model=list[AgencyOperatorDirectoryResponse],
+)
+def list_agency_operator_directory(
+    organization_id: UUID,
+    current_user: CurrentUserDep,
+    session: SessionDep,
+) -> list[AgencyOperatorDirectoryResponse]:
+    organization = session.get(Organization, organization_id)
+    if (
+        not organization
+        or not organization.is_active
+        or organization.organization_type != OrganizationType.AGENCY
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Agency not found.",
+        )
+
+    memberships = session.exec(
+        select(OrganizationMembership)
+        .where(
+            OrganizationMembership.organization_id == organization.id,
+            OrganizationMembership.is_active == True,  # noqa: E712
+        )
+        .order_by(OrganizationMembership.created_at.asc())
+    ).all()
+
+    operators: list[AgencyOperatorDirectoryResponse] = []
+    for membership in memberships:
+        if not membership.role.can_run_trust_checks:
+            continue
+        user = session.get(User, membership.user_id)
+        if not user or not user.is_active:
+            continue
+        operators.append(
+            AgencyOperatorDirectoryResponse(
+                user_id=user.id,
+                full_name=user.full_name,
+                email=user.email,
+                role=membership.role,
+            )
+        )
+
+    return sorted(
+        operators,
+        key=lambda operator: (
+            {"owner": 0, "admin": 1, "agent": 2}.get(operator.role.value, 99),
+            operator.full_name.casefold(),
+            operator.email.casefold(),
+        ),
+    )
 
 
 @router.get("/{organization_id}", response_model=OrganizationResponse)

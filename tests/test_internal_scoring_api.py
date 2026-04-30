@@ -146,7 +146,7 @@ class InternalScoringApiTests(unittest.TestCase):
         )
         self.assertEqual(verify.status_code, 200, verify.text)
 
-    def test_reviewer_can_recalculate_user_scores_and_read_history(self) -> None:
+    def test_admin_can_recalculate_user_scores_and_read_history(self) -> None:
         tenant = self.seed_user(
             email="tenant@example.com",
             full_name="Tenant User",
@@ -162,6 +162,13 @@ class InternalScoringApiTests(unittest.TestCase):
             email="reviewer@example.com",
             full_name="Reviewer User",
             password="reviewer-password-123",
+            system_role=SystemRole.ADMIN,
+            workspace_roles=(AccountWorkspaceRole.INTERNAL,),
+        )
+        self.seed_user(
+            email="case-reviewer@example.com",
+            full_name="Case Reviewer",
+            password="reviewer-password-123",
             system_role=SystemRole.REVIEWER,
             workspace_roles=(AccountWorkspaceRole.INTERNAL,),
         )
@@ -174,7 +181,7 @@ class InternalScoringApiTests(unittest.TestCase):
         self.build_verified_tenancy(
             tenant=tenant,
             landlord=landlord,
-            reviewer_email="reviewer@example.com",
+            reviewer_email="case-reviewer@example.com",
             reviewer_password="reviewer-password-123",
         )
 
@@ -201,7 +208,7 @@ class InternalScoringApiTests(unittest.TestCase):
         denied = outsider_client.post(f"/api/v1/internal/scoring/users/{tenant.id}/recalculate")
         self.assertEqual(denied.status_code, 403)
 
-    def test_reviewer_can_queue_and_process_single_score_recalculation_request(self) -> None:
+    def test_admin_can_queue_and_process_single_score_recalculation_request(self) -> None:
         tenant = self.seed_user(
             email="queued-tenant@example.com",
             full_name="Queued Tenant",
@@ -217,6 +224,13 @@ class InternalScoringApiTests(unittest.TestCase):
             email="queued-reviewer@example.com",
             full_name="Queued Reviewer",
             password="reviewer-password-123",
+            system_role=SystemRole.ADMIN,
+            workspace_roles=(AccountWorkspaceRole.INTERNAL,),
+        )
+        self.seed_user(
+            email="queued-case-reviewer@example.com",
+            full_name="Queued Case Reviewer",
+            password="reviewer-password-123",
             system_role=SystemRole.REVIEWER,
             workspace_roles=(AccountWorkspaceRole.INTERNAL,),
         )
@@ -224,7 +238,7 @@ class InternalScoringApiTests(unittest.TestCase):
         self.build_verified_tenancy(
             tenant=tenant,
             landlord=landlord,
-            reviewer_email="queued-reviewer@example.com",
+            reviewer_email="queued-case-reviewer@example.com",
             reviewer_password="reviewer-password-123",
         )
 
@@ -285,7 +299,7 @@ class InternalScoringApiTests(unittest.TestCase):
             self.assertEqual(requests[0].processed_by_user_id, reviewer.id)
             self.assertEqual(len(history_entries), 1)
 
-    def test_reviewer_can_queue_and_list_score_requests_by_email(self) -> None:
+    def test_admin_can_queue_and_list_score_requests_by_email(self) -> None:
         tenant = self.seed_user(
             email="email-score-tenant@example.com",
             full_name="Email Score Tenant",
@@ -295,7 +309,7 @@ class InternalScoringApiTests(unittest.TestCase):
             email="email-score-reviewer@example.com",
             full_name="Email Score Reviewer",
             password="reviewer-password-123",
-            system_role=SystemRole.REVIEWER,
+            system_role=SystemRole.ADMIN,
             workspace_roles=(AccountWorkspaceRole.INTERNAL,),
         )
 
@@ -322,12 +336,12 @@ class InternalScoringApiTests(unittest.TestCase):
         self.assertEqual(len(request_list.json()), 1)
         self.assertEqual(request_list.json()[0]["id"], create_request.json()["id"])
 
-    def test_reviewer_can_create_and_finish_organization_score_recalculation_batch(self) -> None:
+    def test_admin_can_create_and_finish_organization_score_recalculation_batch(self) -> None:
         self.seed_user(
             email="batch-reviewer@example.com",
             full_name="Batch Reviewer",
             password="reviewer-password-123",
-            system_role=SystemRole.REVIEWER,
+            system_role=SystemRole.ADMIN,
             workspace_roles=(AccountWorkspaceRole.INTERNAL,),
         )
         owner = self.seed_user(

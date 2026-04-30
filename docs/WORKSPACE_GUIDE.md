@@ -6,6 +6,17 @@ The rebuilt frontend now supports both English and Greek. Use the floating `EN` 
 
 The signed-in workspace now uses the compact layout by default. The earlier `Comfort` / `Compact` density choice was removed because it behaved too much like a simple zoom control instead of a meaningful workflow mode. If a future density option returns, it should create an obvious layout difference rather than slightly changing spacing.
 
+The current visual system uses the dark cinematic base intentionally, but each major workspace now has its own color identity. The goal is that users remember the product by shape and color as well as by text:
+
+- `Home` uses a red/orange launch palette for next steps.
+- `My Trust` uses teal/green for score and verification confidence.
+- `Listings` uses green/yellow for marketplace discovery.
+- `Rental Records` uses blue/cyan for evidence and property records.
+- `Rent & Issues` uses amber/red for payments, deposits, maintenance, and disputes.
+- `Agency Tools` uses violet/cyan for screening and portfolio work.
+- `Review Center` uses pink/orange for internal decisions and risk.
+- `Account` uses blue/teal for security and sessions.
+
 The signed-in shell now also supports an active role mode. Sign in with email and password first, then switch assigned roles from the sidebar when your account has more than one role:
 
 - `Tenant` shows tenant trust, listings, tenant records, and tenant-side rent/issue work.
@@ -13,7 +24,7 @@ The signed-in shell now also supports an active role mode. Sign in with email an
 - `Agent` shows agency tools without personal rental lanes.
 - `Admin` shows review-center tools without personal rental lanes.
 
-The role choices come from explicit account workspace-role entitlements. Login does not ask for a role before authentication; the app opens the last valid role for this browser, or the first assigned role if the saved role no longer belongs to the account. An admin can add or remove those entitlements from `Review Center > Roles`. This role mode is a workspace filter, not a permission grant: the backend still checks tenancy participation, property ownership, agency organization membership, and internal privileges before allowing real work.
+The role choices come from explicit account workspace-role entitlements. Login does not ask for a role before authentication; the app opens the last valid role for this browser, or the first assigned role if the saved role no longer belongs to the account. An admin can add or remove those entitlements from `Review Center > Roles`. This role mode is a workspace filter, not a permission grant: the backend still checks tenancy participation, property ownership, agency organization membership, and internal privileges before allowing real work. The agent role has one bootstrap path: if an account has `Agent` but no agency organization yet, `Home` lets that account create the agency workspace and become its owner.
 
 Most workspaces now also use focused section tabs inside the page itself. Good examples are:
 
@@ -22,12 +33,17 @@ Most workspaces now also use focused section tabs inside the page itself. Good e
 - `Account`: sessions and sign-in activity are separated.
 - `Agency Tools` and `Review Center`: each lane is intentionally separated so operators can work one concern at a time.
 
+The intended menu pattern is now: choose one job first, then work inside that one visible lane. For example, `Rental Records` no longer shows tenancy setup and saved-property setup as equal side-by-side workflows; choosing `Tenancy records`, `Properties & setup`, `Artifacts`, or `History & references` changes the work area below. The same rule should guide admin work: daily reviews, account roles, dispute decisions, runtime/system work, and audit/history should stay visibly separate.
+
 The denser workflow cards now also use clearer visual meaning:
 
-- `status badges` show current state or workflow stage,
+- `status badges` show current state or workflow stage and now get semantic colors from labels such as accepted, pending review, rejected, appealed, or verdict issued,
 - `fact pills` show compact business facts like score, rent, verification, or counts,
 - `note blocks` hold comments, evidence summaries, dispute notes, and verdict text,
-- `timeline entries` are used where activity should read as a sequence instead of a generic card.
+- `timeline entries` are used where activity should read as a sequence instead of a generic card,
+- `tabs` and sidebar lanes use stable color markers so different workflows are easier to recognize quickly,
+- `fields`, `dropdowns`, `file inputs`, and `buttons` are intentionally brighter than explanatory copy so actions do not get buried under text.
+- true action `buttons` and button-styled links also show short hover/focus help bubbles explaining what the action does before you click. Workflow tabs and command-card section selectors do not show those bubbles because their job is navigation, not submission.
 
 If you need the code-level explanation behind these workflows, use [CODEBASE_REFERENCE.md](C:/Users/penty/Documents/dev_apps/gna_version/f33f50b4c7c20f826cd265fc68a54d4cc5921865/docs/CODEBASE_REFERENCE.md).
 
@@ -110,7 +126,7 @@ The signed-in workspace uses these menu items, depending on the active role:
 
 - `Agency Tools`
   - Agency-only workspace for properties, listings, applications, and trust checks.
-  - Agent mode only. The account also needs agency organization membership before real agency data appears.
+  - Agent mode only. The account needs agency organization membership before real agency data appears, unless it is using `Home` to create the first agency workspace for that account.
 
 - `Account`
   - Sessions and sign-in activity.
@@ -150,6 +166,7 @@ Typical goals:
 - confirm tenancy details,
 - upload landlord-side evidence,
 - respond to reference requests,
+- publish owner-managed homes directly to tenant listings,
 - track rent, deposits, and repairs,
 - maintain a landlord trust record.
 
@@ -174,24 +191,38 @@ Typical goals:
 Best menu order:
 
 1. `Home`
-2. `Agency Tools`
-3. `Account`
+2. `Create agency workspace` from `Home` if the account has no agency organization yet
+3. `Agency Tools`
+4. `Account`
 
-### Internal Reviewer Or Admin
+### Internal Reviewer
 
 Typical goals:
 
 - review pending tenancies,
 - review evidence and history imports,
-- monitor automation and notifications,
-- inspect audit logs,
-- add or remove account workspace-role entitlements,
-- check release readiness.
+- decide payment, deposit, and maintenance disputes.
 
 Best menu order:
 
 1. `Home`
 2. `Review Center`
+3. `Account`
+
+### Platform Admin
+
+Typical goals:
+
+- add or remove account workspace-role entitlements,
+- manage score controls and recalculation queues,
+- monitor automation, notifications, and workers,
+- inspect audit logs,
+- check release readiness.
+
+Best menu order:
+
+1. `Home`
+2. `Admin Center`
 3. `Account`
 
 ## Page-By-Page Guide
@@ -205,7 +236,8 @@ What you can do:
 - see the score or organization summary relevant to the active role,
 - use shortcuts to key areas,
 - install the web app if your browser supports it,
-- read the built-in menu guide.
+- read the built-in menu guide,
+- create an agency workspace when the active role is `Agent` and no agency organization is attached yet.
 
 When to use it:
 - every time you sign in,
@@ -246,6 +278,8 @@ Purpose:
 
 What you can do:
 - review open listings,
+- see whether each home is listed by an agency or directly by a landlord,
+- see the current listing manager,
 - see rent and deposit amounts,
 - see minimum score and verification requirements,
 - add an application note,
@@ -284,6 +318,11 @@ Friendly explanation:
 - You do not need to know internal IDs. The app now lets you create a tenancy by using the other person's email.
 - The active role locks the tenancy form to tenant or landlord so you do not accidentally create the wrong side of a record.
 - Tenancy cards show your role and the actual counterparty, not a generic parties label.
+- `Tenancy records` now shows existing role-specific tenancy cards as well as the create form. Use those existing cards for confirmation, review requests, and current tenancy facts; use `Artifacts` for uploads, evidence, and reference material.
+- `Artifacts` starts by choosing one active tenancy, then shows only that tenancy's upload, library, and reference workspace so history/evidence work does not sprawl across every property at once.
+- In landlord mode, `Properties & setup` lets you save an owner-managed property even when no agency organization exists yet. The agency-managed choice only becomes available after there is a real agency workspace to assign. After you select an agency, the managing-agent dropdown uses that agency's active operators and fills the operator email for you instead of asking you to type it manually.
+- In landlord mode, `Properties & setup > Publish listing` lets you publish owner-managed properties directly into tenant `Listings`. Agency-managed properties stay in `Agency Tools` so applications route back to the agency instead of the landlord.
+- After you accept an application for an owner-managed listing, the same `Publish listing` lane shows `Create tenancy`; use that bridge to turn the accepted application into the actual rental record.
 - Your uploaded documents are stored privately. Depending on the environment, that storage may be local private storage or S3-compatible object storage such as MinIO, but the app keeps the same safe download flow either way.
 
 ### Rent & Issues
@@ -327,6 +366,7 @@ Purpose:
 
 What you can do:
 - add a property,
+- link an agency-created property to an existing landlord owner,
 - tag properties with your own custom labels,
 - filter your estate portfolio by label, city, or tag,
 - invite team members by email,
@@ -336,6 +376,7 @@ What you can do:
 - adjust minimum score and verification thresholds,
 - review applicants,
 - move applications through review,
+- create a tenancy from an accepted application after the property has a linked landlord owner,
 - validate a share token and access code,
 - preview a shared profile,
 - save a trust check,
@@ -349,6 +390,11 @@ When to use it:
 
 Friendly explanation:
 - This is your agency operating desk.
+- If the account has the `Agent` role but no agency organization yet, open `Home` first and create the agency workspace there. After creation, this account becomes the agency owner and `Agency Tools` becomes usable.
+- Properties created from `Agency Tools > Publishing` are agency inventory. They are assigned to the selected agency organization and your agent account so they remain visible in agency mode and can be used for listings immediately.
+- If a real landlord owns the agency-created property, add that landlord's existing account email in the publishing form or save it later from `Portfolio > Landlord owner email`. The landlord must already have the `Landlord` role. After that, the property appears in the landlord workspace and can be reused for tenancy setup.
+- `created by` and `landlord owner` are separate ideas. The agent can create the record for listing work, while the owner link says which landlord account owns the property.
+- After an application is accepted in `Pipeline`, use the `Create tenancy` bridge on that application card. If the bridge is blocked, it usually means the property still needs a linked landlord owner.
 - Use property tags for your own mental model, for example: `priority`, `renovation`, `premium`, or `student-market`.
 - Use `Team access` when you want another colleague to help manage the portfolio without giving them full uncontrolled access.
 
@@ -425,8 +471,27 @@ Friendly explanation:
 3. Add a short application note.
 4. Submit the application.
 5. Return to the same page to follow the application status.
+6. If the agency or landlord accepts the application, they still need to create the tenancy from their manager lane before it becomes an active rental record.
 
-### 4. Run An Agency Trust Check
+### 4. Accept An Application And Create The Tenancy
+
+Agency path:
+
+1. Open `Agency Tools > Pipeline`.
+2. Review the application and select `Accept`.
+3. If the accepted application shows `Create tenancy`, enter the lease dates and create it.
+4. If the bridge asks for a landlord owner, open `Portfolio`, link the property to an existing landlord account, then return to the accepted application.
+
+Landlord path:
+
+1. Open `Rental Records > Properties & setup > Publish listing`.
+2. Review applications for the owner-managed listing.
+3. Select `Accept`.
+4. Use the visible `Create tenancy` bridge to create the rental record.
+
+After creation, the listing closes and the tenant/landlord can work from `Rental Records` and `Rent & Issues`.
+
+### 5. Run An Agency Trust Check
 
 1. Open `Agency Tools`.
 2. Paste the share token and access code.
@@ -434,7 +499,7 @@ Friendly explanation:
 4. Preview the profile.
 5. Save the trust check if you want it recorded in agency history.
 
-### 5. Operate An Active Tenancy
+### 6. Operate An Active Tenancy
 
 1. Open `Rent & Issues`.
 2. Record payments and add proof.
@@ -443,7 +508,7 @@ Friendly explanation:
 5. Use the `Dispute desk` when a deposit or maintenance outcome needs to be challenged.
 6. Open and manage maintenance tickets as issues happen.
 
-### 6. Review A Pending Case Internally
+### 7. Review A Pending Case Internally
 
 1. Open `Review Center`.
 2. Pick the correct queue: tenancy, evidence, or history import.
@@ -461,7 +526,7 @@ Current account-only reset accounts, created by `apps/api/dev_reset_minimal_user
 - `Agent`: `theodore.tsoutsouras@accounts.trustledger.app` / `TheodoreAgent123!`
 - `Tenant + Landlord`: `froso.evangeliadou@accounts.trustledger.app` / `FrosoTenantLandlord123!`
 
-That reset intentionally has no properties, tenancies, organizations, or history records. Login is email/password only. Mixed-role accounts, such as Vasilis and Froso, switch assigned roles from the signed-in sidebar after authentication.
+That reset intentionally has no properties, tenancies, organizations, or history records. Login is email/password only. Mixed-role accounts, such as Vasilis and Froso, switch assigned roles from the signed-in sidebar after authentication. Theodore has the `Agent` role but no agency organization yet; sign in as Theodore, open `Home`, and use `Create agency workspace` if you want to begin agency work from the clean reset.
 
 Legacy/rich workflow demo accounts, not present after the current account-only reset and available only after running `apps/api/dev_seed.py`:
 
@@ -484,11 +549,31 @@ Go to `Home`. It now includes a built-in menu guide.
 
 ### I cannot see Agency Tools
 
-Switch the active role to `Agent` from the sidebar. If `Agent` is not available, an admin has not assigned that workspace role to your account. If `Agent` is available but the page is empty, your account is not attached to an active agency organization yet.
+Switch the active role to `Agent` from the sidebar. If `Agent` is not available, an admin has not assigned that workspace role to your account. If `Agent` is available but the page says no agency organization is attached, open `Home` and create an agency workspace, or ask an agency owner to invite the account.
 
-### I cannot see Review Center
+### I cannot choose an agency while creating a landlord property
 
-Switch the active role to `Admin` from the sidebar. If `Admin` is not available, your account does not currently have internal access.
+This is normal after the minimal four-account reset because it creates users only, not agency organizations. Save the property as `I manage this property myself`; agency-managed assignment becomes available after an agency workspace exists.
+
+### I created a property as an agent but cannot list it
+
+Agency-created properties should now be saved as agency inventory and remain available in the listing form. If the listing form still has no property, confirm that the active role is `Agent`, the account is inside the intended agency organization, and the property was created from `Agency Tools > Publishing` after selecting that agency.
+
+### I need an agency-created property to belong to a landlord
+
+Use an existing landlord account email. In `Agency Tools > Publishing`, fill `Landlord owner email` while creating the property, or open `Agency Tools > Portfolio` later and save `Landlord owner email` on the property card. This does not create a new landlord account; the selected account must already exist and have the `Landlord` workspace role.
+
+### I am a landlord and want tenants to find my self-managed home
+
+Create or keep the property as `I manage this property myself`, then open `Rental Records > Properties & setup > Publish listing`. That publishes a landlord-managed listing into the same tenant `Listings` marketplace. If the property is agency-managed, publish it from `Agency Tools` instead.
+
+### I accepted an application but do not see a tenancy yet
+
+Acceptance is only the decision. Open the manager lane where the application was accepted and use `Create tenancy`. For agency listings, the property must first be linked to an existing landlord owner account. For owner-managed landlord listings, the bridge is in `Rental Records > Properties & setup > Publish listing`.
+
+### I cannot see Review Center or Admin Center
+
+Switch the active role from the sidebar. Reviewer accounts see `Review Center` for case queues and verdicts. Admin accounts see `Admin Center` for account roles, scoring controls, runtime, audit, and release readiness. If neither role is available, your account does not currently have internal access.
 
 ### A trust check is denied
 

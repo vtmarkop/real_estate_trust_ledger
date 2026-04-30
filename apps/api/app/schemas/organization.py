@@ -24,6 +24,13 @@ class OrganizationResponse(BaseModel):
     current_user_membership_role: OrganizationMembershipRole | None = None
 
 
+class AgencyOperatorDirectoryResponse(BaseModel):
+    user_id: UUID
+    full_name: str
+    email: str
+    role: OrganizationMembershipRole
+
+
 class CommercialOverviewResponse(BaseModel):
     organization_id: UUID
     organization_name: str

@@ -34,7 +34,12 @@ flowchart TD
     K -->|"landlord"| M["Landlord Trust"]
     K -->|"landlord"| N["Landlord Rental Records"]
     K -->|"landlord"| O["Landlord Rent & Issues"]
-    K -->|"agency"| I["Agency Tools"]
+    K -->|"agency"| I["Agent Home"]
+    I --> Q{"Agency organization membership?"}
+    Q -->|"yes"| R["Agency Tools"]
+    Q -->|"no"| S["Create agency workspace from Home or wait for owner invite"]
+    S --> T["Owner membership created after agency creation"]
+    T --> R
     K -->|"internal/admin"| J["Review Center"]
     K --> H["Account"]
 ```
@@ -44,7 +49,8 @@ flowchart TD
 - Account role visibility is explicit: tenant, landlord, agency, and internal/admin roles come from `User.workspace_roles`.
 - Login is email/password only; the active role is resolved after authentication and can be changed from the sidebar.
 - Personal users only see tenant or landlord modes when those entitlements are assigned.
-- Agency mode can be assigned independently, but backend agency work still requires active agency organization membership.
+- Agency mode can be assigned independently. If no agency organization membership exists yet, the agent sees the setup path from Home; real agency tools still require active agency organization membership.
+- Agency organization creation is backend-gated by the `agency` workspace entitlement, so landlord-only accounts do not create agency workspaces.
 - Internal/admin mode is separate from agency access and is synced with backend platform-admin protection.
 - A user can still have multiple legitimate workspace roles, but the active role controls which workspace is visible at one time.
 
@@ -58,7 +64,7 @@ flowchart TD
     B --> C{"Management mode"}
     C -->|"owner_managed"| D["Landlord keeps direct operational control"]
     C -->|"agency_managed"| E["Assign agency organization"]
-    E --> F["Optional: assign agency user"]
+    E --> F["Choose agency operator from directory"]
     D --> G["Optional: assign prospective tenant"]
     F --> G
     G --> H["Property is saved"]
@@ -76,6 +82,12 @@ flowchart TD
 
 UX clarity note: tenancy cards now show the signed-in user's role and the relevant tenant/landlord counterparty instead of a generic `Parties` label.
 
+Tenancy-lane note: created tenancies should be visible from `Rental Records > Tenancy records` under existing records. `Artifacts` is for supporting files, evidence, imports, and references, not the only place to discover current tenancy records.
+
+Agency-empty note: if no agency organization exists yet, the landlord property form keeps `I manage this property myself` available and disables the agency-managed branch until there is a real agency workspace to assign.
+
+Agency-operator note: after an agency exists, the landlord form shows active owner/admin/agent operators for the selected agency. If there is only one operator the assignment email is filled automatically; if there are several, the landlord chooses the managing agent.
+
 ### Backend surface
 
 - properties routes
@@ -88,7 +100,8 @@ This diagram shows the evidence-backed architecture without bank APIs.
 
 ```mermaid
 flowchart TD
-    A["User opens Rental Records > Artifacts"] --> B["Create artifact"]
+    A["User opens Rental Records > Artifacts"] --> A1["Choose one active tenancy"]
+    A1 --> B["Create artifact"]
     B --> C["Upload private file"]
     C --> D["StoredArtifact created"]
     D --> E["Attach artifact to evidence document or operational record"]
@@ -107,33 +120,65 @@ flowchart TD
 
 The storage layer is private and signed-access based. Files are not meant to become public URLs.
 
+UI clarity note: `Artifacts` is a selected-tenancy workspace. It should show one tenancy's upload/library/reference actions at a time, while current tenancy facts and confirmation/review actions remain in `Rental Records > Tenancy records`.
+
 ## Diagram 4: Listing, Application, And Agency Screening
 
-This is the implemented agency pipeline from property publication to applicant handling.
+This is the implemented publication pipeline from property publication to applicant handling. It now covers both agency-managed listings and self-managed landlord listings.
 
 ```mermaid
 flowchart TD
-    A["Agency Tools > Publishing"] --> B["Create or reuse property"]
-    B --> C["Publish listing with rent, deposit, score thresholds"]
-    C --> D["Listing becomes visible in Listings"]
+    A["Agency Tools > Publishing"] --> B["Create agency inventory property"]
+    B --> B1["Property assigned to agency organization + signed-in agent"]
+    B1 --> B2{"Existing landlord owner?"}
+    B2 -->|"yes"| B3["Link owner_landlord_email to landlord account"]
+    B2 -->|"no"| C["Agency publishes listing"]
+    B3 --> C
+    C --> C1{"Property assigned to this agency?"}
+    C1 -->|"yes"| D["Listing visible in tenant Listings"]
+    C1 -->|"no"| X["Agency listing publish blocked"]
+
+    LA["Landlord Rental Records > Properties & setup"] --> LB["Create or keep owner-managed property"]
+    LB --> LC["Publish listing lane"]
+    LC --> LD{"Property owned by landlord and owner-managed?"}
+    LD -->|"yes"| D
+    LD -->|"no"| LX["Owner listing publish blocked"]
+
     D --> E["Tenant browses open listings"]
-    E --> F["Tenant applies"]
+    E --> ES{"Listing source"}
+    ES -->|"agency"| F["Tenant applies to agency listing"]
+    ES -->|"landlord"| LF["Tenant applies to landlord listing"]
     F --> G["Agency Tools > Pipeline"]
+    LF --> LG["Landlord Publish listing lane"]
     G --> H["Agency reviews application status"]
+    LG --> LH["Landlord reviews application status"]
     G --> I["Agency runs trust check from Screening"]
     I --> J["Consent token + access code validated"]
     J --> K["Trust profile preview or saved trust check"]
-    H --> L{"Decision"}
-    L -->|"under review"| M["Stay in pipeline"]
-    L -->|"accepted"| N["Applicant advances"]
+    H --> L{"Agency decision"}
+    LH --> LL{"Landlord decision"}
+    L -->|"under review"| M["Stay in agency pipeline"]
+    L -->|"accepted"| N["Create tenancy from accepted application"]
     L -->|"rejected"| O["Applicant closed out"]
+    LL -->|"under review"| LM["Stay in landlord review"]
+    LL -->|"accepted"| LN["Create tenancy from accepted application"]
+    LL -->|"rejected"| LO["Applicant closed out"]
+    N --> N1{"Linked landlord owner exists?"}
+    N1 -->|"yes"| N2["Tenancy created, listing closed, tenant assigned"]
+    N1 -->|"no"| N3["Bridge blocked until property owner is linked"]
+    LN --> LN1["Tenancy created, listing closed, tenant assigned"]
 ```
+
+Owner-link note: the landlord-owner link is separate from the agency assignment that protects agency listing publication. It gives the existing landlord account visibility and tenancy-reuse rights for the property without changing who created the agency inventory or which agency can list it. Owner-managed landlord publication is a separate direct path and only works for properties the landlord owns and manages personally.
+
+Application bridge note: accepting an application is only the decision. The manager then creates the tenancy from the accepted application, which links the application to the tenancy, closes the listing, assigns the accepted tenant to the property, and writes tenancy-created trust events.
 
 ### Frontend lanes
 
 - `Agency Tools > Publishing`
 - `Agency Tools > Screening`
 - `Agency Tools > Pipeline`
+- `Rental Records > Properties & setup > Publish listing`
 - `Listings`
 
 ## Diagram 5: Payment Workflow With Dispute And Appeal

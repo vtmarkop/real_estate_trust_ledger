@@ -363,6 +363,13 @@ class PaymentsApiTests(unittest.TestCase):
             system_role=SystemRole.REVIEWER,
             workspace_roles=(AccountWorkspaceRole.INTERNAL,),
         )
+        admin = self.seed_user(
+            email="admin@example.com",
+            full_name="Admin User",
+            password="admin-password-123",
+            system_role=SystemRole.ADMIN,
+            workspace_roles=(AccountWorkspaceRole.INTERNAL,),
+        )
         tenancy_id = self.create_tenancy(tenant=tenant, landlord=landlord)
 
         tenant_client = self.new_client()
@@ -402,6 +409,21 @@ class PaymentsApiTests(unittest.TestCase):
         )
         self.assertEqual(dispute_payment.status_code, 200, dispute_payment.text)
         self.assertEqual(dispute_payment.json()["payment_status"], "disputed")
+
+        admin_client = self.new_client()
+        self.login(admin_client, email=admin.email, password="admin-password-123")
+        admin_queue = admin_client.get("/api/v1/internal/disputes/payments")
+        self.assertEqual(admin_queue.status_code, 403, admin_queue.text)
+        admin_verdict = admin_client.post(
+            f"/api/v1/internal/disputes/payments/{payment_id}/verdict",
+            json={
+                "verdict_outcome": "favors_landlord",
+                "verdict_summary": "Admin should not decide case verdicts.",
+                "tenant_score_delta": -25,
+                "landlord_score_delta": 0,
+            },
+        )
+        self.assertEqual(admin_verdict.status_code, 403, admin_verdict.text)
 
         reviewer_client = self.new_client()
         self.login(reviewer_client, email=reviewer.email, password="reviewer-password-123")

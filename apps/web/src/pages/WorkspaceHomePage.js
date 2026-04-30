@@ -279,7 +279,7 @@ export function WorkspaceHomePage() {
 
   var scoreSummary = state.scoreSummary;
   var activeWorkspaceRole = session.activeWorkspaceRole || "tenant";
-  var activeWorkspaceLabel = getWorkspaceRoleLabel(activeWorkspaceRole);
+  var activeWorkspaceLabel = getWorkspaceRoleLabel(activeWorkspaceRole, session.user);
   var isLandlordWorkspace = activeWorkspaceRole === "landlord";
   var isTenantWorkspace = activeWorkspaceRole === "tenant";
   var isAgencyWorkspace = activeWorkspaceRole === "agency";
@@ -287,6 +287,10 @@ export function WorkspaceHomePage() {
   var isPersonalWorkspace = isPersonalWorkspaceRole(activeWorkspaceRole);
   var landlordSideActive = hasLandlordSideSignals(scoreSummary);
   var organizations = state.organizations;
+  var agencyOrganizations = organizations.filter(function filterAgencyOrganizations(organization) {
+    return organization.organization_type === "agency";
+  });
+  var visibleOrganizations = isAgencyWorkspace ? agencyOrganizations : organizations;
   var menuGuide = [
     {
       title: "Home",
@@ -331,9 +335,12 @@ export function WorkspaceHomePage() {
   }
 
   if (isInternalWorkspace) {
+    var isAdminWorkspace = session.capabilities.canManagePlatform;
     menuGuide.push({
-      title: "Review Center",
-      copy: "Internal reviewers and admins use this area for queues, audits, automation, and release checks."
+      title: isAdminWorkspace ? "Admin Center" : "Review Center",
+      copy: isAdminWorkspace
+        ? "Admins use this area for account roles, scoring controls, runtime health, automation, and audit."
+        : "Reviewers use this area for tenancy, evidence, history-import, and dispute decisions."
     });
   }
 
@@ -377,14 +384,16 @@ export function WorkspaceHomePage() {
         e(HeroStat, {
           key: "active-memberships",
           label: isAgencyWorkspace ? "Agency memberships" : "Internal access",
-          value: isAgencyWorkspace ? String(organizations.length) : "Enabled",
+          value: isAgencyWorkspace ? String(agencyOrganizations.length) : "Enabled",
           copy: isAgencyWorkspace
             ? "Agency organizations connected to this account."
-            : "Reviewer/admin tools are available in this workspace mode."
+            : session.capabilities.canManagePlatform
+              ? "Admin platform controls are available in this workspace mode."
+              : "Reviewer case queues are available in this workspace mode."
         })
       ];
 
-  return e("div", { className: "workspace-page" }, [
+  return e("div", { className: "workspace-page home-page" }, [
     e(PageHero, {
       key: "hero",
       eyebrow: "Home",
@@ -396,7 +405,9 @@ export function WorkspaceHomePage() {
             ? "This view is scoped to tenant-side applications, records, rent, maintenance, and score work."
             : isAgencyWorkspace
               ? "This view is scoped to agency portfolio, listing, screening, and application work."
-              : "This view is scoped to internal review, disputes, automation, runtime, and audit work.",
+              : session.capabilities.canManagePlatform
+                ? "This view is scoped to platform administration, account roles, runtime, automation, scoring, and audit work."
+                : "This view is scoped to case review, evidence decisions, history imports, and dispute verdicts.",
       details: [
         "The home page is now meant to answer two questions quickly: where am I working, and what should I open next?"
       ],
@@ -410,11 +421,15 @@ export function WorkspaceHomePage() {
         isPersonalWorkspace
           ? e(Link, { className: "button button-secondary", to: "/app/records", key: "records" }, "Open rental records")
           : null,
-        isAgencyWorkspace
+        isAgencyWorkspace && agencyOrganizations.length
           ? e(Link, { className: "button button-secondary", to: "/app/agency", key: "agency" }, "Open agency tools")
           : null,
         isInternalWorkspace
-          ? e(Link, { className: "button button-secondary", to: "/app/internal", key: "internal" }, "Open review center")
+          ? e(
+              Link,
+              { className: "button button-secondary", to: "/app/internal", key: "internal" },
+              session.capabilities.canManagePlatform ? "Open admin center" : "Open review center"
+            )
           : null
       ],
       stats: workspaceStats
@@ -524,22 +539,24 @@ export function WorkspaceHomePage() {
             : "This area stays away from personal rental info while you are in reviewer mode.",
         key: "heading"
       }),
-      organizations.length
-        ? e("div", { className: "list-stack", key: "list" }, organizations.map(OrganizationCard))
+      visibleOrganizations.length
+        ? e("div", { className: "list-stack", key: "list" }, visibleOrganizations.map(OrganizationCard))
         : e(
             "p",
             { className: "empty-copy", key: "empty" },
-            "No active agency or internal memberships are attached to this account yet."
+            isAgencyWorkspace
+              ? "No agency membership is attached yet. Create an agency workspace below or ask an agency owner to invite this account."
+              : "No active internal memberships are attached to this account yet."
           )
     ])
         : null
     ].filter(Boolean)),
-    session.capabilities.canCreateAgencyWorkspace && isLandlordWorkspace
+    session.capabilities.canCreateAgencyWorkspace && isAgencyWorkspace
       ? e("section", { className: "detail-panel", key: "agency-create" }, [
           e(SectionHeading, {
             title: "Create an agency workspace",
             copy:
-              "If you also work as a real estate operator, create an agency workspace here so you can manage properties, listings, applicants, and trust checks from the same account.",
+              "Create the agency workspace this agent account will operate. After creation, this account becomes the agency owner and can add teammates from Agency Tools.",
             key: "heading"
           }),
           e(

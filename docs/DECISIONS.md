@@ -576,7 +576,7 @@ The internal operations page now also reads:
 - `/internal/audit-logs?limit=20`,
 - optional `action_type` filtering on the same endpoint.
 
-Reason: reviewer and admin operators already triage queues, automation, and worker activity from one operational surface, so recent audit visibility belongs in that same control room instead of forcing a separate navigation path for sensitive-event review.
+Reason: internal operators already used one surface, but the responsibilities are now split: reviewers triage case queues and issue verdicts, while admins manage automation, worker activity, audit, and release controls. Recent audit visibility belongs in the admin control room instead of forcing a separate navigation path for sensitive-event review.
 
 ## D077: Agency Screening Controls Reuse The Existing Listing Patch Contract
 
@@ -795,3 +795,61 @@ The explanation should use the same vocabulary in `My Trust`, agency trust previ
 Reason: trust scores affect screening and user confidence. Users should not need source-code knowledge or staff interpretation to understand why their score changed.
 
 Implementation note: the first Sprint 21 score-transparency checkpoint implements this through shared frontend score-transparency helpers, a reusable score contribution panel, agency preview `score_inputs`, and internal scoring controls that render the same formula vocabulary.
+
+## D100: Agency-Created Property Inventory Can Link To A Separate Landlord Owner
+
+Property records now distinguish:
+
+- the audit creator, stored in `created_by_user_id`,
+- the agency/listing assignment, stored through agency management fields,
+- the real landlord owner, stored in nullable `owner_landlord_user_id`.
+
+An agency user may create property inventory for publication and optionally link it to an existing active landlord account. That owner link gives the landlord visibility and tenancy-reuse rights in landlord mode. It does not replace the agency assignment required for listing publication, and it does not create a new landlord account.
+
+Reason: agencies often prepare listings on behalf of an owner, but overloading the creator field would make audit history false and weakening the listing guard would make agency boundaries unsafe. A separate landlord-owner link keeps the workflow simple for users while preserving clean backend responsibilities.
+
+## D101: Listings Can Be Managed By Either An Agency Or A Landlord Owner
+
+Listings now support exactly one market-facing manager:
+
+- an agency organization through `organization_id`, or
+- a self-managing landlord through `owner_landlord_user_id`.
+
+Tenant discovery remains one unified `Listings` page. The UI labels the source as `Listed by agency` or `Listed by landlord`, and applications route back to the matching manager: agency applications stay in `Agency Tools`, while owner-listed applications stay in `Rental Records > Properties & setup > Publish listing`.
+
+Reason: a self-managed landlord should not need a fake agency just to advertise a rental, but the agency pipeline must remain protected by agency assignment and organization membership. One listing model with one explicit manager keeps tenant discovery simple without weakening agency boundaries.
+
+## D102: Accepted Applications Must Bridge Explicitly Into Tenancies
+
+An accepted listing application is a decision, not a tenancy by itself. After acceptance, the managing agency or owner-landlord must explicitly create the tenancy from that accepted application.
+
+The bridge:
+
+- requires `application_status=accepted`
+- links `ListingApplication.tenancy_id` to the created tenancy
+- closes the listing
+- assigns the accepted applicant as the property tenant
+- copies rent, deposit, currency, and property snapshot data from the listing/property
+- writes tenancy-created trust events for both tenant and landlord
+
+Agency-managed listings must have an existing linked landlord owner before the bridge can create a tenancy. Owner-managed landlord listings use the signed-in landlord owner directly.
+
+Reason: acceptance only answers "who did we choose?" The tenancy answers "what rental relationship now exists?" Keeping those steps separate prevents hidden role handoffs, avoids fake landlord ownership, and makes the next user action obvious in both `Agency Tools > Pipeline` and `Rental Records > Properties & setup > Publish listing`.
+
+## D103: Workflow QA Must Follow Real-Life Role Scenarios
+
+Workflow audits now use `docs/WORKFLOW_QA_PLAN.md` as the active execution plan. Each major workflow should be checked through:
+
+- static continuity review against the workflow map and diagrams,
+- targeted backend regression where rules change,
+- browser interaction with mouse, keyboard, dummy data, visible feedback checks, and console warning/error review.
+
+Findings belong in `docs/WORKFLOW_GAPS.md` with the same classification vocabulary used across the project.
+
+Reason: the rebuild can be technically correct while still feeling broken if the next action is hidden, the wrong role sees the wrong surface, or daily work is mixed with history. The audit must therefore follow real tenant, landlord, agent, and reviewer stories instead of only route or component coverage.
+
+## D104: Tenancy Records Must Show Existing Tenancies, Not Only Creation
+
+`Rental Records > Tenancy records` must show role-scoped existing tenancy records as well as the direct-create form. Confirmation and review-request actions belong on those existing record cards. `Artifacts` remains the lane for uploads, evidence, imports, and references.
+
+Reason: after accepted-application tenancy creation, the backend tenancy exists immediately. If the expected `Tenancy records` lane does not show that record, users experience a completed workflow as a dead end even though the data is correct.

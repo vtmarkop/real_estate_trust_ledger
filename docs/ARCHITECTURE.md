@@ -7,7 +7,7 @@ Trust Ledger is an evidence-verified rental trust platform for:
 - tenants,
 - landlords,
 - agencies,
-- internal reviewers/admins.
+- internal reviewers and platform admins.
 
 The system will support cold-start onboarding without bank APIs by using uploaded evidence, counterparty confirmation, reviewer verification, and automation.
 

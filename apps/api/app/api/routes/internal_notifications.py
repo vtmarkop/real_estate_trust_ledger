@@ -38,7 +38,7 @@ def list_notification_deliveries(
     status_filter: NotificationDeliveryStatus | None = Query(default=None),
     due_only: bool = Query(default=False),
     limit: int = Query(default=50, ge=1, le=200),
-    current_user=Depends(require_system_roles(SystemRole.REVIEWER, SystemRole.ADMIN)),
+    current_user=Depends(require_system_roles(SystemRole.ADMIN)),
 ) -> list[NotificationDeliveryResponse]:
     query = select(NotificationDelivery)
     if status_filter is not None:
@@ -70,7 +70,7 @@ def list_notification_deliveries(
 def get_notification_delivery(
     notification_delivery_id: UUID,
     session: SessionDep,
-    current_user=Depends(require_system_roles(SystemRole.REVIEWER, SystemRole.ADMIN)),
+    current_user=Depends(require_system_roles(SystemRole.ADMIN)),
 ) -> NotificationDeliveryResponse:
     notification_delivery = get_notification_delivery_or_404(
         session=session,

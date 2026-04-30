@@ -23,7 +23,7 @@ from app.core.db import create_engine_from_url, get_session  # noqa: E402
 from app.core.security import hash_password  # noqa: E402
 from app.main import create_app  # noqa: E402
 from app.models import Organization, OrganizationMembership, User  # noqa: E402
-from trustledger_domain import OrganizationMembershipRole, SystemRole  # noqa: E402
+from trustledger_domain import AccountWorkspaceRole, OrganizationMembershipRole, SystemRole  # noqa: E402
 
 
 class OrganizationRbacApiTests(unittest.TestCase):
@@ -58,6 +58,7 @@ class OrganizationRbacApiTests(unittest.TestCase):
         full_name: str,
         password: str,
         system_role: SystemRole = SystemRole.USER,
+        workspace_roles: tuple[AccountWorkspaceRole, ...] | None = None,
     ) -> User:
         with Session(self.engine) as session:
             user = User(
@@ -66,6 +67,8 @@ class OrganizationRbacApiTests(unittest.TestCase):
                 password_hash=hash_password(password),
                 system_role=system_role,
             )
+            if workspace_roles is not None:
+                user.set_workspace_roles(workspace_roles)
             session.add(user)
             session.commit()
             session.refresh(user)
@@ -78,11 +81,12 @@ class OrganizationRbacApiTests(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 200, response.text)
 
-    def test_user_can_create_agency_and_owner_membership_is_created(self) -> None:
+    def test_agent_role_can_create_agency_and_owner_membership_is_created(self) -> None:
         self.seed_user(
             email="owner@example.com",
             full_name="Org Owner",
             password="owner-password-123",
+            workspace_roles=(AccountWorkspaceRole.AGENCY,),
         )
         client = self.new_client()
         self.login(client, email="owner@example.com", password="owner-password-123")
@@ -105,11 +109,37 @@ class OrganizationRbacApiTests(unittest.TestCase):
             self.assertEqual(len(memberships), 1)
             self.assertEqual(memberships[0].role, OrganizationMembershipRole.OWNER)
 
+    def test_non_agent_role_cannot_create_agency(self) -> None:
+        self.seed_user(
+            email="tenant@example.com",
+            full_name="Tenant User",
+            password="tenant-password-123",
+            workspace_roles=(AccountWorkspaceRole.TENANT,),
+        )
+        client = self.new_client()
+        self.login(client, email="tenant@example.com", password="tenant-password-123")
+
+        response = client.post(
+            "/api/v1/organizations",
+            json={
+                "name": "Tenant Realty",
+                "slug": "tenant-realty",
+                "organization_type": "agency",
+            },
+        )
+
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(
+            response.json()["detail"],
+            "Your account needs the agent role before creating an agency workspace.",
+        )
+
     def test_only_org_manager_can_add_members(self) -> None:
         self.seed_user(
             email="owner@example.com",
             full_name="Org Owner",
             password="owner-password-123",
+            workspace_roles=(AccountWorkspaceRole.AGENCY,),
         )
         agent = self.seed_user(
             email="agent@example.com",
@@ -158,6 +188,7 @@ class OrganizationRbacApiTests(unittest.TestCase):
             email="owner@example.com",
             full_name="Org Owner",
             password="owner-password-123",
+            workspace_roles=(AccountWorkspaceRole.AGENCY,),
         )
         agent = self.seed_user(
             email="agent@example.com",
@@ -210,6 +241,7 @@ class OrganizationRbacApiTests(unittest.TestCase):
             email="owner@example.com",
             full_name="Org Owner",
             password="owner-password-123",
+            workspace_roles=(AccountWorkspaceRole.AGENCY,),
         )
         invitee = self.seed_user(
             email="invitee@example.com",
@@ -243,6 +275,7 @@ class OrganizationRbacApiTests(unittest.TestCase):
             email="owner@example.com",
             full_name="Org Owner",
             password="owner-password-123",
+            workspace_roles=(AccountWorkspaceRole.AGENCY,),
         )
 
         owner_client = self.new_client()
@@ -279,6 +312,7 @@ class OrganizationRbacApiTests(unittest.TestCase):
             email="owner@example.com",
             full_name="Org Owner",
             password="owner-password-123",
+            workspace_roles=(AccountWorkspaceRole.AGENCY,),
         )
         self.seed_user(
             email="outsider@example.com",
@@ -308,6 +342,7 @@ class OrganizationRbacApiTests(unittest.TestCase):
             email="owner@example.com",
             full_name="Org Owner",
             password="owner-password-123",
+            workspace_roles=(AccountWorkspaceRole.AGENCY,),
         )
         second_member = self.seed_user(
             email="member@example.com",
@@ -375,6 +410,7 @@ class OrganizationRbacApiTests(unittest.TestCase):
             email="owner@example.com",
             full_name="Org Owner",
             password="owner-password-123",
+            workspace_roles=(AccountWorkspaceRole.AGENCY,),
         )
         self.seed_user(
             email="viewer@example.com",
@@ -440,6 +476,82 @@ class OrganizationRbacApiTests(unittest.TestCase):
         self.assertEqual(directory[0]["name"], "Acme Realty")
         self.assertEqual(directory[0]["organization_type"], "agency")
         self.assertIsNone(directory[0]["current_user_membership_role"])
+
+    def test_authenticated_user_can_read_active_agency_operator_directory(self) -> None:
+        self.seed_user(
+            email="owner@example.com",
+            full_name="Org Owner",
+            password="owner-password-123",
+            workspace_roles=(AccountWorkspaceRole.AGENCY,),
+        )
+        agent = self.seed_user(
+            email="agent@example.com",
+            full_name="Org Agent",
+            password="agent-password-123",
+            workspace_roles=(AccountWorkspaceRole.AGENCY,),
+        )
+        member = self.seed_user(
+            email="member@example.com",
+            full_name="Plain Member",
+            password="member-password-123",
+        )
+        inactive_agent = self.seed_user(
+            email="inactive-agent@example.com",
+            full_name="Inactive Agent",
+            password="inactive-password-123",
+            workspace_roles=(AccountWorkspaceRole.AGENCY,),
+        )
+        self.seed_user(
+            email="viewer@example.com",
+            full_name="Directory Viewer",
+            password="viewer-password-123",
+        )
+
+        owner_client = self.new_client()
+        self.login(owner_client, email="owner@example.com", password="owner-password-123")
+        create_org = owner_client.post(
+            "/api/v1/organizations",
+            json={
+                "name": "Operator Realty",
+                "slug": "operator-realty",
+                "organization_type": "agency",
+            },
+        )
+        self.assertEqual(create_org.status_code, 201, create_org.text)
+        organization_id = create_org.json()["id"]
+
+        add_agent = owner_client.post(
+            f"/api/v1/organizations/{organization_id}/memberships",
+            json={"user_id": str(agent.id), "role": "agent"},
+        )
+        self.assertEqual(add_agent.status_code, 201, add_agent.text)
+        add_member = owner_client.post(
+            f"/api/v1/organizations/{organization_id}/memberships",
+            json={"user_id": str(member.id), "role": "member"},
+        )
+        self.assertEqual(add_member.status_code, 201, add_member.text)
+        add_inactive_agent = owner_client.post(
+            f"/api/v1/organizations/{organization_id}/memberships",
+            json={"user_id": str(inactive_agent.id), "role": "agent"},
+        )
+        self.assertEqual(add_inactive_agent.status_code, 201, add_inactive_agent.text)
+        deactivate_inactive_agent = owner_client.patch(
+            f"/api/v1/organizations/{organization_id}/memberships/{add_inactive_agent.json()['id']}",
+            json={"is_active": False},
+        )
+        self.assertEqual(deactivate_inactive_agent.status_code, 200, deactivate_inactive_agent.text)
+
+        viewer_client = self.new_client()
+        self.login(viewer_client, email="viewer@example.com", password="viewer-password-123")
+        operators_response = viewer_client.get(
+            f"/api/v1/organizations/directory/agencies/{organization_id}/operators"
+        )
+        self.assertEqual(operators_response.status_code, 200, operators_response.text)
+        operator_emails = [operator["email"] for operator in operators_response.json()]
+
+        self.assertEqual(operator_emails, ["owner@example.com", "agent@example.com"])
+        self.assertNotIn("member@example.com", operator_emails)
+        self.assertNotIn("inactive-agent@example.com", operator_emails)
 
     def test_internal_surface_requires_reviewer_or_admin_and_only_admin_can_create_internal_org(self) -> None:
         self.seed_user(

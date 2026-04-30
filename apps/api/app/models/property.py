@@ -26,6 +26,12 @@ class Property(TimestampedModel, table=True):
         max_length=32,
     )
     created_by_user_id: uuid.UUID = Field(foreign_key="users.id", nullable=False, index=True)
+    owner_landlord_user_id: Optional[uuid.UUID] = Field(
+        foreign_key="users.id",
+        default=None,
+        nullable=True,
+        index=True,
+    )
     assigned_agency_organization_id: Optional[uuid.UUID] = Field(
         foreign_key="organizations.id",
         default=None,
@@ -49,6 +55,10 @@ class Property(TimestampedModel, table=True):
     created_by_user: "User" = Relationship(
         back_populates="properties_created",
         sa_relationship_kwargs={"foreign_keys": "Property.created_by_user_id"},
+    )
+    owner_landlord_user: Optional["User"] = Relationship(
+        back_populates="properties_as_owner_landlord",
+        sa_relationship_kwargs={"foreign_keys": "Property.owner_landlord_user_id"},
     )
     assigned_agency_organization: Optional["Organization"] = Relationship(
         back_populates="properties_assigned"

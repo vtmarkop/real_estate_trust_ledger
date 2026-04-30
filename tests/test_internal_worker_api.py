@@ -79,12 +79,12 @@ class InternalWorkerApiTests(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 200, response.text)
 
-    def test_reviewer_can_list_and_read_worker_runs(self) -> None:
+    def test_admin_can_list_and_read_worker_runs(self) -> None:
         self.seed_user(
             email="reviewer@example.com",
             full_name="Reviewer User",
             password="reviewer-password-123",
-            system_role=SystemRole.REVIEWER,
+            system_role=SystemRole.ADMIN,
         )
         self.seed_user(
             email="outsider@example.com",

@@ -128,6 +128,8 @@ var auditActionOptions = [
 
 export function InternalOperationsPage() {
   var session = useSession();
+  var canReviewCases = Boolean(session.capabilities.canReviewCases);
+  var canManagePlatform = Boolean(session.capabilities.canManagePlatform);
   var viewState = React.useState({
     status: "loading",
     overview: null,
@@ -287,20 +289,20 @@ export function InternalOperationsPage() {
       }
       var results = await Promise.all([
         apiRequest("/internal/operations/overview"),
-        apiRequest("/internal/release-readiness"),
-        apiRequest("/internal/review-queue/tenancies"),
-        apiRequest("/internal/review-queue/evidence"),
-        apiRequest("/internal/review-queue/history-imports"),
-        apiRequest("/internal/disputes/deposits"),
-        apiRequest("/internal/disputes/maintenance"),
-        apiRequest("/internal/disputes/payments"),
-        apiRequest("/organizations/directory/agencies"),
-        apiRequest("/internal/scoring/requests?limit=10"),
-        apiRequest("/internal/scoring/batches?limit=10"),
-        apiRequest("/internal/automation/tasks?due_only=true"),
-        apiRequest("/internal/notifications?limit=10"),
-        apiRequest("/internal/workers/runs?limit=10"),
-        apiRequest(auditPath)
+        canManagePlatform ? apiRequest("/internal/release-readiness") : Promise.resolve(null),
+        canReviewCases ? apiRequest("/internal/review-queue/tenancies") : Promise.resolve([]),
+        canReviewCases ? apiRequest("/internal/review-queue/evidence") : Promise.resolve([]),
+        canReviewCases ? apiRequest("/internal/review-queue/history-imports") : Promise.resolve([]),
+        canReviewCases ? apiRequest("/internal/disputes/deposits") : Promise.resolve([]),
+        canReviewCases ? apiRequest("/internal/disputes/maintenance") : Promise.resolve([]),
+        canReviewCases ? apiRequest("/internal/disputes/payments") : Promise.resolve([]),
+        canManagePlatform ? apiRequest("/organizations/directory/agencies") : Promise.resolve([]),
+        canManagePlatform ? apiRequest("/internal/scoring/requests?limit=10") : Promise.resolve([]),
+        canManagePlatform ? apiRequest("/internal/scoring/batches?limit=10") : Promise.resolve([]),
+        canManagePlatform ? apiRequest("/internal/automation/tasks?due_only=true") : Promise.resolve([]),
+        canManagePlatform ? apiRequest("/internal/notifications?limit=10") : Promise.resolve([]),
+        canManagePlatform ? apiRequest("/internal/workers/runs?limit=10") : Promise.resolve([]),
+        canManagePlatform ? apiRequest(auditPath) : Promise.resolve([])
       ]);
       setState({
         status: "ready",
@@ -373,11 +375,24 @@ export function InternalOperationsPage() {
         error: error.message || "Unable to load the operations overview."
       });
     }
-  }, [auditActionType]);
+  }, [auditActionType, canManagePlatform, canReviewCases]);
 
   React.useEffect(function bootstrapInternalOperations() {
     loadOperationsState();
   }, [loadOperationsState]);
+
+  React.useEffect(function syncInternalSectionAccess() {
+    var allowedSections = ["overview"];
+    if (canManagePlatform) {
+      allowedSections = allowedSections.concat(["controls", "roles", "runtime", "audit"]);
+    }
+    if (canReviewCases) {
+      allowedSections = allowedSections.concat(["reviews", "disputes"]);
+    }
+    if (allowedSections.indexOf(internalSection) === -1) {
+      setInternalSection(allowedSections[0]);
+    }
+  }, [canManagePlatform, canReviewCases, internalSection]);
 
   async function submitTenancyDecision(tenancy, verificationStatus) {
     setReviewAction({
@@ -937,45 +952,54 @@ export function InternalOperationsPage() {
 
   var overview = state.overview;
   var releaseReadiness = state.releaseReadiness;
-  var canManageAccountRoles = session.capabilities.canManagePlatform;
   var internalSectionTabs = [
     {
       id: "overview",
-      label: "Overview",
-      meta: "Health, readiness, and system snapshot"
+      label: "Start here",
+      meta: canManagePlatform ? "Health and release snapshot" : "Case-work snapshot"
     },
-    {
-      id: "controls",
-      label: "Controls",
-      meta: "Score and follow-up controls"
-    },
-    canManageAccountRoles
+    canManagePlatform
       ? {
-          id: "roles",
-          label: "Roles",
-          meta: "Account role access"
+          id: "controls",
+          label: "Score controls",
+          meta: "Manual score and follow-up actions"
         }
       : null,
-    {
-      id: "reviews",
-      label: "Review queues",
-      meta: String(state.tenancies.length + state.evidenceDocuments.length + state.historyImports.length) + " pending items"
-    },
-    {
-      id: "disputes",
-      label: "Disputes",
-      meta: String(state.depositDisputes.length + state.maintenanceDisputes.length + state.paymentDisputes.length) + " cases"
-    },
-    {
-      id: "runtime",
-      label: "Runtime",
-      meta: String(state.automationTasks.length + state.notifications.length + state.workerRuns.length) + " runtime items"
-    },
-    {
-      id: "audit",
-      label: "Audit",
-      meta: String(state.auditLogs.length) + " recent events"
-    }
+    canManagePlatform
+      ? {
+          id: "roles",
+          label: "Account roles",
+          meta: "Who can see which workspace"
+        }
+      : null,
+    canReviewCases
+      ? {
+          id: "reviews",
+          label: "Daily reviews",
+          meta: String(state.tenancies.length + state.evidenceDocuments.length + state.historyImports.length) + " pending review items"
+        }
+      : null,
+    canReviewCases
+      ? {
+          id: "disputes",
+          label: "Dispute decisions",
+          meta: String(state.depositDisputes.length + state.maintenanceDisputes.length + state.paymentDisputes.length) + " cases needing verdicts"
+        }
+      : null,
+    canManagePlatform
+      ? {
+          id: "runtime",
+          label: "System runtime",
+          meta: String(state.automationTasks.length + state.notifications.length + state.workerRuns.length) + " automation and worker items"
+        }
+      : null,
+    canManagePlatform
+      ? {
+          id: "audit",
+          label: "History / audit",
+          meta: String(state.auditLogs.length) + " recent events"
+        }
+      : null
   ].filter(Boolean);
   var internalSectionCopyByTab = {
     overview: "Start with the platform picture before acting on any queue or control.",
@@ -987,13 +1011,15 @@ export function InternalOperationsPage() {
     audit: "Use audit when you need traceability, not operations."
   };
 
-  return e("div", { className: "workspace-page" }, [
+  return e("div", { className: "workspace-page internal-page" }, [
     e(PageHero, {
       key: "hero",
-      eyebrow: "Review Center",
-      title: "Review queues and system health",
+      eyebrow: canManagePlatform ? "Admin Center" : "Reviewer Center",
+      title: canManagePlatform ? "Platform controls and system health" : "Case reviews and dispute decisions",
       copy:
-        "Use this page to review pending work, monitor automation, inspect audits, and check whether the platform is ready for release.",
+        canManagePlatform
+          ? "Use this page to manage account access, score controls, runtime health, automation, and audit visibility."
+          : "Use this page to decide trust cases, evidence reviews, history imports, and dispute verdicts without mixing in platform administration.",
       details: [
         "Runtime lane: " +
           overview.environment +
@@ -1034,7 +1060,7 @@ export function InternalOperationsPage() {
     }),
     e("section", { className: "detail-panel section-switcher", key: "internal-switcher" }, [
       e(SectionHeading, {
-        title: "Focus on one internal lane",
+        title: canManagePlatform ? "Choose one admin job" : "Choose one reviewer job",
         copy: internalSectionCopyByTab[internalSection],
         key: "heading"
       }),

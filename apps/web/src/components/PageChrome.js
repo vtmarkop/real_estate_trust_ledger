@@ -6,11 +6,19 @@ function buildToneClass(baseClassName, tone) {
   return tone ? baseClassName + " is-" + tone : baseClassName;
 }
 
+function buildVisualToken(value) {
+  var token = String(value || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return token ? " status-token-" + token : "";
+}
+
 export function HeroStat(props) {
   return e("article", { className: "hero-stat-card" }, [
-    e("p", { className: "hero-stat-label", key: "label" }, props.label),
-    e("strong", { className: "hero-stat-value", key: "value" }, props.value),
-    props.copy ? e("p", { className: "hero-stat-copy", key: "copy" }, props.copy) : null
+    e("p", { className: "hero-stat-label text-static", key: "label" }, props.label),
+    e("strong", { className: "hero-stat-value text-dynamic data-value", key: "value" }, props.value),
+    props.copy ? e("p", { className: "hero-stat-copy text-static", key: "copy" }, props.copy) : null
   ]);
 }
 
@@ -68,7 +76,12 @@ export function SectionHeading(props) {
 }
 
 export function StatusBadge(props) {
-  var className = buildToneClass("status-badge", props.tone || "neutral");
+  var tokenSource =
+    props.token ||
+    props.label ||
+    (typeof props.children === "string" ? props.children : "");
+  var className =
+    buildToneClass("status-badge dynamic-token", props.tone || "neutral") + buildVisualToken(tokenSource);
   return e(
     props.as || "span",
     { className: className },
@@ -79,9 +92,9 @@ export function StatusBadge(props) {
 export function FactPill(props) {
   return e("div", { className: buildToneClass("fact-pill", props.tone) }, [
     props.label
-      ? e("span", { className: "fact-pill-label", key: "label" }, props.label)
+      ? e("span", { className: "fact-pill-label text-static", key: "label" }, props.label)
       : null,
-    e("strong", { className: "fact-pill-value", key: "value" }, props.value || props.children)
+    e("strong", { className: "fact-pill-value text-dynamic data-value", key: "value" }, props.value || props.children)
   ]);
 }
 

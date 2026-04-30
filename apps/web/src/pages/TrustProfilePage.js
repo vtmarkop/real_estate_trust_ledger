@@ -307,7 +307,7 @@ export function TrustProfilePage() {
     }
   ];
 
-  return e("div", { className: "workspace-page" }, [
+  return e("div", { className: "workspace-page trust-page" }, [
     e(PageHero, {
       key: "hero",
       eyebrow: "My Trust",

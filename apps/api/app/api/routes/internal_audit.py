@@ -22,7 +22,7 @@ def list_audit_logs(
     actor_user_id: UUID | None = Query(default=None),
     organization_id: UUID | None = Query(default=None),
     limit: int = Query(default=50, ge=1, le=200),
-    current_user=Depends(require_system_roles(SystemRole.REVIEWER, SystemRole.ADMIN)),
+    current_user=Depends(require_system_roles(SystemRole.ADMIN)),
 ) -> list[AuditLogResponse]:
     query = select(AuditLog)
     if action_type is not None:

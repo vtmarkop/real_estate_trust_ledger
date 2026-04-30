@@ -104,6 +104,7 @@ def resolve_property_for_tenancy(
             )
         if (
             property_record.created_by_user_id != current_user.id
+            and property_record.owner_landlord_user_id != current_user.id
             and not current_user.system_role.can_manage_platform
         ):
             raise HTTPException(

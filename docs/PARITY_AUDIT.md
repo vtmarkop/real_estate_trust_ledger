@@ -108,7 +108,7 @@ Legacy MVP:
 
 Rebuild equivalent:
 - `Review Center`
-- internal reviewer/admin workflow
+- internal reviewer/admin workflow (legacy audit label; current app splits reviewer decisions from admin controls)
 
 What changed:
 - this was not ported 1:1 on purpose,
@@ -157,6 +157,8 @@ Implemented in the frontend:
 - commercial overview metrics.
 
 ## Internal Reviewer/Admin Workflows
+
+Current note: the rebuilt app now separates this legacy audit area into reviewer-only case decisions and admin-only platform controls.
 
 Implemented in the frontend:
 

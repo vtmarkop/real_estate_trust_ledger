@@ -39,9 +39,10 @@ The shell now also applies an active workspace role:
 - `tenant`: tenant trust, listings, tenant records, and tenant-side operations
 - `landlord`: landlord trust, property/tenant records, and landlord-side operations
 - `agency`: agency tools only, plus account controls
-- `internal/admin`: review center and account role controls, plus account controls
+- `reviewer/internal`: review queues and dispute verdict work, plus account controls
+- `admin/internal`: platform controls, account role management, audit/runtime/release tooling, plus account controls
 
-The available roles come from explicit account workspace-role entitlements returned by `/auth/me`. The active role decides what workspace is visible; backend routes still enforce tenancy participation, property ownership, agency organization membership, or internal privileges before allowing real actions.
+The available roles come from explicit account workspace-role entitlements returned by `/auth/me`. The active role decides what workspace is visible; backend routes still enforce tenancy participation, property ownership, agency organization membership, reviewer system role, admin system role, or other internal privileges before allowing real actions. Agency workspace creation is intentionally tied to the `agency` entitlement: an unassigned agent can create the first agency organization from `Home`, while landlord-only accounts stay in owner-managed property setup.
 
 The dense pages are now intentionally split into tabs or lanes:
 
@@ -84,6 +85,12 @@ Current UX-reset note:
 - inside `History`, the selected property shows the read-only timeline and saved proof/notes/verdict details for the active operational lane, built from existing payment, deposit, or maintenance workflow timestamps
 - agency `Screening` is now action-only, while saved trust checks live in `Screening history`
 - score transparency now uses one contribution vocabulary across `My Trust`, agency trust previews, and internal scoring controls instead of hiding the scoring formula in source code or daily action forms
+- landlord agency assignment now uses active agency-operator choices instead of manual email guessing, and agency-created properties are saved as agency inventory assigned to the selected organization and signed-in agent so listing publication has a real property to use; that inventory can also be explicitly linked to an existing landlord owner account when the agency is preparing the property for that owner
+- self-managed landlord listing publication now lives in `Rental Records > Properties & setup > Publish listing`, while tenant `Listings` stays unified and labels whether a home is listed by an agency or directly by a landlord
+- accepted applications now surface an explicit tenancy-creation bridge in the manager's review lane, and button-like actions expose hover/focus help bubbles so novice users can understand what each action will do before clicking
+- `Tenancy records` now shows existing role-scoped tenancy cards as well as the create form, so accepted-application bridge output and direct tenancy records are visible before artifact/evidence work
+- `Artifacts` now starts with an active tenancy selector and only renders the selected tenancy's upload, library, and reference workspace, avoiding the old all-tenancies-at-once card sprawl
+- `docs/WORKFLOW_QA_PLAN.md` is the active execution plan for validating these workflows with real local accounts, mouse/keyboard interaction, dummy data, console checks, and classification in `WORKFLOW_GAPS.md`
 
 ## Role Model
 
@@ -96,16 +103,18 @@ The rebuilt product works with explicit account workspace-role entitlements plus
 - `Agency member`
   - Needs the agency workspace entitlement to see agency mode
   - Still needs active agency organization membership before backend agency routes allow work
-- `Internal/admin operator`
-  - Needs the internal workspace entitlement to see `Review Center`
-  - Internal entitlement is synced with the platform admin system role for backend route protection
+  - Can create an agency organization from `Home` when the account has the agency entitlement and no agency membership yet
+- `Internal reviewer`
+  - Needs the internal workspace entitlement plus the reviewer system role to see case-review sections
+  - Can issue tenancy, evidence, history-import, payment, deposit, and maintenance review decisions
 - `Platform admin`
-  - Has the broadest internal control surface, including account role management
+  - Needs the internal workspace entitlement plus the admin system role to see platform-control sections
+  - Can manage account workspace roles, scoring controls, automation, notifications, workers, audit, and release readiness
 
 Important architectural difference from the archive MVP:
 
-- The old `judge` concept is now implemented as the internal `reviewer/admin` lane.
-- This preserves the neutral-verdict business function without exposing a powerful adjudication role as a normal end-user persona.
+- The old `judge` concept is now implemented as the internal reviewer lane only.
+- This preserves the neutral-verdict business function without exposing case decisions to the platform-admin role or to a normal end-user persona.
 - The active workspace role is a UI scoping choice and entitlement filter, not a record-access grant. Backend access still depends on system roles, organization memberships, and record participation.
 
 ## Workflow 1: Authentication And Session Safety
@@ -181,10 +190,18 @@ Important architectural difference from the archive MVP:
 
 ### Typical flow
 
-1. Agency owner opens `Agency Tools`.
-2. They switch to `Team access`.
-3. They add an agent by email.
-4. They can later change role or deactivate access.
+1. If no agency organization exists yet, an agent-entitled account opens `Home` and creates the agency workspace.
+2. The organization endpoint creates that account's owner membership.
+3. Agency owner opens `Agency Tools`.
+4. They switch to `Team access`.
+5. They add an agent by email.
+6. They can later change role or deactivate access.
+
+Current clarity rule:
+
+- `POST /organizations` for an agency organization now requires the current user to have the `agency` workspace entitlement.
+- Landlord-only accounts do not see the agency workspace creation panel and should use owner-managed property setup unless a real agency organization later exists.
+- If `Agency Tools` opens before membership exists, it should explain the missing agency organization and point the user back to `Home` or an owner invite.
 
 ## Workflow 3: Property Setup And Management Mode
 
@@ -220,14 +237,22 @@ Important architectural difference from the archive MVP:
    - `agency_managed`
 3. They can assign:
    - agency organization
-   - agency user
+   - agency operator from the active owner/admin/agent directory
    - prospective tenant
 4. Agency users later search and tag the property in `Portfolio`.
+5. Agency users can also create agency inventory directly from `Agency Tools > Publishing`; that inventory is assigned to the agency organization and signed-in agent and can be listed immediately.
+6. If the agency-created property belongs to an existing landlord account, the agent can add that landlord's email during creation or later from `Agency Tools > Portfolio`.
 
 ### Example
 
 - A landlord creates `Harbor Flat`, chooses `I manage this property myself`, and keeps the property outside agency management.
 - Another landlord creates `Old Town Duplex`, chooses `An agency manages this property`, and assigns a named agent immediately.
+
+Current clarity rule:
+
+- If the agency directory is empty, `Rental Records > Properties & setup` keeps `owner_managed` as the available path and explains that agency assignment can happen later.
+- The backend still requires a real agency organization for `agency_managed`; the frontend should not imply agency assignment exists before the organization exists.
+- Landlord-owned properties can still be created from landlord mode and optionally assigned to an agency. Agency-created properties remain agency inventory for publication, but they can now carry a separate explicit landlord-owner link to an existing account with the landlord workspace role.
 
 ## Workflow 4: Tenancy Creation, Counterparty Confirmation, And Review Request
 
@@ -264,6 +289,10 @@ Important architectural difference from the archive MVP:
 3. Either side requests review if the tenancy should be formally reviewed/verified.
 4. Reviewer sees it later in `Review Center > Reviews`.
 
+UI continuity rule:
+
+- `Tenancy records` must show both the creation form and the existing role-scoped records. Counterparty confirmation and review-request actions belong on the existing tenancy card. Artifact upload, evidence, imports, and references stay in their own lanes.
+
 ### Example
 
 - Landlord creates a tenancy for `tenant@demo.trustledger.app`.
@@ -297,6 +326,8 @@ Important architectural difference from the archive MVP:
 ### Frontend
 
 - `RecordsPage.js` in `Artifacts`
+  - `Choose one tenancy for artifacts`
+  - `Active artifact tenancy`
   - `Create artifact`
   - `Artifact library`
   - `Reference request`
@@ -308,6 +339,10 @@ Important architectural difference from the archive MVP:
 2. The artifact is attached to an evidence document or operational record.
 3. Reviewer later accepts or rejects it.
 4. Short-lived access URLs keep the file private.
+
+UI continuity rule:
+
+- `Artifacts` should not act as a tenancy overview. Users choose one tenancy first, then work with that tenancy's artifact upload, library, and reference actions. Current tenancy facts and confirmation/review actions stay in `Tenancy records`.
 
 ### Example
 
@@ -433,38 +468,73 @@ Important architectural difference from the archive MVP:
 ### Roles
 
 - Agency owner/admin/agent
+- Landlord for owner-managed direct listings
 - Tenant applicant
 
 ### Backend routes
 
-- listing CRUD/status routes
-- application creation and status routes
+- `/api/v1/organizations/{organization_id}/listings`
+- `/api/v1/organizations/{organization_id}/applications`
+- `/api/v1/organizations/{organization_id}/applications/{application_id}/tenancy`
+- `/api/v1/landlord/listings`
+- `/api/v1/landlord/applications`
+- `/api/v1/landlord/applications/{application_id}/tenancy`
+- `/api/v1/listings/open`
+- `/api/v1/listings/{listing_id}/applications`
+- `/api/v1/applications/mine`
 
 ### Backend services
 
 - listing publication
 - application status transitions
 - application screening signals
+- accepted-application tenancy creation
 
 ### Models
 
 - `Listing`
-- `Application`
+- `ListingApplication`
+- `Tenancy`
 
 ### Frontend
 
 - `AgencyWorkbenchPage.js`
   - `Publishing`
   - `Pipeline`
+- `RecordsPage.js`
+  - `Properties & setup`
+  - `Publish listing`
 - `MarketplacePage.js`
 
 ### Typical flow
 
-1. Agency creates a property.
-2. Agency publishes a listing with thresholds.
-3. Tenant applies from `Listings`.
-4. Agency reviews the application in `Pipeline`.
-5. Status moves through submitted/review/accepted/rejected/withdrawn.
+1. Agency path:
+   - agency creates agency inventory
+   - property is saved against the agency organization
+   - agency publishes a listing with thresholds
+   - tenant applies from `Listings`
+   - agency reviews the application in `Agency Tools > Pipeline`
+   - after acceptance, agency creates the tenancy from the accepted application
+2. Owner-managed landlord path:
+   - landlord creates or keeps a property as `owner_managed`
+   - landlord opens `Rental Records > Properties & setup > Publish listing`
+   - landlord publishes the listing directly with rent, deposit, score, and verification thresholds
+   - tenant applies from the same `Listings` page
+   - landlord reviews the application from the same `Publish listing` lane
+   - after acceptance, landlord creates the tenancy from the accepted application
+3. Status moves through submitted/review/accepted/rejected/withdrawn according to the same application transition rules.
+4. Acceptance is only the decision. Tenancy creation is a separate explicit action that links `tenancy_id`, closes the listing, assigns the tenant to the property, copies the listing terms into the tenancy, and writes tenancy-created trust events.
+5. The created tenancy must then be visible to both parties from `Rental Records > Tenancy records`; it should not require users to discover it inside `Artifacts`.
+
+Current guard:
+
+- `POST /organizations/{organization_id}/listings` requires the selected property to be assigned to the same agency organization. This prevents a loose owner-managed property from becoming an agency listing by accident.
+- A landlord-owner link does not replace the agency assignment guard. It only lets the linked landlord see and reuse the agency-created property in landlord mode.
+- `POST /landlord/listings` requires the signed-in landlord to own the property and the property to be `owner_managed`. It does not accept agency-managed inventory.
+- Tenant discovery is unified through `Listings`, but listing responses expose `listing_source` and `manager_name` so the UI can distinguish `Listed by agency` from `Listed by landlord`.
+- A mixed tenant/landlord account cannot apply to its own landlord-managed listing from tenant mode.
+- Agency application-to-tenancy creation requires the property to have an existing linked landlord owner; owner-managed landlord listings use the signed-in landlord owner directly.
+- `ListingApplication.tenancy_id` records whether an accepted application has already produced a tenancy.
 
 ## Workflow 10: Payment Ledger, Dispute, Verdict, Appeal
 
@@ -600,14 +670,13 @@ Important architectural difference from the archive MVP:
 ### Roles
 
 - Reviewer
-- Platform admin
 
 ### Backend routes
 
-- internal tenancy review
-- internal evidence review
-- internal history import review
-- internal dispute review
+- internal tenancy review, reviewer-only
+- internal evidence review, reviewer-only
+- internal history import review, reviewer-only
+- internal dispute review, reviewer-only
 
 ### Backend services
 
@@ -637,7 +706,7 @@ Important architectural difference from the archive MVP:
 ### Roles
 
 - Everyone for personal score viewing
-- Reviewer/admin for manual score operations
+- Platform admin for manual score operations
 - Worker runtime for background processing
 
 ### Backend routes
@@ -669,7 +738,7 @@ Important architectural difference from the archive MVP:
 1. Score is viewed from `My Trust`.
 2. The personal UI labels tenant-side score as the user's renter dimension and landlord-side score as the user's own landlord/property-owner dimension.
 3. The Overview lane shows base score, role-specific contribution rows, verification-strength contribution rows, and adjudication adjustments.
-4. Internal reviewer can queue a refresh or batch recalculation.
+4. Platform admin can queue a refresh or batch recalculation.
 5. Worker/runtime processes queued items.
 6. Score history remains visible to the subject user with tenant-side and landlord-side labels.
 
@@ -684,7 +753,7 @@ Important architectural difference from the archive MVP:
 
 ### Roles
 
-- Reviewer/admin
+- Platform admin
 - Worker process
 
 ### Backend routes
@@ -711,7 +780,7 @@ Important architectural difference from the archive MVP:
 
 ### Typical flow
 
-1. Internal operator claims or executes automation tasks.
+1. Platform admin claims or executes automation tasks.
 2. Notification deliveries are monitored from the same lane.
 3. Worker runs are inspected for failures and throughput.
 
@@ -719,7 +788,7 @@ Important architectural difference from the archive MVP:
 
 ### Roles
 
-- Reviewer/admin
+- Platform admin
 
 ### Backend routes
 
@@ -743,7 +812,7 @@ Important architectural difference from the archive MVP:
 
 ### Typical flow
 
-1. Internal operator checks release readiness.
+1. Platform admin checks release readiness.
 2. They inspect audit history when tracing actions or failures.
 
 ## Workflow 17: Personal Trust Visibility

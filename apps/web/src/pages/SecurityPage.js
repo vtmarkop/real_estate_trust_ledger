@@ -16,7 +16,7 @@ import { e } from "../lib/i18n.js";
 function DataPanel(props) {
   return e("section", { className: "detail-panel" }, [
     e("h2", { className: "detail-title", key: "title" }, props.title),
-    props.children
+    e("div", { className: "data-panel-body", key: "body" }, props.children)
   ]);
 }
 
@@ -174,7 +174,7 @@ export function SecurityPage() {
     }
   ];
 
-  return e("div", { className: "workspace-page" }, [
+  return e("div", { className: "workspace-page security-page" }, [
     e(PageHero, {
       key: "hero",
       eyebrow: "Account security",

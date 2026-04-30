@@ -230,7 +230,7 @@ Key definitions:
 - `get_current_user`
   - Resolves the active signed-in user.
 - `require_system_roles`
-  - Enforces reviewer/admin-style platform access.
+  - Enforces system-role boundaries; reviewer routes and admin routes should stay separate unless a route is intentionally shared.
 - `has_workspace_role`
   - Checks whether a signed-in account has a specific account workspace entitlement.
 - `require_workspace_role_for_user`
@@ -248,9 +248,10 @@ Key definitions:
 
 Example:
 
-- `InternalOperationsPage` is only useful if the signed-in user is a reviewer or admin.
-- The route guard uses `require_system_roles`.
-- The frontend router also hides those tabs unless the account has the internal workspace entitlement.
+- `InternalOperationsPage` is shared shell code, but reviewer sections and admin sections are intentionally split.
+- Reviewer routes use `require_system_roles(SystemRole.REVIEWER)`.
+- Admin routes use `require_system_roles(SystemRole.ADMIN)`.
+- The frontend router also hides internal tabs unless the account has the internal workspace entitlement.
 
 ### `apps/api/app/core/config.py`
 
@@ -448,6 +449,7 @@ Example:
     - `country_code`
     - `custom_tags_json`
     - `created_by_user_id`
+    - `owner_landlord_user_id`
     - `assigned_agency_organization_id`
     - `assigned_agency_user_id`
     - `assigned_tenant_user_id`
@@ -460,7 +462,9 @@ Example:
 
 - A landlord can create a property first.
 - The property can later be assigned to an agency organization and an agency operator.
+- `owner_landlord_user_id` is the explicit owner link when a property was created by an agent but belongs to an existing landlord account. `created_by_user_id` remains the audit trail, not always the business owner.
 - The property can also carry a prospective tenant assignment before the tenancy is formally created.
+- An agency can create a property as agency inventory by assigning the property to its organization and the signed-in agency operator. This supports listings immediately; adding `owner_landlord_email` links that inventory to an existing landlord account without pretending the agent was the owner.
 
 ### `tenancy.py`
 
@@ -592,9 +596,10 @@ Example:
 ### `listing.py`
 
 - `Listing`
-  - Agency-controlled property listing.
+  - Market-facing property listing managed by either an agency organization or a self-managing landlord owner.
   - Key fields:
     - `organization_id`
+    - `owner_landlord_user_id`
     - `property_id`
     - `listing_status`
     - `title`
@@ -610,6 +615,7 @@ Example:
     - `listing_id`
     - `applicant_user_id`
     - `submitted_by_user_id`
+    - `tenancy_id`
     - `application_status`
     - applicant score snapshot fields
     - `eligibility_met`
@@ -617,6 +623,11 @@ Example:
     - `applicant_note`
     - `status_notes`
     - decision actor/timestamp
+
+Example:
+
+- `tenancy_id` stays empty while an application is only submitted, reviewing, accepted, or rejected.
+- After a manager explicitly creates a tenancy from an accepted application, `tenancy_id` points to the created tenancy so the pipeline no longer ends at acceptance.
 
 ### `agency_trust_check.py`
 
@@ -743,6 +754,8 @@ The schema package describes the request and response contracts returned to the 
   - Create agency or internal organization.
 - `OrganizationResponse`
   - Org summary with current user membership role.
+- `AgencyOperatorDirectoryResponse`
+  - Public authenticated directory row for active owner/admin/agent operators in an agency organization.
 - `CommercialOverviewResponse`
   - Agency-facing performance/dashboard summary.
 - `MembershipCreateRequest`
@@ -755,16 +768,17 @@ The schema package describes the request and response contracts returned to the 
 #### `property.py`
 
 - `PropertyCreateRequest`
-  - Property label, address, country, and custom tags.
+  - Property label, address, country, custom tags, optional landlord owner, and optional agency/tenant assignment fields.
 - `PropertyUpdateRequest`
   - Property edit plus assignment fields:
+    - landlord owner
     - agency organization
     - agency user
     - tenant user
     - clear-assignment toggles
     - activation flag
 - `PropertyResponse`
-  - Full property record including assigned agency/user/tenant display information.
+  - Full property record including creator, landlord owner, and assigned agency/user/tenant display information.
 
 #### `listing.py`
 
@@ -773,13 +787,13 @@ The schema package describes the request and response contracts returned to the 
 - `ListingUpdateRequest`
   - Status and threshold edits.
 - `ListingResponse`
-  - Listing details plus organization and property context.
+  - Listing details plus manager source, organization or landlord context, and property context.
 - `ApplicationCreateRequest`
   - Applicant note.
 - `ApplicationUpdateRequest`
   - Decision/status updates.
 - `ListingApplicationResponse`
-  - Application plus applicant score snapshot and decision info.
+  - Application plus listing manager source, applicant score snapshot, and decision info.
 - `AgencyScreeningDashboardResponse`
   - Aggregated listing/application metrics for agency tools.
 
@@ -960,7 +974,7 @@ The schema package describes the request and response contracts returned to the 
 #### `operations.py`
 
 - `InternalOperationsOverviewResponse`
-  - High-level operations dashboard for reviewers/admins.
+  - Shared high-level operations dashboard for reviewers and admins.
 
 #### `release.py`
 
@@ -1100,6 +1114,8 @@ Important functions:
 
 - `build_listing_response`
 - `build_application_response`
+- `resolve_listing_manager`
+  - Derives whether the listing is agency-managed or landlord-managed and supplies the manager label.
 - `evaluate_listing_eligibility`
   - Applies score/verification thresholds.
 - `ensure_listing_is_open`
@@ -1276,11 +1292,17 @@ Endpoints:
 - `POST /organizations`
 - `GET /organizations/mine`
 - `GET /organizations/directory/agencies`
+- `GET /organizations/directory/agencies/{organization_id}/operators`
 - `GET /organizations/{organization_id}`
 - `GET /organizations/{organization_id}/commercial-overview`
 - `GET /organizations/{organization_id}/memberships`
 - `POST /organizations/{organization_id}/memberships`
 - `PATCH /organizations/{organization_id}/memberships/{membership_id}`
+
+Important detail:
+
+- `POST /organizations` now requires the `agency` workspace entitlement before creating an agency organization; internal organizations still require platform-admin system permissions. The successful agency creation path creates the current user as the organization owner.
+- The agency operator directory returns active owner/admin/agent members from active agency organizations so landlord property assignment can use a real operator choice instead of a manually typed email.
 
 ### `properties.py` with prefix `/properties`
 
@@ -1299,6 +1321,11 @@ Endpoints:
 - `POST /properties`
 - `PATCH /properties/{property_id}`
 - `GET /properties/mine`
+
+Important detail:
+
+- Agency-created properties should be sent as `agency_managed` with `assigned_agency_organization_id` and `assigned_agency_user_email`. That keeps them visible in agency mode and allows tag updates through agency permissions.
+- If an agency-created property belongs to a real landlord, send or patch `owner_landlord_email` / `owner_landlord_user_id`. The target user must already exist and have the `landlord` workspace role. The assigned landlord can then see the property in landlord mode and reuse it for tenancy creation.
 
 ### `tenancies.py` with prefix `/tenancies`
 
@@ -1424,23 +1451,40 @@ Endpoints:
 
 Purpose:
 
-- agency listings, public listing browse, and applications.
+- agency listings, owner-managed landlord listings, public listing browse, and applications.
 
 Helpers:
 
 - `get_listing_for_organization`
+- `get_listing_for_landlord`
+- `resolve_listing_landlord_for_tenancy`
+- `create_tenancy_from_accepted_application`
 
 Endpoints:
 
 - `POST /organizations/{organization_id}/listings`
 - `GET /organizations/{organization_id}/listings`
 - `PATCH /organizations/{organization_id}/listings/{listing_id}`
+- `POST /landlord/listings`
+- `GET /landlord/listings`
+- `PATCH /landlord/listings/{listing_id}`
 - `GET /listings/open`
 - `POST /listings/{listing_id}/applications`
 - `GET /applications/mine`
+- `GET /landlord/applications`
+- `PATCH /landlord/applications/{application_id}`
+- `POST /landlord/applications/{application_id}/tenancy`
 - `GET /organizations/{organization_id}/applications`
 - `GET /organizations/{organization_id}/screening-dashboard`
 - `PATCH /organizations/{organization_id}/applications/{application_id}`
+- `POST /organizations/{organization_id}/applications/{application_id}/tenancy`
+
+Important detail:
+
+- Listing creation rejects properties whose `assigned_agency_organization_id` does not match the target organization. This prevents loose owner-managed properties from becoming agency listings by accident.
+- Landlord owner assignment does not weaken the listing guard; a property still must be assigned to the publishing agency before it can become a listing.
+- Accepted applications are not automatically tenancies. The manager must call the tenancy bridge endpoint, which requires an accepted application, creates or links the tenancy, closes the listing, assigns the accepted tenant to the property, and stores `ListingApplication.tenancy_id`.
+- Agency-managed application tenancy creation requires a linked existing landlord owner; owner-managed landlord applications use the signed-in listing owner.
 
 ### `consents.py` with prefix `/consents/trust-report`
 
@@ -1481,7 +1525,7 @@ Endpoints:
 
 Purpose:
 
-- internal access status, account role management, and reviewer queues for tenancies, evidence, and history imports.
+- internal access status, admin account-role management, and reviewer queues for tenancies, evidence, and history imports.
 
 Endpoints:
 
@@ -1499,7 +1543,7 @@ Endpoints:
 
 Purpose:
 
-- reviewer/admin verdict handling for payment, deposit, and maintenance disputes.
+- reviewer-only verdict handling for payment, deposit, and maintenance disputes.
 
 Endpoints:
 
@@ -1703,6 +1747,10 @@ Definitions:
 - `SessionProvider`
 - `useSession`
 
+Important detail:
+
+- `canCreateAgencyWorkspace` is true only for accounts with the `agency` workspace role and no agency organization membership. This powers the Agent Home bootstrap path and keeps landlord-only accounts out of agency setup.
+
 ### Shared libraries
 
 #### `lib/api.js`
@@ -1728,6 +1776,7 @@ Purpose:
 - English/Greek translation layer for the rebuilt frontend.
 - merges the baseline dictionary with `lib/i18n-extra.js`, where the post-reset Greek patch dictionary now carries most visible product copy added after Sprint 18.
 - translates complete text nodes, selected visible props, and guarded dynamic phrases such as role-only shell status, selected-property history phrases, score contribution breakdown titles, contribution-point rules, tenancy-status labels, and listing-application status messages.
+- decorates true action controls with targeted hover/focus help and normalizes nested translated child arrays so translated JSX collections do not create noisy React key warnings.
 
 Maintenance note:
 
@@ -1816,7 +1865,8 @@ Purpose:
 - quick orientation,
 - org summaries,
 - installable/PWA cues,
-- "where do I go next?" guidance.
+- "where do I go next?" guidance,
+- agent-owned agency workspace bootstrap when an agent-entitled account has no agency organization yet.
 
 #### `pages/TrustProfilePage.js`
 
@@ -1861,6 +1911,8 @@ Purpose:
 - `parseMinorAmount`
 - `parseTagText`
 - `formatTagText`
+- `getAgencyOperatorsForOrganization`
+- `applyAgencyOrganizationSelection`
 - `RecordsPage`
 
 Purpose:
@@ -1868,6 +1920,10 @@ Purpose:
 - property setup,
 - tenancy creation by email or ID,
 - property assignment,
+- owner-managed property setup fallback when the agency directory is empty,
+- agency operator selection and auto-filled operator email for agency-managed landlord property assignment,
+- owner-managed listing publication and accepted-application tenancy creation for direct landlord listings,
+- role-scoped existing tenancy visibility from the `Tenancy records` lane, including confirmation and review-request actions,
 - evidence upload,
 - history imports,
 - reference requests,
@@ -1937,8 +1993,13 @@ Purpose:
 - properties and custom tags,
 - listings and thresholds,
 - applications and decisions,
+- accepted-application tenancy creation for agency-managed listings after landlord owner linking,
 - trust checks with aggregate score contribution previews,
 - team-access management.
+
+Important detail:
+
+- The publishing property form creates agency inventory assigned to the selected agency organization and the signed-in agent account. It can also link that inventory to an existing landlord by email during creation or later from the portfolio card. Landlord-owned property setup still remains available in `RecordsPage.js` under landlord mode.
 
 #### `pages/InternalOperationsPage.js`
 
@@ -1953,17 +2014,17 @@ Purpose:
 
 Purpose:
 
-- reviewer/admin workspace:
-  - tenancy/evidence/history review
-  - dispute verdicts
-  - scoring control and score formula transparency
-  - automation queue control
-  - account workspace-role management
-  - worker/notification visibility
-  - audit visibility
-  - release readiness
+- shared internal workspace shell:
+  - reviewer-only tenancy/evidence/history review
+  - reviewer-only dispute verdicts
+  - admin-only scoring control and score formula transparency
+  - admin-only automation queue control
+  - admin-only account workspace-role management
+  - admin-only worker/notification visibility
+  - admin-only audit visibility
+  - admin-only release readiness
 
-This page replaces the legacy "judge" concept with a centralized internal review center.
+This page replaces the legacy "judge" concept with a split internal center: reviewers decide cases, admins manage platform machinery.
 
 #### `pages/SecurityPage.js`
 
@@ -2132,12 +2193,42 @@ Corrections made in this checkpoint:
 - aligned the API stage marker with the current checkpoint instead of leaving it on an older post-Sprint-17 marker,
 - added documentation/test hooks so the new reference becomes part of the maintained source-of-truth set.
 
+## Frontend Visual System Notes
+
+The current Sprint 21 visual direction keeps the dark cinematic base but makes workflow recognition more explicit.
+
+- Page roots now carry visual identity classes such as `home-page`, `trust-page`, `marketplace-page`, `records-page`, `operations-page`, `agency-page`, `internal-page`, and `security-page`.
+- `apps/web/src/styles/index.css` maps those classes to page accent palettes and shared card/control treatments.
+- `AppShell.js` assigns stable `tone` values to navigation items so the sidebar can show colored lane markers.
+- `AppShell.js` also assigns stable `icon` tokens to navigation items and renders them through `VisualIcon.js`.
+- `SegmentedTabs.js` derives `segmented-tab-*` classes from tab IDs so workflow tabs can use different colors without each page owning custom CSS.
+- `SegmentedTabs.js` derives workflow-tab icons from tab IDs through `resolveIconName`, so new tabs should use meaningful IDs before custom icon overrides.
+- `PageChrome.js` gives `StatusBadge` semantic `status-token-*` classes from labels/tokens so workflow states such as accepted, pending review, rejected, appealed, and verdict issued can be recognized by color.
+- `i18n.js` decorates `span.field-label` elements with `VisualIcon` based on the source English label text via `resolveFieldIconName`; new form labels should use clear nouns such as city, address, email, date, rent, file, notes, score, status, or role so the shared icon resolver can choose the right marker.
+- `i18n.js` also decorates true action buttons and button-styled links with `data-tooltip` and `has-action-tooltip` so actions expose short hover/focus help. Workflow tabs and command-card selectors opt out through role/class checks because segmented cards are navigation controls and their pseudo-tooltips can clip inside panels. Prefer clear button labels and add entries to `ACTION_HELP_BY_LABEL` plus `EL_PATCH_TRANSLATIONS` when the generic fallback is too vague.
+- The shared visual contract is that interactive controls must be brighter and clearer than explanatory copy, dynamic values/statuses/counts should be stronger than static labels, and history/timeline surfaces must remain visually different from daily action forms.
+- `VisualIcon.js` is the local icon source; keep using inline SVG line icons there instead of adding a third-party icon package unless the visual system is intentionally replaced.
+- Dense pages should follow the guided menu-flow pattern: top-level `.section-switcher` tabs act as a command-card menu across all main workspaces, and only the selected job should own the visible work area below that menu. `RecordsPage.js` is the first explicit content example: tenancies, properties, artifacts, and history/references no longer render as competing side-by-side panels; the artifacts lane then narrows again to one selected tenancy before rendering upload/library/reference actions.
+- Avoid adding decorative `::after` rules to `.section-switcher`; panel shells already use `::after` for the left accent rail, and reusing it caused a visible stray color pill in mixed panel/switcher components.
+
+## Workflow QA Notes
+
+`docs/WORKFLOW_QA_PLAN.md` is the active product QA plan for auditing the rebuild as real users would experience it. It should be updated when the scenario matrix, execution order, or fix policy changes.
+
+- Use `WORKFLOW_MAP.md` and `WORKFLOW_DIAGRAMS.md` to understand the intended workflow.
+- Use `WORKFLOW_QA_PLAN.md` to decide the browser/static/backend verification sequence.
+- Use `MANUAL_QA_RUNBOOK.md`, `MANUAL_QA_CHECKLIST.md`, and `MANUAL_QA_RESULTS.md` when the user or tester is running manual QA without changing code.
+- Record failures and current classifications in `WORKFLOW_GAPS.md`.
+- For frontend workflow fixes, verify with `npm test`, `npm run build`, and a browser mouse/keyboard pass when the change affects user continuity.
+
 ## Safe Places To Start The Next Sprint
 
 If the next sprint is visual/design-heavy, these are the safest entry points:
 
 - `apps/web/src/styles/index.css`
 - `apps/web/src/app/AppShell.js`
+- `apps/web/src/components/PageChrome.js`
+- `apps/web/src/components/SegmentedTabs.js`
 - `apps/web/src/pages/WorkspaceHomePage.js`
 - `apps/web/src/pages/AgencyWorkbenchPage.js`
 - `apps/web/src/pages/OperationsPage.js`

@@ -27,6 +27,88 @@ test("getLanguageLocale reflects the selected UI language", function () {
   assert.equal(getLanguageLocale("el"), "el-GR");
 });
 
+test("button actions receive hover help bubbles", function () {
+  var acceptHtml = renderToStaticMarkup(e("button", { type: "button" }, "Accept"));
+  assert.match(acceptHtml, /has-action-tooltip/);
+  assert.match(acceptHtml, /data-tooltip="Accept this application so the next step can create the tenancy\."/);
+
+  var directTenancyHtml = renderToStaticMarkup(
+    e("button", { type: "button" }, "Create tenancy record")
+  );
+  assert.match(
+    directTenancyHtml,
+    /data-tooltip="Create a new tenancy record from the entered property, lease, and counterparty details\."/
+  );
+  assert.doesNotMatch(directTenancyHtml, /accepted application/);
+
+  var publishHtml = renderToStaticMarkup(
+    e("button", { type: "button" }, "Publish to tenant Listings")
+  );
+  assert.match(
+    publishHtml,
+    /data-tooltip="Publish this owner-managed home so tenants can find and apply to it\."/
+  );
+
+  var confirmHtml = renderToStaticMarkup(e("button", { type: "button" }, "Confirm record"));
+  assert.match(
+    confirmHtml,
+    /data-tooltip="Confirm that this tenancy record matches your side of the agreement\."/
+  );
+
+  var tabHtml = renderToStaticMarkup(
+    e(
+      "button",
+      {
+        type: "button",
+        className: "segmented-tab",
+        role: "tab"
+      },
+      "Sessions"
+    )
+  );
+  assert.doesNotMatch(tabHtml, /has-action-tooltip/);
+  assert.doesNotMatch(tabHtml, /data-tooltip=/);
+
+  var languageHtml = renderToStaticMarkup(
+    e(
+      "button",
+      {
+        type: "button",
+        className: "language-button",
+        "aria-label": "Switch language to Greek"
+      },
+      "EL"
+    )
+  );
+  assert.match(languageHtml, /data-tooltip="Use this button to run the Switch language to Greek action\."/);
+});
+
+test("translated nested child arrays do not trigger React key warnings", function () {
+  var errors = [];
+  var originalError = console.error;
+  console.error = function captureError() {
+    errors.push(Array.prototype.slice.call(arguments).join(" "));
+  };
+
+  try {
+    renderToStaticMarkup(
+      e("div", null, [
+        e("span", null, "One"),
+        e("span", null, "Two")
+      ])
+    );
+  } finally {
+    console.error = originalError;
+  }
+
+  assert.equal(
+    errors.some(function includesKeyWarning(message) {
+      return message.indexOf('unique "key" prop') !== -1;
+    }),
+    false
+  );
+});
+
 test("translateText covers Sprint 20 workflow copy in Greek", function () {
   assert.equal(
     translateText("Focus on one operational lane", "el"),
@@ -48,7 +130,15 @@ test("translateText covers current UX reset and score transparency copy in Greek
       "Sign in securely. The app will open the last valid workspace role for this browser, and you can switch assigned roles from the sidebar.",
       "el"
     ),
-    "Συνδέσου με ασφάλεια. Η εφαρμογή θα ανοίξει τον τελευταίο έγκυρο ρόλο αυτού του browser και μπορείς να αλλάξεις τους ανατεθειμένους ρόλους από την πλευρική μπάρα."
+    "Συνδέσου με ασφάλεια. Η εφαρμογή θα ανοίξει τον τελευταίο έγκυρο ρόλο αυτού του προγράμματος περιήγησης και μπορείς να αλλάξεις τους ανατεθειμένους ρόλους από την πλευρική μπάρα."
+  );
+  assert.equal(
+    translateText("End this browser session.", "el"),
+    "Τερμάτισε αυτή τη συνεδρία του προγράμματος περιήγησης."
+  );
+  assert.equal(
+    translateText("Landlord home for lila tsoutsoura.", "el"),
+    "Αρχική ιδιοκτήτη για lila tsoutsoura."
   );
   assert.equal(translateText("Daily work", "el"), "Καθημερινή εργασία");
   assert.equal(translateText("History", "el"), "Ιστορικό");
@@ -69,6 +159,44 @@ test("translateText covers current UX reset and score transparency copy in Greek
       "el"
     ),
     "Χρησιμοποίησε αυτή την ενότητα για πρώτες αποφάσεις και επανελέγχους μετά από έφεση. Αν μια υπόθεση επιστρέψει με έφεση, αντικατάστησε εδώ την προηγούμενη απόφαση με νέα."
+  );
+  assert.equal(
+    translateText("Agency-managed setup unavailable", "el"),
+    "Η διαχείριση από πρακτορείο δεν είναι ακόμη διαθέσιμη"
+  );
+  assert.equal(
+    translateText(
+      "No agency workspace exists yet. Save this property as owner-managed now; you can assign an agency later.",
+      "el"
+    ),
+    "Δεν υπάρχει ακόμη χώρος πρακτορείου. Αποθήκευσε τώρα το ακίνητο ως διαχειριζόμενο από εσένα και μπορείς να αναθέσεις πρακτορείο αργότερα."
+  );
+  assert.equal(
+    translateText(
+      "Create the agency workspace this agent account will operate. After creation, this account becomes the agency owner and can add teammates from Agency Tools.",
+      "el"
+    ),
+    "Δημιούργησε τον χώρο πρακτορείου που θα χειρίζεται αυτός ο λογαριασμός agent. Μετά τη δημιουργία, ο λογαριασμός γίνεται ιδιοκτήτης του πρακτορείου και μπορεί να προσθέσει συνεργάτες από τα Εργαλεία Πρακτορείου."
+  );
+  assert.equal(
+    translateText(
+      "Your agent role is active, but this account is not attached to an agency organization yet. Create an agency workspace from Home, or ask an agency owner to invite this account.",
+      "el"
+    ),
+    "Ο ρόλος agent είναι ενεργός, αλλά αυτός ο λογαριασμός δεν είναι ακόμη συνδεδεμένος με οργανισμό πρακτορείου. Δημιούργησε χώρο πρακτορείου από την Αρχική ή ζήτησε από ιδιοκτήτη πρακτορείου να προσκαλέσει αυτόν τον λογαριασμό."
+  );
+  assert.equal(
+    translateText("Open Home to create agency workspace", "el"),
+    "Άνοιγμα Αρχικής για δημιουργία χώρου πρακτορείου"
+  );
+  assert.equal(translateText("Managing agent", "el"), "Υπεύθυνος agent");
+  assert.equal(
+    translateText("Selected agent email: agent@example.com", "el"),
+    "Email επιλεγμένου agent: agent@example.com"
+  );
+  assert.equal(
+    translateText("Property created as agency inventory and ready for listing.", "el"),
+    "Το ακίνητο δημιουργήθηκε ως απόθεμα πρακτορείου και είναι έτοιμο για αγγελία."
   );
 });
 

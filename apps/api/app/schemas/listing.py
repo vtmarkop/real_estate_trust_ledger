@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+from datetime import date
 from datetime import datetime
 from uuid import UUID
 
 from pydantic import BaseModel, Field
 
-from trustledger_domain import ApplicationStatus, ListingStatus
+from trustledger_domain import ApplicationStatus, ListingStatus, TenancyStatus
 
 
 class ListingCreateRequest(BaseModel):
@@ -28,8 +29,12 @@ class ListingUpdateRequest(BaseModel):
 
 class ListingResponse(BaseModel):
     id: UUID
-    organization_id: UUID
-    organization_name: str
+    organization_id: UUID | None = None
+    organization_name: str | None = None
+    owner_landlord_user_id: UUID | None = None
+    owner_landlord_full_name: str | None = None
+    listing_source: str
+    manager_name: str
     property_id: UUID
     property_label: str
     address_line1: str
@@ -58,13 +63,23 @@ class ApplicationUpdateRequest(BaseModel):
     status_notes: str | None = Field(default=None, max_length=1000)
 
 
+class ApplicationTenancyCreateRequest(BaseModel):
+    lease_start_date: date
+    lease_end_date: date | None = None
+    tenancy_status: TenancyStatus = TenancyStatus.ACTIVE
+
+
 class ListingApplicationResponse(BaseModel):
     id: UUID
     listing_id: UUID
     listing_title: str
     listing_status: ListingStatus
-    organization_id: UUID
-    organization_name: str
+    organization_id: UUID | None = None
+    organization_name: str | None = None
+    owner_landlord_user_id: UUID | None = None
+    owner_landlord_full_name: str | None = None
+    listing_source: str
+    manager_name: str
     applicant_user_id: UUID
     applicant_full_name: str
     applicant_tenant_score: int | None = None
@@ -81,6 +96,7 @@ class ListingApplicationResponse(BaseModel):
     decided_by_user_id: UUID | None = None
     decided_by_user_full_name: str | None = None
     decided_at: datetime | None = None
+    tenancy_id: UUID | None = None
     created_at: datetime
     updated_at: datetime
 

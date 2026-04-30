@@ -12,6 +12,8 @@
 - Post-Sprint-20 archive-alignment UX reset checkpoint: in progress
 - Sprint 21 score-transparency checkpoint: complete
 - Sprint 21 Greek localization quality checkpoint: complete
+- Sprint 21 visual memorability checkpoint: first slice plus global cleanup and icon/data hierarchy complete
+- Sprint 21 guided menu-flow clarity checkpoint: first slice plus global section-switcher styling, agent agency-bootstrap clarity, agency property/listing assignment continuity, explicit landlord-owner links for agency-created inventory, direct owner-managed landlord listing publication, accepted-application tenancy creation, button hover-help bubbles, the workflow QA master-plan/manual QA package, the 2026-04-30 Codex pre-QA pass across QA-00 through QA-27, and strict admin-versus-reviewer internal separation complete
 - Next planned delivery lane: remaining Sprint 21 frontend experience track for motion, accessibility, responsive behavior, design-system documentation, and release-level frontend refinement
 - Sprint 17 outcome: the rebuilt app now has substantially fuller frontend parity for core operator and review actions, clearer dispute handling, visible evidence upload/storage behavior, and better day-to-day agency portfolio management
 - Post-Sprint-17 remediation outcome: archive-parity audit completed, operational document uploads now reach payments/deposits/maintenance in the web app, single-session revoke is available, internal automation cleanup actions are surfaced, and regression coverage was expanded around operational artifact links
@@ -24,7 +26,7 @@
 - Post-Sprint-20 cross-device continuity checkpoint outcome: the repo now includes a durable handoff system with repo-wide agent instructions, a live handoff file, a workflow-gap tracker, and a daily workstation sync guide so work can continue safely across devices and new Codex threads
 - Post-Sprint-20 GitHub bootstrap checkpoint outcome: the repo is now prepared for a first private GitHub publish as `real_estate_trust_ledger`, with local-only databases and artifact storage excluded from version control and the full first-push plus home/work sync procedure documented in-project
 - Post-Sprint-20 dispute continuity checkpoint outcome: payment, deposit, and maintenance dispute flows now surface explicit appeal and re-review handoffs in both the user dispute desk and `Review Center > Disputes`, and the payment counterparty decision path is blocked once a case has moved into reviewer flow
-- Post-Sprint-20 archive-alignment UX reset status: the reset is underway on branch `codex/archive-ux-reset`, with the first slices restoring property targeting, strict `Daily work` versus read-only `History` separation, create-new versus existing-record separation inside payments and maintenance, compact payment/issue detail dropdowns in `Rent & Issues`, agency `Screening history` separation, tenancy role/counterparty clarity, explicit account workspace-role entitlements for tenant/landlord/agent/admin visibility, sidebar-only role switching after login, fixed compact shell density, a local account-only reset path, clearer tenant-side versus landlord-side score wording, completed score-contribution transparency across `My Trust`, agency previews, and internal scoring controls, and completed Greek localization quality coverage for likely visible reset workspace copy while preserving the rebuilt dispute/reviewer/scoring architecture
+- Post-Sprint-20 archive-alignment UX reset status: the reset is underway on branch `codex/archive-ux-reset`, with the first slices restoring property targeting, strict `Daily work` versus read-only `History` separation, create-new versus existing-record separation inside payments and maintenance, compact payment/issue detail dropdowns in `Rent & Issues`, agency `Screening history` separation, tenancy role/counterparty clarity, explicit account workspace-role entitlements for tenant/landlord/agent/admin visibility, sidebar-only role switching after login, fixed compact shell density, a local account-only reset path, clearer tenant-side versus landlord-side score wording, completed score-contribution transparency across `My Trust`, agency previews, and internal scoring controls, completed Greek localization quality coverage for likely visible reset workspace copy, a first modern visual memorability slice with page/workflow color identities, a first guided menu-flow clarity slice for `Rental Records` and `Review Center` labels, agent agency-bootstrap clarity so unassigned agents can create the first agency workspace from Home while landlord-only accounts stay out of agency setup, agency property/listing assignment continuity so landlord agency assignment uses real operator choices and agency-created inventory stays visible for listings, explicit landlord-owner links so agents can connect agency-created inventory to an existing landlord account, direct owner-managed landlord listing publication so self-managed rentals can appear in tenant `Listings`, accepted-application tenancy creation so acceptance is no longer a dead end, global button hover-help bubbles for action clarity, a workflow QA master plan plus manual QA package, a Codex pre-QA pass that browser-tested QA-00 through QA-27 across minimal and rich seed data, and strict admin-versus-reviewer separation so reviewers decide cases while admins manage platform controls
 - Remaining planned launch track: none
 - Remaining planned post-pilot experience track: Sprint 21
 
@@ -66,7 +68,7 @@ Create a safe rebuild lane and stop relying on chat history as project memory.
 - users, organizations, memberships,
 - sessions, auth flows, RBAC,
 - agency access boundaries,
-- reviewer/admin role definition,
+- early internal reviewer/admin role definition, later split into reviewer decisions and admin platform controls,
 - consent primitives.
 
 ### Planned Exit Criteria
@@ -99,7 +101,7 @@ Completed in the third Sprint 1 slice:
 - RBAC dependencies for system-role and organization access checks,
 - organization creation endpoint with owner membership bootstrap,
 - organization membership listing and member-add flows,
-- internal reviewer/admin access surface,
+- internal access surface, later split into reviewer decisions and admin platform controls,
 - API tests covering org access, membership management, and protected internal routes.
 
 Completed in the fourth Sprint 1 slice:
@@ -252,7 +254,7 @@ Completed in the first Sprint 3 slice:
 
 - `evidence_documents` model with structured evidence types and reviewer decision states,
 - tenancy-linked evidence submission flow for participants,
-- reviewer/admin evidence queue list and decision endpoints,
+- reviewer evidence queue list and decision endpoints,
 - trust-event support for evidence submission and accepted/rejected review outcomes,
 - trust-profile enrichment with evidence-backed counts for submitted, accepted, and rejected documents,
 - API tests covering evidence submission, access control, queue processing, and profile-summary updates,
@@ -263,7 +265,7 @@ Completed in the second Sprint 3 slice:
 - `history_imports` model as a cold-start onboarding bundle owned by a subject user,
 - tenancy linkage into draft history imports without disrupting the existing live-tenancy flow,
 - self-service history import create/list/submit endpoints,
-- reviewer/admin history-import queue list and accept/reject decisions,
+- reviewer history-import queue list and accept/reject decisions,
 - trust-profile enrichment with submitted/accepted/rejected history import counts,
 - trust-event support for history import submission and review outcomes,
 - API tests covering non-empty bundle rules, subject-only submission, and accepted import visibility in agency trust profiles,
@@ -336,7 +338,7 @@ Completed in the first Sprint 4 slice:
 Completed in the second Sprint 4 slice:
 
 - canonical score calculation reasons shared across public and internal scoring entry points,
-- reviewer/admin internal scoring endpoints for user-targeted recalculation and score-history inspection,
+- admin internal scoring endpoints for user-targeted recalculation and score-history inspection,
 - API tests covering internal score recalculation, stable unchanged-history behavior, and permission enforcement.
 
 Completed in the third Sprint 4 slice:
@@ -484,7 +486,7 @@ Sprint 6 is now functionally complete for the current planned scope.
 ### Planned Scope
 
 - worker-aligned automation records and queues,
-- reminders, expirations, and reviewer/admin follow-up tasks,
+- reminders, expirations, and internal follow-up tasks,
 - scheduled recalculation and cleanup jobs built on the existing persisted request path.
 
 ### Planned Exit Criteria
@@ -499,7 +501,7 @@ Completed in the first Sprint 7 slice:
 
 - `automation_tasks` model with worker-aligned task type, status, scheduling, and processing fields,
 - automatic consent-expiry reminder creation on trust-report consent issue and cancellation on consent revocation,
-- reviewer/admin internal automation endpoints for queue listing, consent-reminder backfill, follow-up task creation, and explicit task processing,
+- admin internal automation endpoints for queue listing, consent-reminder backfill, follow-up task creation, and explicit task processing,
 - API tests covering consent-reminder lifecycle, follow-up task processing, and permission boundaries,
 - full regression suite and fresh Alembic verification through the automation-task schema.
 
@@ -674,7 +676,7 @@ Completed in the fourth Sprint 9 slice:
 
 - worker cycles now persist first-class `worker_runs` records with run status, due-boundary context, queue counts, and last-error details,
 - worker runtime now finalizes run records on both successful and failed cycles instead of leaving execution observability only in task rows and audit logs,
-- internal reviewer/admin APIs can now list worker runs and inspect a single run directly,
+- admin internal APIs can now list worker runs and inspect a single run directly,
 - worker runtime tests now cover both successful run persistence and failed-run recording, with API coverage for internal worker-run visibility,
 - full regression suite and fresh Alembic verification re-run through the worker-run schema.
 
@@ -995,7 +997,7 @@ Completed in the second Sprint 13 slice:
 
 - added durable `notification_deliveries` records plus worker-run notification counters in the rebuild schema,
 - consent-expiry reminder automation now queues a real notification outbox record instead of only leaving a note on the automation task,
-- internal reviewer/admin APIs can now inspect notification deliveries through `/api/v1/internal/notifications`,
+- admin internal APIs can now inspect notification deliveries through `/api/v1/internal/notifications`,
 - internal operations overview now includes notification backlog counts.
 
 Completed in the third Sprint 13 slice:
@@ -1417,27 +1419,182 @@ Completed in the fixed compact density checkpoint:
 - navigation tests now pin compact density as a fixed shell contract instead of a user preference,
 - docs now state that future density choices should only return if they create an obvious layout difference.
 
+Completed in the first visual memorability checkpoint:
+
+- restore point `32db93f` was created before the visual pass,
+- each main workspace root now carries a page identity class, letting home, trust, listings, records, rent/issues, agency, review, and account use distinct accent palettes,
+- sidebar navigation items now carry stable visual lane tones and tests pin that contract,
+- workflow tabs now derive semantic visual classes from tab IDs, so daily work, history, payments, deposits, maintenance, screening, audit, and review lanes can look intentionally different,
+- status badges now derive semantic visual classes from labels/tokens, so accepted, pending review, rejected, appealed, verdict, and other workflow states can be recognized by color,
+- shared CSS now makes cards, facts, notes, timelines, fields, dropdowns, file inputs, and buttons more prominent while preserving the compact shell layout.
+
+Completed in the first guided menu-flow clarity checkpoint:
+
+- `Rental Records` no longer renders tenancy creation and saved-property setup as equal side-by-side panels,
+- the selected top-level records lane now owns the work area, so tenancies, properties, artifacts, and history/references do not compete on screen,
+- shared CSS adds a `guided-workflow` layout and makes section switchers read more like command menus,
+- `Review Center` tab labels now use novice-facing job names: start here, score controls, account roles, daily reviews, dispute decisions, system runtime, and history/audit,
+- Greek translations were extended for the new admin menu labels and dynamic menu counts.
+
+Completed in the global section-switcher visual cleanup checkpoint:
+
+- top-level section switchers across trust, marketplace, records, rent/issues, agency, review, and account/security pages now share the larger command-card tab treatment,
+- the conflicting `.section-switcher::after` flourish was removed because it reused the same pseudo-element as panel accent rails and could render as a stray color pill,
+- workspace pages now use deliberate vertical gaps between major blocks,
+- signed-in workspace ambient blobs were removed, and compact hero/detail-panel shadows, nested card shadows, command-tab shadows, and internal hero/stat spacing were tightened so stacked panels still feel modern without creating colored background haze or heavy shadow overlap.
+
+Completed in the semantic icon and data hierarchy checkpoint:
+
+- `VisualIcon.js` now provides shared inline SVG line icons without adding a third-party icon dependency,
+- shell navigation items carry stable icon tokens for home, trust, listings, records, rent/issues, agency, review, and account lanes,
+- segmented workflow tabs derive icons from their tab IDs, so daily work, history, payments, maintenance, disputes, agency screening, roles, runtime, and account safety get consistent visual markers,
+- `i18n.e` now decorates `field-label` spans with semantic field icons derived from their source label text, so submit fields such as city, address, country, email, date, rent, deposit, file, notes, score, status, and role get consistent markers without manually editing every form,
+- shared stat/fact/status components and sidebar account rows now distinguish static labels from dynamic values, role names, counts, and status tokens,
+- navigation tests now pin lane icon tokens, workflow-tab icon resolution, and submit-field label icon resolution.
+
+Completed in the property setup clarity checkpoint:
+
+- landlord `Rental Records > Properties & setup` now treats owner-managed property creation as the clear default when no agency organization exists,
+- the agency-managed option is disabled and explained when the agency directory is empty, which matches the clean four-account reset where the agent account has no agency organization yet,
+- create/update payloads now fall back to owner-managed instead of accidentally submitting an agency-managed property with no agency selected,
+- frontend regression coverage now pins that a landlord property setup does not require an agency when none exist.
+
+Completed in the agency property/listing assignment continuity checkpoint:
+
+- the agency directory now includes an active-operator endpoint for agency owner/admin/agent choices,
+- landlord property setup now uses a managing-agent dropdown and fills the assignment email from the selected agency operator instead of asking for manual email entry,
+- `Agency Tools > Publishing` now creates agency inventory assigned to the selected organization and signed-in agent, so newly created agency properties remain visible in agency mode,
+- listing publication now rejects properties that are not assigned to the same agency organization,
+- regression coverage now pins the operator directory, agency-created property visibility/tag updates, listing assignment guard, and landlord operator-email selection helper.
+
+Completed in the agency landlord-owner link checkpoint:
+
+- `Property.owner_landlord_user_id` now stores an explicit landlord owner for agency-created property inventory while `created_by_user_id` remains the audit creator,
+- agency publishing can attach an existing landlord owner by email during property creation, and agency portfolio cards can save or clear that owner link later,
+- the backend requires the selected owner account to exist, be active, and have the landlord workspace role,
+- linked landlord owners see the property in landlord mode and can reuse it when creating tenancy records,
+- listing publication still requires the property to be assigned to the publishing agency organization, so owner linking does not weaken agency listing boundaries.
+
+Completed in the agency portfolio card action cleanup:
+
+- `Agency Tools > Portfolio` no longer renders the landlord-owner save action as a stretched full-grid translucent pill,
+- landlord-owner and tag saves now share the same compact card action treatment,
+- single custom tags render as compact wrapping tags instead of full-width transparent blocks,
+- the owner-link helper copy is shorter and clearer for production review.
+
+Completed in the owner-managed landlord listing checkpoint:
+
+- `Listing` records can now be managed by either an agency organization or a self-managing landlord owner, with a single-manager constraint,
+- landlords can publish only owner-managed properties they own through `/landlord/listings`,
+- landlord-owned listing applications are listed and reviewed through `/landlord/applications`,
+- tenant `Listings` remains unified and now labels whether a home is `Listed by agency` or `Listed by landlord`,
+- mixed tenant/landlord accounts cannot apply to their own landlord-managed listing from tenant mode,
+- `Rental Records > Properties & setup` now includes a focused `Publish listing` lane for owner-managed landlord homes and direct application review.
+
+Completed in the accepted-application tenancy bridge checkpoint:
+
+- `ListingApplication` now stores `tenancy_id` so the application pipeline can point to the tenancy it created,
+- agency and landlord managers now create tenancies explicitly from accepted applications through dedicated API routes instead of treating acceptance as the final rental relationship,
+- tenancy creation from an accepted application closes the listing, assigns the accepted tenant to the property, copies listing/property terms into the tenancy, and writes tenancy-created trust events,
+- agency-managed applications require the agency-created property to have a linked existing landlord owner before tenancy creation,
+- `Agency Tools > Pipeline` and landlord `Rental Records > Properties & setup > Publish listing` show the same compact next-step bridge after acceptance,
+- button-like actions now receive hover/focus help bubbles from the shared frontend element wrapper, with common action help localized in English and Greek.
+
+Completed in the first workflow QA checkpoint:
+
+- `docs/WORKFLOW_QA_PLAN.md` now defines the full real-life scenario matrix, QA method, ordered execution path, and fix policy for workflow audits,
+- `docs/MANUAL_QA_RUNBOOK.md`, `docs/MANUAL_QA_CHECKLIST.md`, and `docs/MANUAL_QA_RESULTS.md` now give the user a self-service manual QA path with seed commands, accounts, task IDs, expected results, severity labels, and a reusable results worksheet,
+- the first browser QA slice used mouse/keyboard interaction and dummy data to verify the owner-managed flow: landlord creates a property, publishes a listing, tenant applies, landlord accepts, landlord creates the tenancy, and tenant sees the tenancy,
+- the slice exposed a real frontend continuity bug where existing tenancy records were hidden in `Artifacts` after bridge creation,
+- `Rental Records > Tenancy records` now includes `Existing tenancy records` with current tenancy facts and the next valid action,
+- confirmation and review actions are now ordered so a counterparty sees `Confirm record` before `Request review`,
+- direct tenancy creation, listing publication, application submission, record confirmation, review request, evidence submission, reference request, and artifact-opening actions now have targeted hover/focus help instead of generic fallback text,
+- the shared localization element wrapper now normalizes nested child arrays, reducing React key-warning noise during translated render paths.
+
+Completed in the workflow QA stabilization checkpoint:
+
+- the 2026-04-30 Codex pre-QA browser pass covered QA-00 through QA-27 across the clean minimal reset and the rich demo seed,
+- the pass exercised sign-in/role scope, account safety, agency bootstrap, property setup, owner-managed listings, agency listings, accepted-application tenancy creation, direct tenancy creation, evidence/review, imports/references, trust sharing, payment/deposit/maintenance operations, dispute/reviewer handoffs, score transparency, system runtime/audit, Greek copy, hover help, visual separation, and console-warning sweeps,
+- fragile date-entry fields in direct tenancy and accepted-application bridge forms now use explicit `YYYY-MM-DD` text inputs instead of native date controls that failed under keyboard entry,
+- landlord-only accounts are now guarded away from direct tenant marketplace routes instead of seeing role-irrelevant listing/application surfaces,
+- agency and landlord listing/application cards no longer expose confusing `undefined` closed-listing copy, mixed applicant/status notes, or closed-listing badges that imply tenant visibility,
+- `Rental Records > Artifacts` now uses one selected tenancy at a time for upload/library/reference work, reducing card sprawl and keeping current tenancy facts in `Tenancy records`,
+- Greek visible copy received a final small cleanup for browser/session wording and dynamic home-title grammar,
+- `docs/MANUAL_QA_RESULTS.md` now records the pre-QA outcome and keeps QA-23 keyboard traversal plus QA-26 responsive widths as explicit user manual-QA follow-ups.
+
+Completed in the admin/reviewer separation checkpoint:
+
+- review queue and dispute verdict APIs now require the reviewer system role only,
+- platform-control APIs for account roles, scoring, automation, notifications, workers, audit, and release readiness now require the admin system role only,
+- frontend capabilities now split `canReviewCases` from `canManagePlatform`,
+- the internal shell now labels the workspace as `Review Center` for reviewers and `Admin Center` for admins, and it loads only the sections the signed-in role can use,
+- regression coverage now proves admin users cannot issue payment dispute verdicts and reviewers do not receive platform-management capabilities.
+
 ### Current Deliverables
 
 - `apps/api/app/schemas/trust_check.py`
+- `apps/api/app/schemas/organization.py`
+- `apps/api/app/schemas/property.py`
+- `apps/api/app/models/listing.py`
+- `apps/api/app/models/property.py`
+- `apps/api/app/models/application.py`
+- `apps/api/app/models/tenancy.py`
+- `apps/api/app/models/user.py`
+- `apps/api/app/schemas/listing.py`
+- `apps/api/alembic/versions/20260429_0034_application_tenancy_bridge.py`
+- `apps/api/app/services/listings.py`
+- `apps/api/alembic/versions/20260428_0032_property_landlord_owner_assignment.py`
+- `apps/api/alembic/versions/20260429_0033_owner_listed_landlord_listings.py`
+- `apps/api/app/api/routes/organizations.py`
+- `apps/api/app/api/routes/properties.py`
+- `apps/api/app/api/routes/listings.py`
+- `apps/api/app/api/routes/tenancies.py`
+- `apps/api/app/services/properties.py`
 - `apps/api/app/services/trust_profiles.py`
 - `apps/web/src/lib/scoreTransparency.js`
+- `apps/web/src/lib/i18n.js`
 - `apps/web/src/components/ScoreTransparency.js`
+- `apps/web/src/components/PageChrome.js`
+- `apps/web/src/components/SegmentedTabs.js`
+- `apps/web/src/components/VisualIcon.js`
 - `apps/web/src/pages/TrustProfilePage.js`
+- `apps/web/src/pages/WorkspaceHomePage.js`
+- `apps/web/src/pages/MarketplacePage.js`
+- `apps/web/src/pages/RecordsPage.js`
+- `apps/web/src/pages/OperationsPage.js`
 - `apps/web/src/pages/AgencyWorkbenchPage.js`
 - `apps/web/src/pages/InternalOperationsPage.js`
+- `apps/web/src/lib/i18n-extra.js`
+- `apps/web/src/pages/SecurityPage.js`
 - `apps/web/src/app/AppShell.js`
 - `apps/web/src/styles/index.css`
 - `apps/web/tests/scoreTransparency.test.mjs`
 - `apps/web/tests/navigation.test.mjs`
+- `apps/web/tests/i18n.test.mjs`
+- `docs/WORKFLOW_QA_PLAN.md`
+- `docs/MANUAL_QA_RUNBOOK.md`
+- `docs/MANUAL_QA_CHECKLIST.md`
+- `docs/MANUAL_QA_RESULTS.md`
 - `tests/test_trust_scores_api.py`
+- `tests/test_organization_rbac_api.py`
+- `tests/test_property_assignments_api.py`
+- `tests/test_listing_application_api.py`
 - `tests/test_web_scaffold.py`
 
 ### Next Slice
 
 Continue the remaining Sprint 21 release-polish lane:
 
-- visually review the score panels with seeded data that includes evidence, references, verified tenancies, and final dispute verdict deltas,
-- visually review the Greek UI with the minimal four-account reset and the rich demo seed to catch any awkward copy that only appears with real user data,
-- complete accessibility, focus, responsive, and motion checks across the reset workspaces,
+- let the user run the full manual pass from `docs/MANUAL_QA_RUNBOOK.md`, `docs/MANUAL_QA_CHECKLIST.md`, and `docs/MANUAL_QA_RESULTS.md`, using QA IDs for any new failures,
+- repeat QA-26 on real tablet/mobile widths and repeat QA-23 as a human keyboard-only traversal,
+- improve marketplace post-application confirmation if manual QA still feels too subtle,
+- continue accessibility, focus, responsive, and motion checks across the reset workspaces,
 - document fixed compact shell and visual-system rules before considering the frontend release candidate complete.
+
+Future production-hardening sprint candidate:
+
+- harden property ownership lifecycle after the current UX release-polish lane:
+- add audit-log entries for landlord-owner assignment, reassignment, and clearing,
+- add owner-link confirmation UX that clearly says the landlord account must already exist,
+- decide whether ownership history needs a dedicated transfer table before multi-owner or company-owner support,
+- add regression tests for inactive owner accounts, removed landlord roles, agency membership changes, and ownership reassignment boundaries.

@@ -90,7 +90,7 @@ export function AuthPage(props) {
     });
   }
 
-  return e("div", { className: "public-page auth-page" }, [
+  return e("div", { className: "public-page auth-page auth-screen" }, [
     e("section", { className: "auth-panel", key: "panel" }, [
       e("div", { className: "auth-intro", key: "intro" }, [
         e("p", { className: "eyebrow", key: "eyebrow" }, mode === "register" ? "Create account" : "Sign in"),
@@ -199,11 +199,11 @@ export function AuthPage(props) {
             { className: "auth-switch", key: "switch" },
             mode === "register"
               ? [
-                  "Already have an account? ",
+                  e("span", { key: "prompt" }, "Already have an account? "),
                   e(Link, { to: "/login", key: "link" }, "Sign in")
                 ]
               : [
-                  "Need an account? ",
+                  e("span", { key: "prompt" }, "Need an account? "),
                   e(Link, { to: "/register", key: "link" }, "Create one")
                 ]
           )

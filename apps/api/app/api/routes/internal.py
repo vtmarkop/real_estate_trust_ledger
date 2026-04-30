@@ -134,7 +134,7 @@ def update_user_workspace_roles(
 )
 def list_tenancy_review_queue(
     session: SessionDep,
-    current_user=Depends(require_system_roles(SystemRole.REVIEWER, SystemRole.ADMIN)),
+    current_user=Depends(require_system_roles(SystemRole.REVIEWER)),
 ) -> list[TenancyResponse]:
     tenancies = session.exec(
         select(Tenancy)
@@ -153,7 +153,7 @@ def list_tenancy_review_queue(
 )
 def list_evidence_review_queue(
     session: SessionDep,
-    current_user=Depends(require_system_roles(SystemRole.REVIEWER, SystemRole.ADMIN)),
+    current_user=Depends(require_system_roles(SystemRole.REVIEWER)),
 ) -> list[EvidenceResponse]:
     evidence_documents = session.exec(
         select(EvidenceDocument)
@@ -175,7 +175,7 @@ def list_evidence_review_queue(
 )
 def list_history_import_review_queue(
     session: SessionDep,
-    current_user=Depends(require_system_roles(SystemRole.REVIEWER, SystemRole.ADMIN)),
+    current_user=Depends(require_system_roles(SystemRole.REVIEWER)),
 ) -> list[HistoryImportResponse]:
     history_imports = session.exec(
         select(HistoryImport)
@@ -199,7 +199,7 @@ def review_tenancy(
     tenancy_id: UUID,
     payload: TenancyReviewDecisionRequest,
     session: SessionDep,
-    current_user=Depends(require_system_roles(SystemRole.REVIEWER, SystemRole.ADMIN)),
+    current_user=Depends(require_system_roles(SystemRole.REVIEWER)),
 ) -> TenancyResponse:
     if payload.verification_status not in {
         VerificationStatus.REVIEWED,
@@ -255,7 +255,7 @@ def review_evidence_document(
     evidence_document_id: UUID,
     payload: EvidenceReviewDecisionRequest,
     session: SessionDep,
-    current_user=Depends(require_system_roles(SystemRole.REVIEWER, SystemRole.ADMIN)),
+    current_user=Depends(require_system_roles(SystemRole.REVIEWER)),
 ) -> EvidenceResponse:
     if payload.review_status not in {
         EvidenceReviewStatus.ACCEPTED,
@@ -328,7 +328,7 @@ def review_history_import(
     history_import_id: UUID,
     payload: HistoryImportReviewDecisionRequest,
     session: SessionDep,
-    current_user=Depends(require_system_roles(SystemRole.REVIEWER, SystemRole.ADMIN)),
+    current_user=Depends(require_system_roles(SystemRole.REVIEWER)),
 ) -> HistoryImportResponse:
     if payload.status not in {
         HistoryImportStatus.ACCEPTED,

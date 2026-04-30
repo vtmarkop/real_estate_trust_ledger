@@ -111,6 +111,32 @@ def resolve_agency_assignment(
     return organization.id, agency_user.id
 
 
+def resolve_owner_landlord_assignment(
+    *,
+    session: SessionDep,
+    property_record: Property,
+    payload: PropertyCreateRequest | PropertyUpdateRequest,
+) -> UUID | None:
+    if getattr(payload, "clear_owner_landlord_assignment", False):
+        return None
+
+    if payload.owner_landlord_user_id is None and payload.owner_landlord_email is None:
+        return property_record.owner_landlord_user_id
+
+    landlord_user = resolve_target_user(
+        session=session,
+        user_id=payload.owner_landlord_user_id,
+        email=payload.owner_landlord_email,
+        detail_prefix="Landlord owner",
+    )
+    if AccountWorkspaceRole.LANDLORD not in landlord_user.workspace_roles:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="The selected property owner does not have the landlord role.",
+        )
+    return landlord_user.id
+
+
 def determine_management_mode(
     *,
     property_record: Property | None,
@@ -239,6 +265,11 @@ def create_property(
         payload=payload,
     )
     property_record.management_mode = management_mode.value
+    property_record.owner_landlord_user_id = resolve_owner_landlord_assignment(
+        session=session,
+        property_record=property_record,
+        payload=payload,
+    )
     session.add(property_record)
     session.commit()
     session.refresh(property_record)
@@ -265,6 +296,30 @@ def update_property(
         and payload.city is None
         and payload.country_code is None
         and payload.custom_tags is not None
+        and payload.owner_landlord_user_id is None
+        and payload.owner_landlord_email is None
+        and payload.assigned_agency_organization_id is None
+        and payload.assigned_agency_user_id is None
+        and payload.assigned_agency_user_email is None
+        and payload.assigned_tenant_user_id is None
+        and payload.assigned_tenant_email is None
+        and not payload.clear_agency_assignment
+        and not payload.clear_owner_landlord_assignment
+        and not payload.clear_tenant_assignment
+        and payload.is_active is None
+    )
+    is_owner_landlord_assignment_only_update = (
+        payload.property_label is None
+        and payload.address_line1 is None
+        and payload.city is None
+        and payload.country_code is None
+        and payload.custom_tags is None
+        and payload.management_mode is None
+        and (
+            payload.owner_landlord_user_id is not None
+            or payload.owner_landlord_email is not None
+            or payload.clear_owner_landlord_assignment
+        )
         and payload.assigned_agency_organization_id is None
         and payload.assigned_agency_user_id is None
         and payload.assigned_agency_user_email is None
@@ -283,22 +338,50 @@ def update_property(
                 OrganizationMembership.is_active == True,  # noqa: E712
             )
         ).first()
-    can_manage_assigned_agency_property_tags = (
+    can_manage_assigned_agency_property = (
         property_record.assigned_agency_user_id == current_user.id
         or (agency_membership is not None and agency_membership.role.can_run_trust_checks)
     )
+    can_assign_owner_landlord = (
+        property_record.created_by_user_id == current_user.id
+        or property_record.assigned_agency_user_id == current_user.id
+        or (agency_membership is not None and agency_membership.can_manage_members)
+    )
 
-    if property_record.created_by_user_id == current_user.id:
+    is_explicit_owner_landlord = property_record.owner_landlord_user_id == current_user.id
+
+    if is_owner_landlord_assignment_only_update and can_assign_owner_landlord:
+        require_workspace_role_for_user(
+            user=current_user,
+            role=AccountWorkspaceRole.AGENCY,
+            detail="Your account does not have the agent role for agency property owner assignment.",
+        )
+    elif (
+        property_record.created_by_user_id == current_user.id
+        and not is_tag_only_update
+    ):
         require_workspace_role_for_user(
             user=current_user,
             role=AccountWorkspaceRole.LANDLORD,
             detail="Your account does not have the landlord role for property setup.",
         )
-    elif is_tag_only_update and can_manage_assigned_agency_property_tags:
+    elif is_tag_only_update and can_manage_assigned_agency_property:
         require_workspace_role_for_user(
             user=current_user,
             role=AccountWorkspaceRole.AGENCY,
             detail="Your account does not have the agent role for agency property updates.",
+        )
+    elif is_explicit_owner_landlord:
+        require_workspace_role_for_user(
+            user=current_user,
+            role=AccountWorkspaceRole.LANDLORD,
+            detail="Your account does not have the landlord role for property setup.",
+        )
+    elif property_record.created_by_user_id == current_user.id:
+        require_workspace_role_for_user(
+            user=current_user,
+            role=AccountWorkspaceRole.LANDLORD,
+            detail="Your account does not have the landlord role for property setup.",
         )
     else:
         raise HTTPException(
@@ -313,12 +396,15 @@ def update_property(
         and payload.country_code is None
         and payload.custom_tags is None
         and payload.management_mode is None
+        and payload.owner_landlord_user_id is None
+        and payload.owner_landlord_email is None
         and payload.assigned_agency_organization_id is None
         and payload.assigned_agency_user_id is None
         and payload.assigned_agency_user_email is None
         and payload.assigned_tenant_user_id is None
         and payload.assigned_tenant_email is None
         and not payload.clear_agency_assignment
+        and not payload.clear_owner_landlord_assignment
         and not payload.clear_tenant_assignment
         and payload.is_active is None
     ):
@@ -348,6 +434,11 @@ def update_property(
         payload=payload,
     )
     property_record.management_mode = next_management_mode.value
+    property_record.owner_landlord_user_id = resolve_owner_landlord_assignment(
+        session=session,
+        property_record=property_record,
+        payload=payload,
+    )
     property_record.assigned_agency_organization_id = next_agency_organization_id
     property_record.assigned_agency_user_id = next_agency_user_id
     property_record.assigned_tenant_user_id = next_tenant_user_id
@@ -374,7 +465,12 @@ def list_my_properties(
     direct_properties = (
         session.exec(
             select(Property)
-            .where(Property.created_by_user_id == current_user.id)
+            .where(
+                or_(
+                    Property.created_by_user_id == current_user.id,
+                    Property.owner_landlord_user_id == current_user.id,
+                )
+            )
             .order_by(Property.created_at.desc())
         ).all()
         if can_use_landlord_properties

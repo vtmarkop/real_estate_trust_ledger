@@ -11,7 +11,7 @@ function PersonaCard(props) {
 }
 
 export function LandingPage() {
-  return e("div", { className: "public-page" }, [
+  return e("div", { className: "public-page landing-page" }, [
     e("section", { className: "hero-panel", key: "hero" }, [
       e("div", { className: "hero-copy", key: "copy" }, [
         e("p", { className: "eyebrow", key: "eyebrow" }, "Evidence-verified rental trust"),

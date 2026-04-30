@@ -33,7 +33,7 @@ This file should stay short, practical, and current. Long explanation belongs in
 - Expected behavior:
   - tenant or landlord appeals a verdict
   - the dispute returns to internal review
-  - reviewer/admin sees it clearly as appealed and awaiting a fresh verdict
+  - reviewer sees it clearly as appealed and awaiting a fresh verdict
   - a new verdict can affect either side's score
   - the user-facing side explains that the old verdict is no longer final
 - Actual behavior:
@@ -83,12 +83,13 @@ This file should stay short, practical, and current. Long explanation belongs in
   - personal trust history, account security events, internal audit logs, and worker-run history were already separated into their own lanes
   - operations proof/notes/verdict details have now been moved out of action cards and into selected-property `History`
   - agency saved trust checks have moved out of the screening action lane into a dedicated `Screening history` lane
-  - remaining audit work should check for smaller wording or metric cards that imply history without giving it a clear lane
+  - `Rental Records > Artifacts` now uses one selected tenancy at a time instead of rendering every tenancy's upload/library/reference block together
+  - the 2026-04-30 pre-QA browser pass checked the main tenant, landlord, agency, reviewer, and admin history/daily-action separations with minimal reset and rich seed data
 - Backend status: complete
-- Frontend status: materially improved, pending live visual review across role accounts
-- Classification: `complete_but_hard_to_understand`
+- Frontend status: complete for the current desktop browser pass; responsive and full human keyboard traversal remain manual QA checks
+- Classification: `complete_and_obvious`
 - Next fix:
-  - visually review tenant, landlord, agency, and reviewer demo accounts for any remaining inline read-only history blocks
+  - repeat the separation check during user manual QA on tablet/mobile widths
   - keep current actions and read-only history separated in future UI changes
 
 ### Shell Density Choice
@@ -105,6 +106,198 @@ This file should stay short, practical, and current. Long explanation belongs in
 - Classification: `complete_and_obvious`
 - Next fix:
   - only reintroduce a density option if it produces a visibly different layout model, not just slightly different spacing
+
+### Visual Memorability And Control Clarity
+
+- Expected behavior:
+  - every major role/workflow lane should be visually distinguishable, not just textually labeled
+  - users should be able to remember common actions by color, shape, card treatment, and control placement
+  - fields, dropdowns, file inputs, and buttons should stand out more than explanatory copy
+- Actual behavior:
+  - the prior dark design system was coherent but too single-note, with many cards sharing the same red glow and muted panel treatment
+  - the first modern visual memorability slice now adds page-level color identities for home, trust, marketplace, records, operations, agency, internal review, and account lanes
+  - sidebar navigation items now carry stable color markers
+  - workflow tabs derive visual classes from their tab IDs, so daily work, history, payments, deposits, maintenance, screening, audit, and review lanes can look different
+  - status badges derive visual classes from their labels/tokens, so accepted, pending review, rejected, appealed, verdict, and similar states are easier to recognize
+  - shared cards, fact pills, note blocks, timeline entries, fields, dropdowns, file inputs, and buttons now have stronger contrast, rails, glows, and focus states
+  - follow-up CSS now adds deliberate spacing between major workspace blocks, removes signed-in workspace ambient background blobs, replaces broad glow shadows with tighter negative-spread elevation on panels/cards/tabs, increases internal hero/stat spacing, and removes the stray section-switcher accent pill caused by pseudo-element overlap
+  - semantic icons now mark shell navigation, workflow tabs, and submit-form field labels, while shared text classes distinguish static labels from dynamic values, role names, counts, and statuses
+- Backend status: not applicable
+- Frontend status: materially improved, pending live visual review
+- Classification: `complete_but_hard_to_understand`
+- Next fix:
+  - visually review all main workspaces in English and Greek with seeded data
+  - tune any page whose color identity is too loud, too dull, or semantically confusing
+  - confirm icons help novice users identify lanes without adding visual clutter
+  - confirm field-label icons make submit forms easier to scan without making every field feel equally loud
+  - confirm dynamic values/statuses are stronger than static explanatory copy
+  - confirm no top-level menu creates odd shadow stacking, floating color artifacts, or distracting decorative elements
+  - confirm the stronger fields and buttons improve task completion instead of adding visual noise
+
+### Guided Menu-Flow Clarity
+
+- Expected behavior:
+  - a novice should choose one job first, then see one focused work area
+  - setup, daily work, history, admin controls, and system/runtime work should not appear as equal competing panels
+  - admin menus should use job language, not only internal system vocabulary
+- Actual behavior:
+  - `Rental Records` previously showed tenancy creation and saved-property setup side by side, which made the user infer whether property setup or tenancy setup came first
+  - `Rental Records` now renders only the selected top-level lane: tenancies, properties, artifacts, or history/references
+  - `Review Center` section labels now use more novice-facing job names such as daily reviews, dispute decisions, account roles, system runtime, and history/audit
+  - the shared section switcher is now styled globally as a command-card menu across all top-level workspace tabs so it reads as the first decision on the page
+- Backend status: not applicable
+- Frontend status: global section-switcher styling complete, pending live visual review
+- Classification: `complete_but_hard_to_understand`
+- Next fix:
+  - visually review the landlord `Rental Records` flow from the screenshot path and confirm the first decision is now obvious
+  - visually review trust, marketplace, rent/issues, agency, review, and account/security top-level menus for the same novice clarity
+  - continue applying the one-job-at-a-time rule to dense page content below the menus when too many panels still compete at once
+  - review the admin panel with a novice operator lens and tune any remaining labels that sound like implementation details
+
+### Property Owner-Managed Versus Agency-Managed Setup Clarity
+
+- Expected behavior:
+  - a landlord should always be able to save an owner-managed property without needing an agency organization
+  - agency-managed setup should only be selectable when a real agency organization exists
+  - the clean four-account reset should not make property creation feel blocked just because the agent account has no agency organization yet
+- Actual behavior:
+  - the backend already supports owner-managed property creation without an agency and correctly requires an agency organization for agency-managed assignment
+  - the frontend now disables the agency-managed option when the agency directory is empty
+  - the frontend now explains that the landlord can save the property as owner-managed first and assign an agency later
+  - property-create and property-update payloads are hardened so an empty agency directory cannot accidentally submit `agency_managed`
+- Backend status: complete
+- Frontend status: complete for the no-agency landlord path
+- Classification: `complete_and_obvious`
+- Next fix:
+  - visually verify the landlord `Rental Records > Properties & setup` path with the minimal four-account reset
+  - when an agency organization is created later, verify the same form exposes the agency-managed path and validates active agency membership clearly
+
+### Self-Managed Landlord Listing Publication
+
+- Expected behavior:
+  - a landlord who manages a property personally should be able to publish that property as available for rent without needing an agency
+  - tenants should discover both owner-listed and agency-listed open homes from `Listings`
+  - tenant applications should route back to the actual listing manager: the landlord for owner-listed homes, the agency for agency-listed homes
+  - the UI should make the listing source obvious, for example `Listed by landlord` versus `Listed by agency`
+  - after an application is accepted, the manager should see a clear next step to create the tenancy
+- Actual behavior:
+  - `Listing` now supports either an agency manager or a landlord manager
+  - `/landlord/listings` lets a landlord publish only properties they own and that remain `owner_managed`
+  - `/landlord/applications` lets the landlord review applications for those owner-listed homes
+  - tenant `Listings` remains unified and now shows the listing manager/source instead of assuming every listing is agency-managed
+  - `Rental Records > Properties & setup` now has a focused `Publish listing` lane for owner-managed landlord homes
+  - accepted landlord applications now show a compact tenancy bridge with lease dates and `Create tenancy`
+  - a browser QA pass with the clean accounts verified the path from Lila creating an owner-managed property, publishing it, Vasilis applying as tenant, Lila accepting, and Lila creating the tenancy
+  - the tenant application did submit successfully and became visible as already applied, but the success feedback is still weaker than ideal because it relies mostly on the changed application state instead of a strong persistent confirmation
+- Backend status: complete for owner-managed listing publication and landlord-owned application review
+- Frontend status: complete for landlord-side publish/listing/application management, tenant source labeling, and the accepted-application tenancy bridge; post-submit confirmation polish remains a minor UX improvement
+- Classification: `complete_and_obvious`
+- Next fix:
+  - verify the same owner-managed listing flow in Greek
+  - add stronger application-submitted confirmation if the marketplace still feels ambiguous during the full keyboard/mouse pass
+  - consider later whether owner-listed applications should offer a richer message thread before tenancy creation
+
+### Accepted Application -> Tenancy Handoff
+
+- Expected behavior:
+  - acceptance should not be a dead end
+  - the managing agency or landlord should explicitly create a tenancy from an accepted application
+  - the UI should explain that acceptance is only the decision, while tenancy creation creates the rental relationship
+  - agency-created inventory should require a linked landlord owner before tenancy creation
+- Actual behavior:
+  - `ListingApplication.tenancy_id` stores the bridge from application to tenancy
+  - `/organizations/{organization_id}/applications/{application_id}/tenancy` creates a tenancy from an accepted agency-managed application
+  - `/landlord/applications/{application_id}/tenancy` creates a tenancy from an accepted owner-managed landlord application
+  - the bridge closes the listing, assigns the accepted tenant to the property, copies listing/property terms into the tenancy, and writes tenancy-created trust events
+  - `Agency Tools > Pipeline` and landlord `Rental Records > Properties & setup > Publish listing` both surface the next-step bridge only after acceptance
+  - the frontend also shows when the application is already linked to a tenancy
+  - the owner-managed landlord path has now been browser-verified through visible tenancy creation and tenant-side record visibility
+- Backend status: complete with migration, route contracts, ownership guards, and regression coverage
+- Frontend status: complete for agency and landlord application review lanes
+- Classification: `complete_and_obvious`
+- Next fix:
+  - visually verify the agency-managed path with real local data and confirm the explanatory copy stays clear in Greek
+  - keep richer pre-tenancy messaging, holding deposits, or lease-document generation as future workflow candidates, not hidden inside acceptance
+
+### Tenancy Records Lane Visibility After Bridge Creation
+
+- Expected behavior:
+  - when a tenancy is created, the tenant and landlord should find it from `Rental Records > Tenancy records`
+  - artifact uploads, evidence, and references should remain in their own lane instead of acting as the only place to see current tenancy cards
+  - if the counterparty must confirm or request review, those next actions should appear on the tenancy record itself
+- Actual behavior:
+  - the accepted-application bridge created the tenancy correctly
+  - the tenant could see the tenancy count increase, but existing tenancy cards were hidden under `Artifacts`, making the completed workflow look broken
+  - `Tenancy records` now includes `Existing tenancy records` with role, counterparty, rent, lease start, verification/status badges, and the next valid action
+  - the UI now shows `Confirm record` before offering `Request review`; the counterparty is not asked to choose between confirmation and review at the same time
+  - `Artifacts` remains the lane for uploads and reference/evidence work, not the only tenancy overview surface
+- Backend status: complete; no backend change was required
+- Frontend status: fixed and browser-verified on reload with no fresh React key/hook warnings
+- Classification: `complete_and_obvious`
+- Next fix:
+  - include this visibility check in the direct-tenancy QA pass as well as accepted-application bridge QA
+
+### Agent Workspace Bootstrap Without Existing Agency Membership
+
+- Expected behavior:
+  - a landlord-only account should not be responsible for creating or solving agency workspace setup
+  - an agent-entitled account with no agency organization membership should see a clear setup or invite path
+  - agency organization creation should be impossible for accounts without the `agency` workspace entitlement
+- Actual behavior:
+  - the frontend capability model now exposes `canCreateAgencyWorkspace` only for accounts with the `agency` workspace role and no agency membership
+  - `Home` now shows the create-agency panel in Agent mode, not Landlord mode
+  - after successful creation, the account becomes the agency owner through the existing organization owner-membership bootstrap
+  - `Agency Tools` now explains that the agent role is active but no agency organization is attached yet, and links back to Home for setup
+  - the backend now rejects `POST /organizations` for `agency` organizations unless the current user has the `agency` workspace entitlement
+- Backend status: complete for entitlement-gated agency creation and owner-membership bootstrap
+- Frontend status: complete for the clean minimal-reset agent setup path
+- Classification: `complete_and_obvious`
+- Next fix:
+  - visually verify `theodore.tsoutsouras@accounts.trustledger.app` can create the first agency workspace from Home, then open Agency Tools
+  - visually verify `lila.tsoutsoura@accounts.trustledger.app` stays in landlord-only owner-managed property setup and never sees agency bootstrap work
+  - decide later whether agency membership invitations should automatically grant the `agency` workspace entitlement or remain admin-managed only
+
+### Agency Property Inventory And Listing Assignment
+
+- Expected behavior:
+  - a landlord assigning a property to agency management should choose a real agency operator without typing or guessing that operator's email
+  - an agency creating a property for publication should see the property remain in the agency workspace and be able to publish a listing from it immediately
+  - a listing should only publish against property inventory actually assigned to that agency
+  - an agency-created property is agency inventory, but it can be explicitly linked to an existing landlord account when the agency is working on behalf of that owner
+- Actual behavior:
+  - the agency directory now exposes active owner/admin/agent operators for each active agency organization
+  - landlord `Properties & setup` fetches those operators, auto-fills the operator email when there is only one, and otherwise lets the landlord select the managing agent from a dropdown
+  - `Agency Tools > Publishing` now creates properties as `agency_managed`, assigned to the selected agency organization and the signed-in agent account
+  - `Agency Tools > Publishing` can add a landlord owner email during creation, and `Agency Tools > Portfolio` can save or clear the owner link later for the creating or assigned agent
+  - the backend stores that owner link separately from `created_by_user_id`; the selected user must already exist and have the landlord workspace role
+  - assigned landlord owners see the property in landlord mode and can reuse it for tenancy creation
+  - `/properties/mine` returns those agency-assigned properties in agency mode, so the listing form has a usable property immediately after creation
+  - backend listing creation now rejects properties that are not assigned to the target agency organization
+- Backend status: complete for agency inventory assignment, explicit landlord owner linking, operator directory, agency property visibility, tag/owner updates, and listing assignment guard
+- Frontend status: complete for landlord operator selection, agency publishing inventory creation, and agency-side landlord owner linking
+- Classification: `complete_and_obvious`
+- Next fix:
+  - visually verify the path with a clean agent-created agency workspace and an existing landlord account
+  - confirm the owner-link UI is clear enough that agents understand they are linking to an existing landlord, not creating a new landlord account
+
+### Property Ownership Production Hardening
+
+- Expected behavior:
+  - every landlord-owner assignment, change, and clear action should be audit logged
+  - the UI should make it obvious that owner linking uses an existing landlord account and does not create a new account
+  - future ownership transfers should preserve history instead of overwriting meaning
+  - the model should be ready for company ownership or multiple owners if the product needs it
+  - edge cases should be tested for inactive owners, removed landlord roles, changed agency memberships, and ownership reassignment
+- Actual behavior:
+  - `owner_landlord_user_id` is now a clean foundation for a single existing landlord owner
+  - the audit creator, landlord owner, and agency listing assignment are separated
+  - current tests cover assigning an agency-created property to an existing landlord and rejecting tenant-only owner assignment
+  - full ownership history, audit events, company/multiple-owner support, and deeper role-change edge cases are not implemented yet
+- Backend status: partially implemented as a clean single-owner foundation
+- Frontend status: partially implemented for create/edit owner linking, but not yet hardened with confirmation or ownership-history UX
+- Classification: `partially_implemented`
+- Next fix:
+  - schedule a production-hardening slice for property ownership lifecycle audit logs, owner history, stronger confirmation copy, and expanded permission regression tests
 
 ### Tenant-Side Versus Landlord-Side Score Meaning
 
@@ -179,15 +372,37 @@ This file should stay short, practical, and current. Long explanation belongs in
   - tenant mode shows tenant trust, listings, tenant records, and tenant-side operations
   - landlord mode shows landlord trust, landlord property/tenant records, and landlord-side operations
   - agency mode shows agency tools without personal rental lanes
-  - admin/internal mode shows review center without personal rental lanes
+  - reviewer/internal mode shows review queues and dispute verdict lanes without personal rental lanes
+  - admin/internal mode shows platform controls and account-role management without personal rental lanes
   - backend list/create/access routes now filter or reject tenant, landlord, and agency workflows when the account lacks the matching workspace entitlement
+  - reviewer-only backend routes now own tenancy/evidence/history-import decisions and payment/deposit/maintenance verdicts
+  - admin-only backend routes now own account role management, scoring controls, automation, notifications, workers, audit, and release readiness
   - agency actions still require agency organization membership, and tenancy/property actions still require domain participation
-- Backend status: complete with explicit account workspace-role entitlements and route-level checks
-- Frontend status: complete for shell navigation, route guards, `Home`, `My Trust`, `Rental Records`, and `Rent & Issues`
+- Backend status: complete with explicit account workspace-role entitlements, role-specific internal checks, and route-level checks
+- Frontend status: complete for shell navigation, route guards, `Home`, `My Trust`, `Rental Records`, `Rent & Issues`, and internal admin/reviewer section scoping
 - Classification: `complete_and_obvious`
 - Next fix:
   - visually review the four clean local accounts to confirm no role-irrelevant cards remain in each active workspace mode
   - if future API responses expose a new role surface, add backend role-entitlement checks at the route boundary instead of relying only on the frontend role selector
+
+### Admin Versus Reviewer Internal Role Separation
+
+- Expected behavior:
+  - reviewers should make neutral case decisions only: tenancy verification, evidence/history-import review, and payment/deposit/maintenance verdicts
+  - admins should manage platform controls only: account workspace roles, scoring control, automation, notifications, worker runs, audit, and release readiness
+  - internal overview/access can be shared, but decision authority and platform authority should not leak across roles
+- Actual behavior:
+  - manual review found that an admin could still issue a dispute verdict through the old shared internal route guard
+  - review queue and dispute verdict endpoints now require the reviewer system role only
+  - platform-control endpoints now require the admin system role only
+  - frontend capabilities now split `canReviewCases` from `canManagePlatform`
+  - `InternalOperationsPage` loads only the sections the active internal role can use and labels the workspace as `Review Center` for reviewers or `Admin Center` for admins
+  - regression coverage now asserts admins are blocked from payment dispute verdict APIs and reviewers do not receive platform-management capabilities
+- Backend status: complete
+- Frontend status: complete for role-specific labels, navigation, capability loading, and section visibility
+- Classification: `complete_and_obvious`
+- Next fix:
+  - keep this separation in manual QA and future tests: if a route makes a verdict, use reviewer; if it manages platform machinery, use admin
 
 ### Full Workflow Continuity Audit
 
@@ -196,30 +411,24 @@ This file should stay short, practical, and current. Long explanation belongs in
 - Actual behavior:
   - architecture is strong and many workflows are implemented
   - the first continuity pass is now complete for dispute and appeal handoffs
-  - the rest of the rebuilt product still has not been re-audited end to end after the large frontend refinement arc
-- Backend status: broad coverage in place
-- Frontend status: broad coverage in place
-- Classification: `partially_implemented`
+  - `docs/WORKFLOW_QA_PLAN.md` now defines the full real-life workflow matrix, method, order, and fix policy
+  - `docs/MANUAL_QA_RUNBOOK.md`, `docs/MANUAL_QA_CHECKLIST.md`, and `docs/MANUAL_QA_RESULTS.md` now let the user run the full manual QA pass with clear task IDs and pass/fail notes
+  - the first browser QA slice verified the owner-managed landlord listing-to-tenancy chain and fixed the discovered tenancy-lane visibility gap
+  - the 2026-04-30 Codex pre-QA pass then covered QA-00 through QA-27 across the clean minimal accounts and the rich demo seed
+  - fixes from that pass include explicit date fields, tenant-only marketplace routing, closed-listing copy, agency application note clarity, selected-tenancy artifact focus, and Greek wording cleanup
+  - QA-26 responsive-width review and a full human keyboard traversal for QA-23 intentionally remain for the user's manual pass because the in-app browser automation cannot resize the viewport or fully emulate a human accessibility pass
+- Backend status: broad coverage in place, with targeted listing/property/organization tests required before checkpoint close
+- Frontend status: pre-QA desktop browser stabilization complete; manual responsive and keyboard signoff pending
+- Classification: `complete_but_hard_to_understand`
 - Next fix:
-  - audit and classify at least these flows:
-    - property ownership and management assignment
-    - tenancy setup and confirmation
-    - artifact creation, library, and reference requests
-    - agency-facing score explanation and point-by-point contribution transparency outside live dispute cards
-    - agency screening and application movement
-    - trust sharing, consent revoke, and access history
-    - cross-role history and next-step framing after reviewer decisions
+  - user should run `docs/MANUAL_QA_RUNBOOK.md`, `docs/MANUAL_QA_CHECKLIST.md`, and `docs/MANUAL_QA_RESULTS.md` as the final human QA pass
+  - record any new failed checklist item here with its role, expected behavior, actual behavior, and next fix
 
 ## Candidate Workflows For Immediate Review
 
-These are not yet confirmed as gaps, but they are the right places to inspect first in the next continuity pass:
+These are the remaining human-review targets after the Codex pre-QA pass:
 
-1. Property owner-managed versus agency-managed setup clarity
-2. Prospective tenant assignment versus activated tenancy transition
-3. Artifact upload versus artifact review/library separation
-4. Visual verification of agency-facing score explanation outside live dispute cards and reviewer queues
-5. Agency screening next-step guidance after a trust-check result
-6. Consent/share-token lifecycle clarity for end users
-7. Cross-role history and timeline clarity after reviewer decisions
-8. Remaining action-form density versus archive interaction clarity in `Rent & Issues`
-9. Visual verification of the completed score contribution breakdowns in `My Trust`, agency previews, and internal scoring controls
+1. Real tablet/mobile responsive pass for QA-26.
+2. Human keyboard-only traversal for QA-23, including focus order, dropdowns, date fields, and action help.
+3. Marketplace post-submit confirmation strength after tenant applications.
+4. Property ownership lifecycle hardening after the current UX release-polish lane.

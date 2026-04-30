@@ -1,5 +1,7 @@
 import React from "react";
+import { Link } from "react-router-dom";
 
+import { useSession } from "../app/session.js";
 import {
   FactPill,
   HeroStat,
@@ -21,11 +23,12 @@ function MetricCard(props) {
   ]);
 }
 
-function buildEmptyState(message) {
+function buildEmptyState(message, action) {
   return e("div", { className: "state-panel" }, [
     e("p", { className: "eyebrow", key: "eyebrow" }, "Agency tools"),
     e("h1", { className: "state-title", key: "title" }, "Agency tools unavailable"),
-    e("p", { className: "state-copy", key: "copy" }, message)
+    e("p", { className: "state-copy", key: "copy" }, message),
+    action || null
   ]);
 }
 
@@ -66,6 +69,18 @@ function parseTagText(value) {
 
 function formatTagText(tags) {
   return (tags || []).join(", ");
+}
+
+function getPortfolioTagToneClass(index) {
+  var tones = [
+    "portfolio-tag-sky",
+    "portfolio-tag-mint",
+    "portfolio-tag-amber",
+    "portfolio-tag-rose",
+    "portfolio-tag-violet",
+    "portfolio-tag-cyan"
+  ];
+  return tones[index % tones.length];
 }
 
 function inferStatusTone(value) {
@@ -169,6 +184,7 @@ function buildInitialPropertyForm() {
     address_line1: "",
     city: "",
     country_code: "GR",
+    owner_landlord_email: "",
     custom_tags_text: ""
   };
 }
@@ -191,6 +207,14 @@ function buildListingEditForm(listing) {
     description: listing.description || "",
     minimum_tenant_score: String(listing.minimum_tenant_score),
     minimum_verification_strength: String(listing.minimum_verification_strength)
+  };
+}
+
+function buildApplicationTenancyForm() {
+  var today = new Date().toISOString().slice(0, 10);
+  return {
+    lease_start_date: today,
+    lease_end_date: ""
   };
 }
 
@@ -318,6 +342,7 @@ var applicationStatusOptions = [
 ];
 
 export function AgencyWorkbenchPage() {
+  var session = useSession();
   var stateTuple = React.useState({
     status: "loading",
     organizations: [],
@@ -360,6 +385,15 @@ export function AgencyWorkbenchPage() {
   });
   var propertyTagAction = propertyTagActionTuple[0];
   var setPropertyTagAction = propertyTagActionTuple[1];
+  var propertyOwnerFormsTuple = React.useState({});
+  var propertyOwnerForms = propertyOwnerFormsTuple[0];
+  var setPropertyOwnerForms = propertyOwnerFormsTuple[1];
+  var propertyOwnerActionTuple = React.useState({
+    propertyId: "",
+    message: null
+  });
+  var propertyOwnerAction = propertyOwnerActionTuple[0];
+  var setPropertyOwnerAction = propertyOwnerActionTuple[1];
   var listingSubmissionTuple = React.useState({
     isSubmitting: false,
     message: null
@@ -386,6 +420,16 @@ export function AgencyWorkbenchPage() {
   });
   var applicationAction = actionTuple[0];
   var setApplicationAction = actionTuple[1];
+  var applicationTenancyFormsTuple = React.useState({});
+  var applicationTenancyForms = applicationTenancyFormsTuple[0];
+  var setApplicationTenancyForms = applicationTenancyFormsTuple[1];
+  var applicationTenancyActionTuple = React.useState({
+    applicationId: "",
+    messageApplicationId: "",
+    message: null
+  });
+  var applicationTenancyAction = applicationTenancyActionTuple[0];
+  var setApplicationTenancyAction = applicationTenancyActionTuple[1];
   var listingActionTuple = React.useState({
     listingId: "",
     nextStatus: ""
@@ -486,6 +530,19 @@ export function AgencyWorkbenchPage() {
         });
         return next;
       });
+      setApplicationTenancyForms(function syncApplicationTenancyForms(previous) {
+        var next = Object.assign({}, previous);
+        results[4].forEach(function ensureApplicationTenancyForm(application) {
+          if (
+            application.application_status === "accepted" &&
+            !application.tenancy_id &&
+            !next[application.id]
+          ) {
+            next[application.id] = buildApplicationTenancyForm();
+          }
+        });
+        return next;
+      });
       setListingForm(function syncPropertySelection(previous) {
         if (previous.property_id) {
           return previous;
@@ -499,6 +556,13 @@ export function AgencyWorkbenchPage() {
         var next = Object.assign({}, previous);
         results[5].forEach(function ensurePropertyTagForm(propertyRecord) {
           next[propertyRecord.id] = formatTagText(propertyRecord.custom_tags);
+        });
+        return next;
+      });
+      setPropertyOwnerForms(function syncPropertyOwnerForms(previous) {
+        var next = Object.assign({}, previous);
+        results[5].forEach(function ensurePropertyOwnerForm(propertyRecord) {
+          next[propertyRecord.id] = propertyRecord.owner_landlord_user_email || "";
         });
         return next;
       });
@@ -615,15 +679,22 @@ export function AgencyWorkbenchPage() {
     });
 
     try {
+      var propertyBody = {
+        property_label: propertyForm.property_label,
+        address_line1: propertyForm.address_line1,
+        city: propertyForm.city,
+        country_code: propertyForm.country_code,
+        custom_tags: parseTagText(propertyForm.custom_tags_text),
+        management_mode: "agency_managed",
+        assigned_agency_organization_id: state.selectedOrganizationId,
+        assigned_agency_user_email: session.user.email
+      };
+      if (String(propertyForm.owner_landlord_email || "").trim()) {
+        propertyBody.owner_landlord_email = propertyForm.owner_landlord_email;
+      }
       var createdProperty = await apiRequest("/properties", {
         method: "POST",
-        body: {
-          property_label: propertyForm.property_label,
-          address_line1: propertyForm.address_line1,
-          city: propertyForm.city,
-          country_code: propertyForm.country_code,
-          custom_tags: parseTagText(propertyForm.custom_tags_text)
-        }
+        body: propertyBody
       });
       setPropertyForm(buildInitialPropertyForm());
       setListingForm(function attachCreatedProperty(previous) {
@@ -632,7 +703,7 @@ export function AgencyWorkbenchPage() {
       await loadOrganizationData(state.selectedOrganizationId);
       setPropertySubmission({
         isSubmitting: false,
-        message: "Property created and ready for listing."
+        message: "Property created as agency inventory and ready for listing."
       });
     } catch (error) {
       setPropertySubmission({
@@ -664,6 +735,33 @@ export function AgencyWorkbenchPage() {
       setPropertyTagAction({
         propertyId: "",
         message: error.message || "Unable to save property tags."
+      });
+    }
+  }
+
+  async function handlePropertyOwnerSave(propertyRecord) {
+    var ownerEmail = String(propertyOwnerForms[propertyRecord.id] || "").trim();
+    setPropertyOwnerAction({
+      propertyId: propertyRecord.id,
+      message: null
+    });
+
+    try {
+      await apiRequest("/properties/" + propertyRecord.id, {
+        method: "PATCH",
+        body: ownerEmail
+          ? { owner_landlord_email: ownerEmail }
+          : { clear_owner_landlord_assignment: true }
+      });
+      await loadOrganizationData(state.selectedOrganizationId);
+      setPropertyOwnerAction({
+        propertyId: "",
+        message: ownerEmail ? "Landlord owner assignment saved." : "Landlord owner assignment cleared."
+      });
+    } catch (error) {
+      setPropertyOwnerAction({
+        propertyId: "",
+        message: error.message || "Unable to save landlord owner assignment."
       });
     }
   }
@@ -858,6 +956,45 @@ export function AgencyWorkbenchPage() {
     }
   }
 
+  async function handleCreateApplicationTenancy(application) {
+    var form = applicationTenancyForms[application.id] || buildApplicationTenancyForm();
+    setApplicationTenancyAction({
+      applicationId: application.id,
+      messageApplicationId: "",
+      message: null
+    });
+
+    try {
+      await apiRequest(
+        "/organizations/" +
+          state.selectedOrganizationId +
+          "/applications/" +
+          application.id +
+          "/tenancy",
+        {
+          method: "POST",
+          body: {
+            lease_start_date: form.lease_start_date,
+            lease_end_date: form.lease_end_date || null,
+            tenancy_status: "active"
+          }
+        }
+      );
+      await loadOrganizationData(state.selectedOrganizationId);
+      setApplicationTenancyAction({
+        applicationId: "",
+        messageApplicationId: application.id,
+        message: "Tenancy created from the accepted application."
+      });
+    } catch (error) {
+      setApplicationTenancyAction({
+        applicationId: "",
+        messageApplicationId: application.id,
+        message: error.message || "Unable to create tenancy from this application."
+      });
+    }
+  }
+
   async function handleListingAction(listing, nextStatus) {
     setListingAction({
       listingId: listing.id,
@@ -944,7 +1081,8 @@ export function AgencyWorkbenchPage() {
 
   if (!state.organizations.length) {
     return buildEmptyState(
-      "This account is not attached to an active agency organization, so agency tools are not available yet."
+      "Your agent role is active, but this account is not attached to an agency organization yet. Create an agency workspace from Home, or ask an agency owner to invite this account.",
+      e(Link, { className: "button", to: "/app", key: "home" }, "Open Home to create agency workspace")
     );
   }
 
@@ -975,6 +1113,10 @@ export function AgencyWorkbenchPage() {
     });
   });
   var commercialOverview = state.commercialOverview;
+  var closedListingCount = Math.max(
+    0,
+    Number(dashboard.total_listings || 0) - Number(dashboard.open_listings || 0)
+  );
   var agencySectionTabs = [
     {
       id: "overview",
@@ -1022,7 +1164,7 @@ export function AgencyWorkbenchPage() {
     pipeline: "Use the pipeline lane when you want to process listings and applications together."
   };
 
-  return e("div", { className: "workspace-page" }, [
+  return e("div", { className: "workspace-page agency-page" }, [
     e(PageHero, {
       key: "hero",
       eyebrow: "Agency tools",
@@ -1055,7 +1197,7 @@ export function AgencyWorkbenchPage() {
         e(HeroStat, {
           label: "Open listings",
           value: String(dashboard.open_listings),
-          copy: String(dashboard.closed_listings) + " closed listings also on record."
+          copy: String(closedListingCount) + " closed listings also on record."
         }),
         e(HeroStat, {
           label: "Applications",
@@ -1095,7 +1237,7 @@ export function AgencyWorkbenchPage() {
         e(
           "p",
           { className: "empty-copy", key: "copy" },
-          "Create a property record first. You can use it right away when you create a listing."
+          "Create agency inventory first. It is assigned to this agency and your agent account so it can be listed immediately. If the property already belongs to a landlord account, add that landlord email here so ownership and agency listing work stay linked."
         ),
         e(
           "form",
@@ -1150,6 +1292,22 @@ export function AgencyWorkbenchPage() {
                   required: true
                 })
               ])
+            ]),
+            e("label", { className: "field", key: "owner_landlord_email" }, [
+              e("span", { className: "field-label", key: "label" }, "Landlord owner email"),
+              e("input", {
+                className: "field-input",
+                name: "owner_landlord_email",
+                type: "email",
+                value: propertyForm.owner_landlord_email,
+                onChange: updatePropertyField,
+                placeholder: "landlord@example.com"
+              }),
+              e(
+                "span",
+                { className: "field-help", key: "help" },
+                "Optional. Use an existing landlord account when the agency is preparing a listing for that owner."
+              )
             ]),
             e("label", { className: "field", key: "custom_tags_text" }, [
               e("span", { className: "field-label", key: "label" }, "Custom tags"),
@@ -1211,10 +1369,13 @@ export function AgencyWorkbenchPage() {
                 [
                   e("option", { value: "", key: "blank" }, "Select a property"),
                   state.properties.map(function renderProperty(propertyRecord) {
+                    var ownerText = propertyRecord.owner_landlord_user_full_name
+                      ? " | Owner: " + propertyRecord.owner_landlord_user_full_name
+                      : "";
                     return e(
                       "option",
                       { value: propertyRecord.id, key: propertyRecord.id },
-                      propertyRecord.property_label + " | " + propertyRecord.city
+                      propertyRecord.property_label + " | " + propertyRecord.city + ownerText
                     );
                   })
                 ]
@@ -1336,6 +1497,9 @@ export function AgencyWorkbenchPage() {
       propertyTagAction.message
         ? e("div", { className: "form-alert", key: "message" }, propertyTagAction.message)
         : null,
+      propertyOwnerAction.message
+        ? e("div", { className: "form-alert", key: "owner-message" }, propertyOwnerAction.message)
+        : null,
       filteredProperties.length
         ? e(
             "div",
@@ -1345,6 +1509,13 @@ export function AgencyWorkbenchPage() {
                 Object.prototype.hasOwnProperty.call(propertyTagForms, propertyRecord.id)
                   ? propertyTagForms[propertyRecord.id]
                   : formatTagText(propertyRecord.custom_tags);
+              var ownerEmailValue =
+                Object.prototype.hasOwnProperty.call(propertyOwnerForms, propertyRecord.id)
+                  ? propertyOwnerForms[propertyRecord.id]
+                  : propertyRecord.owner_landlord_user_email || "";
+              var canAssignLandlordOwner =
+                propertyRecord.created_by_user_id === session.user.id ||
+                propertyRecord.assigned_agency_user_email === session.user.email;
               return e("article", { className: "stack-card", key: propertyRecord.id }, [
                 e("strong", { className: "stack-card-title", key: "title" }, propertyRecord.property_label),
                 e("div", { className: "status-row", key: "status" }, [
@@ -1367,6 +1538,12 @@ export function AgencyWorkbenchPage() {
                     tone: "accent"
                   }),
                   e(FactPill, {
+                    key: "owner",
+                    label: "Landlord owner",
+                    value: propertyRecord.owner_landlord_user_full_name || "Not yet assigned",
+                    tone: propertyRecord.owner_landlord_user_id ? "success" : "warning"
+                  }),
+                  e(FactPill, {
                     key: "tenant",
                     label: "Prospective tenant",
                     value: propertyRecord.assigned_tenant_user_full_name || "Not yet assigned"
@@ -1375,9 +1552,16 @@ export function AgencyWorkbenchPage() {
                 propertyRecord.custom_tags && propertyRecord.custom_tags.length
                   ? e(
                       "div",
-                      { className: "pill-row", key: "tags" },
-                      propertyRecord.custom_tags.map(function renderTag(tag) {
-                        return e("span", { className: "pill", key: tag }, tag);
+                      { className: "portfolio-tag-row", key: "tags" },
+                      propertyRecord.custom_tags.map(function renderTag(tag, tagIndex) {
+                        return e(
+                          "span",
+                          {
+                            className: "pill portfolio-tag " + getPortfolioTagToneClass(tagIndex),
+                            key: tag
+                          },
+                          tag
+                        );
                       })
                     )
                   : e(
@@ -1385,32 +1569,77 @@ export function AgencyWorkbenchPage() {
                       { className: "empty-copy", key: "empty" },
                       "No tags added yet."
                     ),
-                e("label", { className: "field", key: "tag-edit" }, [
-                  e("span", { className: "field-label", key: "label" }, "Edit custom tags"),
-                  e("input", {
-                    className: "field-input",
-                    value: tagValue,
-                    onChange: function onChange(event) {
-                      setPropertyTagForms(function updatePropertyTags(previous) {
-                        var next = Object.assign({}, previous);
-                        next[propertyRecord.id] = event.target.value;
-                        return next;
-                      });
-                    }
-                  })
-                ]),
-                e(
-                  "button",
-                  {
-                    type: "button",
-                    className: "button button-secondary button-small",
-                    disabled: propertyTagAction.propertyId === propertyRecord.id,
-                    onClick: function onClick() {
-                      handlePropertyTagSave(propertyRecord);
-                    }
-                  },
-                  propertyTagAction.propertyId === propertyRecord.id ? "Saving..." : "Save tags"
-                )
+                canAssignLandlordOwner
+                  ? e("div", { className: "portfolio-action-row", key: "owner-edit-grid" }, [
+                      e("label", { className: "field", key: "owner-edit" }, [
+                        e("span", { className: "field-label", key: "label" }, "Landlord owner email"),
+                        e("input", {
+                          className: "field-input",
+                          type: "email",
+                          value: ownerEmailValue,
+                          onChange: function onChange(event) {
+                            setPropertyOwnerForms(function updatePropertyOwners(previous) {
+                              var next = Object.assign({}, previous);
+                              next[propertyRecord.id] = event.target.value;
+                              return next;
+                            });
+                          },
+                          placeholder: "landlord@example.com"
+                        }),
+                        e(
+                          "span",
+                          { className: "field-help", key: "help" },
+                          "Existing landlord account only. Leave blank to clear."
+                        )
+                      ]),
+                      e(
+                        "button",
+                        {
+                          type: "button",
+                          className: "button button-secondary button-small portfolio-action-button",
+                          disabled: propertyOwnerAction.propertyId === propertyRecord.id,
+                          onClick: function onClick() {
+                            handlePropertyOwnerSave(propertyRecord);
+                          },
+                          key: "save-owner"
+                        },
+                        propertyOwnerAction.propertyId === propertyRecord.id ? "Saving..." : "Save landlord owner"
+                      )
+                    ])
+                  : e(
+                      "p",
+                      { className: "empty-copy", key: "owner-static" },
+                      "Landlord owner assignment is handled by the creating or assigned agent for this property."
+                    ),
+                e("div", { className: "portfolio-action-row", key: "tag-edit-row" }, [
+                  e("label", { className: "field", key: "tag-edit" }, [
+                    e("span", { className: "field-label", key: "label" }, "Edit custom tags"),
+                    e("input", {
+                      className: "field-input",
+                      value: tagValue,
+                      onChange: function onChange(event) {
+                        setPropertyTagForms(function updatePropertyTags(previous) {
+                          var next = Object.assign({}, previous);
+                          next[propertyRecord.id] = event.target.value;
+                          return next;
+                        });
+                      }
+                    })
+                  ]),
+                  e(
+                    "button",
+                    {
+                      type: "button",
+                      className: "button button-secondary button-small portfolio-action-button",
+                      disabled: propertyTagAction.propertyId === propertyRecord.id,
+                      onClick: function onClick() {
+                        handlePropertyTagSave(propertyRecord);
+                      },
+                      key: "save-tags"
+                    },
+                    propertyTagAction.propertyId === propertyRecord.id ? "Saving..." : "Save tags"
+                  )
+                ])
               ]);
             })
           )
@@ -1536,7 +1765,7 @@ export function AgencyWorkbenchPage() {
       e(MetricCard, {
         kicker: "Listings",
         value: String(dashboard.open_listings) + " open",
-        copy: String(dashboard.closed_listings) + " closed listings on record."
+        copy: String(closedListingCount) + " closed listings on record."
       }),
       e(MetricCard, {
         kicker: "Applications",
@@ -1965,11 +2194,16 @@ export function AgencyWorkbenchPage() {
                 ]),
                 e(
                   NoteBlock,
-                  { key: "note", label: "Application note", tone: "accent" },
-                  application.status_notes ||
-                    application.applicant_note ||
-                    "No extra notes captured yet."
+                  { key: "applicant-note", label: "Application note", tone: "accent" },
+                  application.applicant_note || "No application note captured yet."
                 ),
+                application.status_notes
+                  ? e(
+                      NoteBlock,
+                      { key: "status-note", label: "Status note", tone: "info" },
+                      application.status_notes
+                    )
+                  : null,
                 actions.length
                   ? e(
                       "div",
@@ -1997,7 +2231,118 @@ export function AgencyWorkbenchPage() {
                       "p",
                       { className: "empty-copy", key: "final" },
                       "This application is already in a final state."
-                    )
+                    ),
+                application.application_status === "accepted"
+                  ? e("div", { className: "application-bridge", key: "tenancy-bridge" }, [
+                      application.tenancy_id
+                        ? e(
+                            NoteBlock,
+                            {
+                              key: "created",
+                              tone: "success",
+                              label: "Tenancy created"
+                            },
+                            "This accepted application is now linked to a tenancy record. Use Tenancy records for confirmation, evidence, and review."
+                          )
+                        : null,
+                      application.tenancy_id
+                        ? e("p", { className: "empty-copy", key: "created-copy" }, "The listing is closed and the applicant can now operate from the tenancy record.")
+                        : null,
+                      !application.tenancy_id
+                        ? e(
+                            NoteBlock,
+                            {
+                              key: "next-step",
+                              tone: "warning",
+                              label: "Next step"
+                            },
+                            "Acceptance is only the decision. Create the tenancy here after the property has a linked landlord owner, so both parties move into one rental record."
+                          )
+                        : null,
+                      !application.tenancy_id
+                        ? e("div", { className: "form-grid", key: "lease-dates" }, [
+                            e("label", { className: "field", key: "start" }, [
+                              e("span", { className: "field-label", key: "label" }, "Lease start date"),
+                              e("input", {
+                                className: "field-input",
+                                type: "text",
+                                inputMode: "numeric",
+                                placeholder: "YYYY-MM-DD",
+                                pattern: "\\d{4}-\\d{2}-\\d{2}",
+                                value:
+                                  (applicationTenancyForms[application.id] || buildApplicationTenancyForm())
+                                    .lease_start_date,
+                                onChange: function onChange(event) {
+                                  updateEntityForm(
+                                    setApplicationTenancyForms,
+                                    application.id,
+                                    "lease_start_date",
+                                    event.target.value
+                                  );
+                                },
+                                required: true
+                              })
+                            ]),
+                            e("label", { className: "field", key: "end" }, [
+                              e("span", { className: "field-label", key: "label" }, "Lease end date"),
+                              e("input", {
+                                className: "field-input",
+                                type: "text",
+                                inputMode: "numeric",
+                                placeholder: "YYYY-MM-DD",
+                                pattern: "\\d{4}-\\d{2}-\\d{2}",
+                                value:
+                                  (applicationTenancyForms[application.id] || buildApplicationTenancyForm())
+                                    .lease_end_date,
+                                onChange: function onChange(event) {
+                                  updateEntityForm(
+                                    setApplicationTenancyForms,
+                                    application.id,
+                                    "lease_end_date",
+                                    event.target.value
+                                  );
+                                }
+                              })
+                            ])
+                          ])
+                        : null,
+                      applicationTenancyAction.messageApplicationId === application.id &&
+                      applicationTenancyAction.message
+                        ? e(
+                            NoteBlock,
+                            {
+                              key: "bridge-message",
+                              tone:
+                                applicationTenancyAction.message.indexOf("Unable") >= 0 ||
+                                applicationTenancyAction.message.indexOf("Link a landlord") >= 0
+                                  ? "danger"
+                                  : "success",
+                              label: "Tenancy bridge"
+                            },
+                            applicationTenancyAction.message
+                          )
+                        : null,
+                      !application.tenancy_id
+                        ? e("div", { className: "action-row", key: "create-tenancy" }, [
+                            e(
+                              "button",
+                              {
+                                type: "button",
+                                className: "button button-small",
+                                disabled: applicationTenancyAction.applicationId === application.id,
+                                onClick: function onClick() {
+                                  handleCreateApplicationTenancy(application);
+                                },
+                                key: "create"
+                              },
+                              applicationTenancyAction.applicationId === application.id
+                                ? "Creating tenancy..."
+                                : "Create tenancy"
+                            )
+                          ])
+                        : null
+                    ])
+                  : null
               ]);
             })
           )

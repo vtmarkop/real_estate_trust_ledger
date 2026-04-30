@@ -1,4 +1,5 @@
 import React from "react";
+import { VisualIcon, resolveFieldIconName } from "../components/VisualIcon.js";
 import { EL_PATCH_TRANSLATIONS } from "./i18n-extra.js";
 
 var STORAGE_KEY = "trustledger.language";
@@ -6,6 +7,41 @@ var SUPPORTED_LANGUAGES = ["en", "el"];
 var VISIBLE_PROP_NAMES = new Set(["placeholder", "title", "aria-label", "ariaLabel", "alt"]);
 var runtimeLanguage = "en";
 var MERGED_EL_TRANSLATIONS = null;
+var ACTION_HELP_BY_LABEL = {
+  Accept: "Accept this application so the next step can create the tenancy.",
+  Reject: "Reject this application and keep it out of the tenancy flow.",
+  "Mark reviewing": "Move this application into review before making a final decision.",
+  "Mark under review": "Move this application into review before making a final decision.",
+  "Create tenancy": "Create the actual tenancy record from this accepted application.",
+  "Create tenancy record": "Create a new tenancy record from the entered property, lease, and counterparty details.",
+  "Pause listing": "Pause this listing so tenants cannot apply until it is reopened.",
+  "Reopen listing": "Make this listing visible to tenants again.",
+  "Close listing": "Close this listing and stop new tenant applications.",
+  Pause: "Pause this listing so tenants cannot apply until it is reopened.",
+  Reopen: "Make this listing visible to tenants again.",
+  Close: "Close this listing and stop new tenant applications.",
+  "Save property": "Save this property setup for future tenancy or listing work.",
+  "Save property setup": "Save the current property setup changes.",
+  "Save landlord owner": "Link this agency property to the selected existing landlord account.",
+  "Save tags": "Save these searchable property tags.",
+  "Save screening settings": "Save the listing description and screening thresholds.",
+  "Create property": "Create a reusable property record.",
+  "Create agency workspace": "Create the agency organization this account will operate.",
+  "Open Home to create agency workspace": "Go to Home to create the agency workspace first.",
+  "Publish to tenant Listings": "Publish this owner-managed home so tenants can find and apply to it.",
+  "Send application": "Submit your application to the listing manager.",
+  "Confirm record": "Confirm that this tenancy record matches your side of the agreement.",
+  "Request review": "Send this tenancy record to the reviewer queue for verification.",
+  "Submit evidence": "Upload this supporting file for the selected tenancy record.",
+  "Request reference": "Ask the counterparty to provide a written reference.",
+  "Open artifact": "Open this private supporting file through a secure access link.",
+  "Sign out": "End this browser session.",
+  "Create account": "Create a new Trust Ledger account.",
+  "Sign in": "Sign in and open your assigned workspace.",
+  "Browse listings": "Open tenant listings and applications.",
+  "Open rental records": "Open records for properties, tenancies, artifacts, and references.",
+  "Open My Trust": "Open your trust score, sharing, and history workspace."
+};
 
 var EL_TRANSLATIONS = {
   "Trust Ledger": "Trust Ledger",
@@ -108,18 +144,18 @@ var EL_TRANSLATIONS = {
   "This device is already running the workspace in installed mode.":
     "Αυτή η συσκευή τρέχει ήδη τον χώρο εργασίας σε εγκατεστημένη μορφή.",
   "The rebuilt web app now exposes a manifest and service worker so supported browsers can offer an install flow for quicker repeat access.":
-    "Η νέα web εφαρμογή εκθέτει πλέον manifest και service worker ώστε οι συμβατοί browsers να προσφέρουν εγκατάσταση για ταχύτερη επαναλαμβανόμενη πρόσβαση.",
+    "Η νέα web εφαρμογή εκθέτει πλέον manifest και service worker ώστε τα συμβατά προγράμματα περιήγησης να προσφέρουν εγκατάσταση για ταχύτερη επαναλαμβανόμενη πρόσβαση.",
   Installed: "Εγκαταστάθηκε",
   "Install app shell": "Εγκατάσταση εφαρμογής",
   "Mobile-ready shell": "Κέλυφος έτοιμο για κινητό",
   "Install is available in this browser for faster repeat access.":
-    "Η εγκατάσταση είναι διαθέσιμη σε αυτόν τον browser για γρηγορότερη επαναλαμβανόμενη πρόσβαση.",
+    "Η εγκατάσταση είναι διαθέσιμη σε αυτό το πρόγραμμα περιήγησης για γρηγορότερη επαναλαμβανόμενη πρόσβαση.",
   "Trust Ledger is now installed on this device.":
     "Το Trust Ledger είναι πλέον εγκατεστημένο σε αυτή τη συσκευή.",
   "This browser is not currently offering an install prompt.":
-    "Αυτός ο browser δεν προσφέρει αυτή τη στιγμή προτροπή εγκατάστασης.",
+    "Αυτό το πρόγραμμα περιήγησης δεν προσφέρει αυτή τη στιγμή προτροπή εγκατάστασης.",
   "Install prompt completed. If the app was not installed, the browser may have dismissed it.":
-    "Η διαδικασία προτροπής εγκατάστασης ολοκληρώθηκε. Αν η εφαρμογή δεν εγκαταστάθηκε, ο browser ίσως την απέρριψε.",
+    "Η διαδικασία προτροπής εγκατάστασης ολοκληρώθηκε. Αν η εφαρμογή δεν εγκαταστάθηκε, το πρόγραμμα περιήγησης ίσως την απέρριψε.",
   "Opening install...": "Άνοιγμα εγκατάστασης...",
   "Tenant score": "Βαθμολογία ενοικιαστή",
   "Verification strength": "Ισχύς επαλήθευσης",
@@ -682,7 +718,15 @@ function translateCore(value, language) {
 
   var homeForMatch = value.match(/^(.+) home for (.+)$/);
   if (homeForMatch) {
-    return translateCore(homeForMatch[1], language) + " αρχική για " + homeForMatch[2];
+    var homeRoleLabels = {
+      Tenant: "ενοικιαστή",
+      Landlord: "ιδιοκτήτη",
+      Agent: "μεσίτη",
+      Admin: "διαχειριστή"
+    };
+    var homeRoleLabel =
+      homeRoleLabels[homeForMatch[1]] || translateCore(homeForMatch[1], language).toLowerCase();
+    return "Αρχική " + homeRoleLabel + " για " + homeForMatch[2];
   }
 
   var scoreContributionBreakdownMatch = value.match(/^(.+) score contribution breakdown$/);
@@ -752,6 +796,11 @@ function translateCore(value, language) {
     return "Αναφέρθηκε ζήτημα: " + issueReportedMatch[1];
   }
 
+  var genericButtonHelpMatch = value.match(/^Use this button to run the (.+) action\.$/);
+  if (genericButtonHelpMatch) {
+    return "Χρησιμοποίησε αυτό το κουμπί για την ενέργεια " + translateCore(genericButtonHelpMatch[1], language) + ".";
+  }
+
   return value;
 }
 
@@ -811,9 +860,163 @@ function translateNode(node) {
   return node;
 }
 
+function hasClassName(props, className) {
+  return (
+    props &&
+    typeof props.className === "string" &&
+    (" " + props.className + " ").indexOf(" " + className + " ") >= 0
+  );
+}
+
+function firstStringChild(children) {
+  for (var index = 0; index < children.length; index += 1) {
+    if (typeof children[index] === "string") {
+      return children[index];
+    }
+  }
+  return "";
+}
+
+function textFromNode(node) {
+  if (typeof node === "string" || typeof node === "number") {
+    return String(node);
+  }
+  if (Array.isArray(node)) {
+    return node.map(textFromNode).join(" ").replace(/\s+/g, " ").trim();
+  }
+  if (React.isValidElement(node)) {
+    return textFromNode(node.props && node.props.children);
+  }
+  return "";
+}
+
+function normalizeActionLabel(label) {
+  return String(label || "")
+    .replace(/\.\.\.$/, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function getActionHelpText(label) {
+  var normalizedLabel = normalizeActionLabel(label);
+  if (!normalizedLabel) {
+    return "";
+  }
+  if (Object.prototype.hasOwnProperty.call(ACTION_HELP_BY_LABEL, normalizedLabel)) {
+    return ACTION_HELP_BY_LABEL[normalizedLabel];
+  }
+  if (normalizedLabel === "Saving") {
+    return "This action is currently saving.";
+  }
+  if (normalizedLabel.indexOf("Creating ") === 0) {
+    return "This action is currently creating the record.";
+  }
+  if (normalizedLabel.indexOf("Save ") === 0) {
+    return "Save the current changes for this item.";
+  }
+  if (normalizedLabel.indexOf("Create ") === 0) {
+    return "Create a new record from the information entered here.";
+  }
+  if (normalizedLabel.indexOf("Open ") === 0) {
+    return "Open this workspace or record.";
+  }
+  return "Use this button to run the " + normalizedLabel + " action.";
+}
+
+function isButtonLikeElement(type, props) {
+  if (
+    props &&
+    (props["data-no-tooltip"] ||
+      props["data-action-help"] === "off" ||
+      props.role === "tab" ||
+      hasClassName(props, "segmented-tab"))
+  ) {
+    return false;
+  }
+
+  return (
+    type === "button" ||
+    hasClassName(props, "button") ||
+    hasClassName(props, "language-button")
+  );
+}
+
+function decorateButtonHelpProps(type, props, rawChildren) {
+  if (!isButtonLikeElement(type, props)) {
+    return props;
+  }
+
+  var existingHelp = props && (props["data-tooltip"] || props["data-help"] || props.title);
+  var ariaLabel = props && (props["aria-label"] || props.ariaLabel || "");
+  var label = hasClassName(props, "language-button")
+    ? ariaLabel || textFromNode(rawChildren)
+    : textFromNode(rawChildren) || ariaLabel;
+  var helpText = existingHelp || getActionHelpText(label);
+  if (!helpText) {
+    return props;
+  }
+
+  var next = props ? Object.assign({}, props) : {};
+  var translatedHelp = translateText(helpText);
+  next["data-tooltip"] = translatedHelp;
+  next.className = ((next.className || "") + " has-action-tooltip").trim();
+  if (!next["aria-label"] && !next.ariaLabel && !label) {
+    next["aria-label"] = translatedHelp;
+  }
+  return next;
+}
+
+function decorateFieldLabelProps(props) {
+  if (!hasClassName(props, "field-label")) {
+    return props;
+  }
+
+  return Object.assign({}, props, {
+    className: props.className + " field-label-with-icon"
+  });
+}
+
+function decorateFieldLabelChildren(rawChildren, translatedChildren) {
+  var label = firstStringChild(rawChildren);
+  if (!label) {
+    return translatedChildren;
+  }
+
+  return [
+    React.createElement(VisualIcon, {
+      className: "field-label-icon",
+      key: "field-label-icon",
+      name: resolveFieldIconName(label)
+    })
+  ].concat(
+    translatedChildren.map(function wrapFieldLabelChild(child, index) {
+      if (typeof child !== "string") {
+        return child;
+      }
+      return React.createElement(
+        "span",
+        { className: "field-label-text", key: "field-label-text-" + index },
+        child
+      );
+    })
+  );
+}
+
 export function e(type, props) {
-  var children = Array.prototype.slice.call(arguments, 2).map(translateNode);
-  return React.createElement.apply(React, [type, translateProps(props)].concat(children));
+  var rawChildren = Array.prototype.slice.call(arguments, 2);
+  var children = rawChildren.map(translateNode);
+  var translatedProps = translateProps(props);
+
+  translatedProps = decorateButtonHelpProps(type, translatedProps, rawChildren);
+
+  if (type === "span" && hasClassName(props, "field-label")) {
+    translatedProps = decorateFieldLabelProps(translatedProps);
+    children = decorateFieldLabelChildren(rawChildren, children);
+  }
+
+  children = React.Children.toArray(children);
+
+  return React.createElement.apply(React, [type, translatedProps].concat(children));
 }
 
 export function getLanguageLocale(languageOverride) {

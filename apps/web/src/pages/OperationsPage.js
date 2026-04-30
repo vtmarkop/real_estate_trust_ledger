@@ -1265,7 +1265,7 @@ export function OperationsPage() {
     }
   ];
 
-  return e("div", { className: "workspace-page" }, [
+  return e("div", { className: "workspace-page operations-page" }, [
     e(PageHero, {
       key: "hero",
       eyebrow: "Rent & Issues",
@@ -1916,7 +1916,10 @@ export function OperationsPage() {
                       }),
                       e("input", {
                         className: "field-input",
-                        type: "date",
+                        type: "text",
+                        inputMode: "numeric",
+                        placeholder: "YYYY-MM-DD",
+                        pattern: "\\d{4}-\\d{2}-\\d{2}",
                         value: paymentForm.due_date,
                         onChange: function onChange(event) {
                           updateEntityForm(setPaymentForms, tenancy.id, "due_date", event.target.value);

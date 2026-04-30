@@ -210,6 +210,10 @@ class ListingApplicationApiTests(unittest.TestCase):
                 "address_line1": "22 Market Lane",
                 "city": "Athens",
                 "country_code": "GR",
+                "management_mode": "agency_managed",
+                "assigned_agency_organization_id": agency["id"],
+                "assigned_agency_user_email": "owner@agency.example",
+                "owner_landlord_email": "landlord@example.com",
             },
         )
         self.assertEqual(create_property.status_code, 201, create_property.text)
@@ -283,22 +287,262 @@ class ListingApplicationApiTests(unittest.TestCase):
         )
         self.assertEqual(accepted_application.status_code, 200, accepted_application.text)
         self.assertEqual(accepted_application.json()["application_status"], "accepted")
+        self.assertIsNone(accepted_application.json()["tenancy_id"])
         self.assertEqual(
             accepted_application.json()["decided_by_user_full_name"],
             "Agency Owner",
         )
 
+        create_tenancy = owner_client.post(
+            f"/api/v1/organizations/{agency['id']}/applications/{application['id']}/tenancy",
+            json={
+                "lease_start_date": "2026-05-01",
+                "lease_end_date": "2027-04-30",
+                "tenancy_status": "active",
+            },
+        )
+        self.assertEqual(create_tenancy.status_code, 200, create_tenancy.text)
+        tenancy = create_tenancy.json()
+        self.assertEqual(tenancy["property_label"], "Agency Flat")
+        self.assertEqual(tenancy["tenant_full_name"], "Tenant Applicant")
+        self.assertEqual(tenancy["landlord_full_name"], "History Landlord")
+        self.assertEqual(tenancy["monthly_rent_minor"], 110000)
+        self.assertEqual(tenancy["deposit_minor"], 220000)
+
+        org_applications_after_tenancy = owner_client.get(
+            f"/api/v1/organizations/{agency['id']}/applications"
+        )
+        self.assertEqual(org_applications_after_tenancy.status_code, 200)
+        self.assertEqual(org_applications_after_tenancy.json()[0]["tenancy_id"], tenancy["id"])
+
+        listings_after_tenancy = owner_client.get(
+            f"/api/v1/organizations/{agency['id']}/listings"
+        )
+        self.assertEqual(listings_after_tenancy.status_code, 200)
+        self.assertEqual(listings_after_tenancy.json()[0]["listing_status"], "closed")
+
         applicant_trust_events = applicant_client.get("/api/v1/trust-events/mine")
         self.assertEqual(applicant_trust_events.status_code, 200, applicant_trust_events.text)
         event_types = [event["event_type"] for event in applicant_trust_events.json()]
+        self.assertIn("tenancy:created", event_types)
         self.assertIn("application:submitted", event_types)
         self.assertIn("application:status_updated", event_types)
-        self.assertEqual(applicant_trust_events.json()[0]["listing_title"], "Central Flat")
-        self.assertEqual(applicant_trust_events.json()[0]["property_label"], "Agency Flat")
+        application_events = [
+            event
+            for event in applicant_trust_events.json()
+            if event["event_type"] == "application:status_updated"
+        ]
+        self.assertEqual(application_events[0]["listing_title"], "Central Flat")
+        self.assertEqual(application_events[0]["property_label"], "Agency Flat")
 
         owner_trust_events = owner_client.get("/api/v1/trust-events/mine")
         self.assertEqual(owner_trust_events.status_code, 200, owner_trust_events.text)
         self.assertEqual(owner_trust_events.json()[0]["event_type"], "listing:published")
+
+    def test_landlord_can_publish_owner_listing_and_manage_application(self) -> None:
+        self.seed_user(
+            email="landlord@example.com",
+            full_name="Direct Landlord",
+            password="landlord-password-123",
+            workspace_roles=(AccountWorkspaceRole.LANDLORD,),
+        )
+        self.seed_user(
+            email="tenant@example.com",
+            full_name="Tenant Applicant",
+            password="tenant-password-123",
+        )
+
+        landlord_client = self.new_client()
+        self.login(landlord_client, email="landlord@example.com", password="landlord-password-123")
+        create_property = landlord_client.post(
+            "/api/v1/properties",
+            json={
+                "property_label": "Self Managed Studio",
+                "address_line1": "4 Owner Street",
+                "city": "Athens",
+                "country_code": "GR",
+                "management_mode": "owner_managed",
+            },
+        )
+        self.assertEqual(create_property.status_code, 201, create_property.text)
+
+        create_listing = landlord_client.post(
+            "/api/v1/landlord/listings",
+            json={
+                "property_id": create_property.json()["id"],
+                "title": "Self Managed Studio Listing",
+                "description": "Available directly from the owner.",
+                "monthly_rent_minor": 82000,
+                "deposit_minor": 82000,
+                "currency_code": "EUR",
+                "minimum_tenant_score": 0,
+                "minimum_verification_strength": 0,
+            },
+        )
+        self.assertEqual(create_listing.status_code, 201, create_listing.text)
+        listing = create_listing.json()
+        self.assertIsNone(listing["organization_id"])
+        self.assertEqual(listing["listing_source"], "landlord")
+        self.assertEqual(listing["manager_name"], "Direct Landlord")
+        self.assertEqual(listing["owner_landlord_full_name"], "Direct Landlord")
+
+        landlord_listings = landlord_client.get("/api/v1/landlord/listings")
+        self.assertEqual(landlord_listings.status_code, 200, landlord_listings.text)
+        self.assertEqual(len(landlord_listings.json()), 1)
+
+        tenant_client = self.new_client()
+        self.login(tenant_client, email="tenant@example.com", password="tenant-password-123")
+        open_listings = tenant_client.get("/api/v1/listings/open")
+        self.assertEqual(open_listings.status_code, 200, open_listings.text)
+        self.assertEqual(open_listings.json()[0]["listing_source"], "landlord")
+        self.assertEqual(open_listings.json()[0]["manager_name"], "Direct Landlord")
+
+        submit_application = tenant_client.post(
+            f"/api/v1/listings/{listing['id']}/applications",
+            json={"applicant_note": "I can move in next month."},
+        )
+        self.assertEqual(submit_application.status_code, 201, submit_application.text)
+        application = submit_application.json()
+        self.assertEqual(application["listing_source"], "landlord")
+        self.assertIsNone(application["organization_id"])
+        self.assertEqual(application["owner_landlord_full_name"], "Direct Landlord")
+
+        landlord_applications = landlord_client.get("/api/v1/landlord/applications")
+        self.assertEqual(landlord_applications.status_code, 200, landlord_applications.text)
+        self.assertEqual(len(landlord_applications.json()), 1)
+
+        accepted_application = landlord_client.patch(
+            f"/api/v1/landlord/applications/{application['id']}",
+            json={
+                "application_status": "accepted",
+                "status_notes": "Owner accepted this direct application.",
+            },
+        )
+        self.assertEqual(accepted_application.status_code, 200, accepted_application.text)
+        self.assertEqual(accepted_application.json()["application_status"], "accepted")
+        self.assertEqual(accepted_application.json()["decided_by_user_full_name"], "Direct Landlord")
+
+        create_tenancy = landlord_client.post(
+            f"/api/v1/landlord/applications/{application['id']}/tenancy",
+            json={
+                "lease_start_date": "2026-06-01",
+                "lease_end_date": None,
+                "tenancy_status": "active",
+            },
+        )
+        self.assertEqual(create_tenancy.status_code, 200, create_tenancy.text)
+        tenancy = create_tenancy.json()
+        self.assertEqual(tenancy["property_label"], "Self Managed Studio")
+        self.assertEqual(tenancy["tenant_full_name"], "Tenant Applicant")
+        self.assertEqual(tenancy["landlord_full_name"], "Direct Landlord")
+        self.assertEqual(tenancy["monthly_rent_minor"], 82000)
+        self.assertEqual(tenancy["deposit_minor"], 82000)
+
+        landlord_applications_after_tenancy = landlord_client.get("/api/v1/landlord/applications")
+        self.assertEqual(landlord_applications_after_tenancy.status_code, 200)
+        self.assertEqual(landlord_applications_after_tenancy.json()[0]["tenancy_id"], tenancy["id"])
+
+        landlord_listings_after_tenancy = landlord_client.get("/api/v1/landlord/listings")
+        self.assertEqual(landlord_listings_after_tenancy.status_code, 200)
+        self.assertEqual(landlord_listings_after_tenancy.json()[0]["listing_status"], "closed")
+
+        tenant_tenancies = tenant_client.get("/api/v1/tenancies/mine")
+        self.assertEqual(tenant_tenancies.status_code, 200, tenant_tenancies.text)
+        self.assertEqual(tenant_tenancies.json()[0]["id"], tenancy["id"])
+
+    def test_landlord_listing_requires_owned_owner_managed_property(self) -> None:
+        self.seed_user(
+            email="landlord@example.com",
+            full_name="Direct Landlord",
+            password="landlord-password-123",
+            workspace_roles=(AccountWorkspaceRole.LANDLORD,),
+        )
+        self.seed_user(
+            email="other-landlord@example.com",
+            full_name="Other Landlord",
+            password="other-password-123",
+            workspace_roles=(AccountWorkspaceRole.LANDLORD,),
+        )
+
+        owner_client = self.new_client()
+        self.login(owner_client, email="other-landlord@example.com", password="other-password-123")
+        other_property = owner_client.post(
+            "/api/v1/properties",
+            json={
+                "property_label": "Other Owner Flat",
+                "address_line1": "9 Boundary Road",
+                "city": "Athens",
+                "country_code": "GR",
+                "management_mode": "owner_managed",
+            },
+        )
+        self.assertEqual(other_property.status_code, 201, other_property.text)
+
+        landlord_client = self.new_client()
+        self.login(landlord_client, email="landlord@example.com", password="landlord-password-123")
+        denied_listing = landlord_client.post(
+            "/api/v1/landlord/listings",
+            json={
+                "property_id": other_property.json()["id"],
+                "title": "Boundary Listing",
+                "monthly_rent_minor": 70000,
+                "deposit_minor": 70000,
+                "currency_code": "EUR",
+            },
+        )
+        self.assertEqual(denied_listing.status_code, 403)
+        self.assertEqual(
+            denied_listing.json()["detail"],
+            "Property must belong to the signed-in landlord before publishing.",
+        )
+
+    def test_mixed_role_landlord_cannot_apply_to_own_owner_listing(self) -> None:
+        self.seed_user(
+            email="mixed@example.com",
+            full_name="Mixed Role Owner",
+            password="mixed-password-123",
+            workspace_roles=(AccountWorkspaceRole.TENANT, AccountWorkspaceRole.LANDLORD),
+        )
+
+        mixed_client = self.new_client()
+        self.login(mixed_client, email="mixed@example.com", password="mixed-password-123")
+        create_property = mixed_client.post(
+            "/api/v1/properties",
+            json={
+                "property_label": "Own Home",
+                "address_line1": "1 Mixed Role Lane",
+                "city": "Athens",
+                "country_code": "GR",
+                "management_mode": "owner_managed",
+            },
+        )
+        self.assertEqual(create_property.status_code, 201, create_property.text)
+
+        create_listing = mixed_client.post(
+            "/api/v1/landlord/listings",
+            json={
+                "property_id": create_property.json()["id"],
+                "title": "Own Home Listing",
+                "monthly_rent_minor": 90000,
+                "deposit_minor": 90000,
+                "currency_code": "EUR",
+            },
+        )
+        self.assertEqual(create_listing.status_code, 201, create_listing.text)
+
+        open_listings = mixed_client.get("/api/v1/listings/open")
+        self.assertEqual(open_listings.status_code, 200, open_listings.text)
+        self.assertEqual(open_listings.json(), [])
+
+        own_application = mixed_client.post(
+            f"/api/v1/listings/{create_listing.json()['id']}/applications",
+            json={"applicant_note": "This should not be allowed."},
+        )
+        self.assertEqual(own_application.status_code, 409)
+        self.assertEqual(
+            own_application.json()["detail"],
+            "You cannot apply to your own landlord listing.",
+        )
 
     def test_application_is_blocked_when_listing_requirements_are_not_met(self) -> None:
         self.seed_user(
@@ -324,6 +568,9 @@ class ListingApplicationApiTests(unittest.TestCase):
                 "address_line1": "22 Market Lane",
                 "city": "Athens",
                 "country_code": "GR",
+                "management_mode": "agency_managed",
+                "assigned_agency_organization_id": agency["id"],
+                "assigned_agency_user_email": "owner@agency.example",
             },
         )
         self.assertEqual(create_property.status_code, 201, create_property.text)
@@ -350,6 +597,48 @@ class ListingApplicationApiTests(unittest.TestCase):
             json={"applicant_note": "Please consider me."},
         )
         self.assertEqual(blocked_application.status_code, 409)
+
+    def test_listing_requires_property_assigned_to_agency(self) -> None:
+        self.seed_user(
+            email="owner@agency.example",
+            full_name="Agency Owner",
+            password="owner-password-123",
+            workspace_roles=(AccountWorkspaceRole.AGENCY,),
+        )
+
+        owner_client = self.new_client()
+        self.login(owner_client, email="owner@agency.example", password="owner-password-123")
+        agency = self.create_agency(owner_client)
+
+        create_property = owner_client.post(
+            "/api/v1/properties",
+            json={
+                "property_label": "Loose Property",
+                "address_line1": "1 Detached Lane",
+                "city": "Athens",
+                "country_code": "GR",
+            },
+        )
+        self.assertEqual(create_property.status_code, 201, create_property.text)
+
+        create_listing = owner_client.post(
+            f"/api/v1/organizations/{agency['id']}/listings",
+            json={
+                "property_id": create_property.json()["id"],
+                "title": "Detached Listing",
+                "description": "Should not publish without agency assignment.",
+                "monthly_rent_minor": 110000,
+                "deposit_minor": 220000,
+                "currency_code": "EUR",
+                "minimum_tenant_score": 500,
+                "minimum_verification_strength": 10,
+            },
+        )
+        self.assertEqual(create_listing.status_code, 403)
+        self.assertEqual(
+            create_listing.json()["detail"],
+            "Property must be assigned to this agency before publishing a listing.",
+        )
 
     def test_non_operator_cannot_manage_agency_listings_or_applications(self) -> None:
         member = self.seed_user(
@@ -411,6 +700,9 @@ class ListingApplicationApiTests(unittest.TestCase):
                 "address_line1": "22 Market Lane",
                 "city": "Athens",
                 "country_code": "GR",
+                "management_mode": "agency_managed",
+                "assigned_agency_organization_id": agency["id"],
+                "assigned_agency_user_email": "owner@agency.example",
             },
         )
         self.assertEqual(create_property.status_code, 201, create_property.text)

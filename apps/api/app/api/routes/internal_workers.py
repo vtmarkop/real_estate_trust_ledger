@@ -37,7 +37,7 @@ def list_worker_runs(
     session: SessionDep,
     status_filter: WorkerRunStatus | None = Query(default=None),
     limit: int = Query(default=50, ge=1, le=200),
-    current_user=Depends(require_system_roles(SystemRole.REVIEWER, SystemRole.ADMIN)),
+    current_user=Depends(require_system_roles(SystemRole.ADMIN)),
 ) -> list[WorkerRunResponse]:
     query = select(WorkerRun)
     if status_filter is not None:
@@ -59,7 +59,7 @@ def list_worker_runs(
 def get_worker_run(
     worker_run_id: UUID,
     session: SessionDep,
-    current_user=Depends(require_system_roles(SystemRole.REVIEWER, SystemRole.ADMIN)),
+    current_user=Depends(require_system_roles(SystemRole.ADMIN)),
 ) -> WorkerRunResponse:
     worker_run = get_worker_run_or_404(session=session, worker_run_id=worker_run_id)
     return build_worker_run_response(session=session, worker_run=worker_run)

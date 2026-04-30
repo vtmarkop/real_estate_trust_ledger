@@ -48,7 +48,7 @@ Pop-Location
 - API readiness: `http://127.0.0.1:8000/health/ready`
 - Web app: `http://127.0.0.1:8080`
 
-6. Log in as the reviewer or admin and inspect the internal release-readiness panel before calling the stack pilot-ready.
+6. Log in as the admin and inspect the internal release-readiness panel before calling the stack pilot-ready. Use a reviewer account only for case-review and verdict queues.
 
 ## Important Notes
 

@@ -23,8 +23,8 @@ export var WORKSPACE_ROLE_OPTIONS = [
   },
   {
     id: "internal",
-    label: "Admin",
-    copy: "Internal review queues, disputes, runtime controls, and audit work."
+    label: "Internal",
+    copy: "Reviewer case work or admin platform controls, depending on the account role."
   }
 ];
 
@@ -49,11 +49,27 @@ function getWorkspaceRoleOption(role) {
   );
 }
 
-export function getWorkspaceRoleLabel(role) {
+export function getWorkspaceRoleLabel(role, user) {
+  if (role === "internal" && user) {
+    if (user.system_role === "reviewer") {
+      return "Reviewer";
+    }
+    if (user.system_role === "admin") {
+      return "Admin";
+    }
+  }
   return getWorkspaceRoleOption(role).label;
 }
 
-export function getWorkspaceRoleCopy(role) {
+export function getWorkspaceRoleCopy(role, user) {
+  if (role === "internal" && user) {
+    if (user.system_role === "reviewer") {
+      return "Case reviews, evidence decisions, dispute verdicts, and review history.";
+    }
+    if (user.system_role === "admin") {
+      return "Account roles, scoring controls, runtime health, automation, and audit.";
+    }
+  }
   return getWorkspaceRoleOption(role).copy;
 }
 
@@ -121,6 +137,7 @@ export function buildCapabilities(user, organizations, activeWorkspaceRole) {
       canManageAgency: false,
       canCreateAgencyWorkspace: false,
       canAccessInternal: false,
+      canReviewCases: false,
       canManagePlatform: false,
       canUsePersonalWorkspace: false,
       organizations: []
@@ -138,18 +155,21 @@ export function buildCapabilities(user, organizations, activeWorkspaceRole) {
     user.system_role === "reviewer" || user.system_role === "admin";
   var normalizedWorkspaceRole = normalizeWorkspaceRole(activeWorkspaceRole || "tenant", user, organizations);
   var availableWorkspaceRoles = getAvailableWorkspaceRoles(user, organizations);
+  var hasAgencyRole = availableWorkspaceRoles.indexOf("agency") !== -1;
 
   return {
     isAuthenticated: true,
     activeWorkspaceRole: normalizedWorkspaceRole,
     availableWorkspaceRoles: availableWorkspaceRoles,
     hasAgencyWorkspace: agencyMemberships.length > 0,
-    canOperateAgency: availableWorkspaceRoles.indexOf("agency") !== -1,
+    canOperateAgency: hasAgencyRole,
     canManageAgency: canManageAgency,
     canCreateAgencyWorkspace:
-      availableWorkspaceRoles.indexOf("landlord") !== -1 &&
-      agencyMemberships.length === 0,
+      hasAgencyRole && agencyMemberships.length === 0,
     canAccessInternal: availableWorkspaceRoles.indexOf("internal") !== -1,
+    canReviewCases:
+      user.system_role === "reviewer" &&
+      availableWorkspaceRoles.indexOf("internal") !== -1,
     canManagePlatform:
       user.system_role === "admin" &&
       availableWorkspaceRoles.indexOf("internal") !== -1,

@@ -50,7 +50,7 @@ def refresh_tenancy_scores(*, session: SessionDep, tenancy: Tenancy) -> None:
 @router.get("/maintenance", response_model=list[MaintenanceTicketResponse])
 def list_maintenance_dispute_queue(
     session: SessionDep,
-    current_user=Depends(require_system_roles(SystemRole.REVIEWER, SystemRole.ADMIN)),
+    current_user=Depends(require_system_roles(SystemRole.REVIEWER)),
 ) -> list[MaintenanceTicketResponse]:
     maintenance_tickets = session.exec(
         select(MaintenanceTicket)
@@ -75,7 +75,7 @@ def issue_maintenance_verdict(
     ticket_id: UUID,
     payload: MaintenanceTicketVerdictRequest,
     session: SessionDep,
-    current_user=Depends(require_system_roles(SystemRole.REVIEWER, SystemRole.ADMIN)),
+    current_user=Depends(require_system_roles(SystemRole.REVIEWER)),
 ) -> MaintenanceTicketResponse:
     maintenance_ticket = session.get(MaintenanceTicket, ticket_id)
     if not maintenance_ticket:
@@ -149,7 +149,7 @@ def issue_maintenance_verdict(
 @router.get("/payments", response_model=list[PaymentResponse])
 def list_payment_dispute_queue(
     session: SessionDep,
-    current_user=Depends(require_system_roles(SystemRole.REVIEWER, SystemRole.ADMIN)),
+    current_user=Depends(require_system_roles(SystemRole.REVIEWER)),
 ) -> list[PaymentResponse]:
     payment_records = session.exec(
         select(PaymentRecord)
@@ -169,7 +169,7 @@ def list_payment_dispute_queue(
 @router.get("/deposits", response_model=list[DepositResponse])
 def list_deposit_dispute_queue(
     session: SessionDep,
-    current_user=Depends(require_system_roles(SystemRole.REVIEWER, SystemRole.ADMIN)),
+    current_user=Depends(require_system_roles(SystemRole.REVIEWER)),
 ) -> list[DepositResponse]:
     deposit_records = session.exec(
         select(DepositRecord)
@@ -187,7 +187,7 @@ def issue_deposit_verdict(
     deposit_id: UUID,
     payload: DepositVerdictRequest,
     session: SessionDep,
-    current_user=Depends(require_system_roles(SystemRole.REVIEWER, SystemRole.ADMIN)),
+    current_user=Depends(require_system_roles(SystemRole.REVIEWER)),
 ) -> DepositResponse:
     deposit_record = session.get(DepositRecord, deposit_id)
     if not deposit_record:
@@ -263,7 +263,7 @@ def issue_payment_verdict(
     payment_id: UUID,
     payload: PaymentVerdictRequest,
     session: SessionDep,
-    current_user=Depends(require_system_roles(SystemRole.REVIEWER, SystemRole.ADMIN)),
+    current_user=Depends(require_system_roles(SystemRole.REVIEWER)),
 ) -> PaymentResponse:
     payment_record = session.get(PaymentRecord, payment_id)
     if not payment_record:

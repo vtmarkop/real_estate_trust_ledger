@@ -1,6 +1,7 @@
 import React from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 
+import { VisualIcon } from "../components/VisualIcon.js";
 import { e } from "../lib/i18n.js";
 import {
   getWorkspaceRoleCopy,
@@ -26,7 +27,9 @@ export function buildNavigation(session) {
     {
       to: "/app",
       label: "Home",
-      copy: "Start here and see what to do next"
+      icon: "home",
+      copy: "Start here and see what to do next",
+      tone: "home"
     }
   ];
 
@@ -35,6 +38,8 @@ export function buildNavigation(session) {
       {
         to: "/app/trust",
         label: activeWorkspaceRole === "landlord" ? "Landlord Trust" : "Tenant Trust",
+        icon: "trust",
+        tone: "trust",
         copy:
           activeWorkspaceRole === "landlord"
             ? "Your property-owner score, inputs, and sharing"
@@ -43,6 +48,8 @@ export function buildNavigation(session) {
       {
         to: "/app/records",
         label: "Rental Records",
+        icon: "records",
+        tone: "records",
         copy:
           activeWorkspaceRole === "landlord"
             ? "Properties, tenant records, evidence, and references"
@@ -51,6 +58,8 @@ export function buildNavigation(session) {
       {
         to: "/app/operations",
         label: "Rent & Issues",
+        icon: "operations",
+        tone: "operations",
         copy:
           activeWorkspaceRole === "landlord"
             ? "Rent collection, deposits, repairs, and disputes"
@@ -63,6 +72,8 @@ export function buildNavigation(session) {
     items.splice(2, 0, {
       to: "/app/marketplace",
       label: "Listings",
+      icon: "marketplace",
+      tone: "marketplace",
       copy: "Browse listings and track applications"
     });
   }
@@ -71,21 +82,30 @@ export function buildNavigation(session) {
     items.push({
       to: "/app/agency",
       label: "Agency Tools",
+      icon: "agency",
+      tone: "agency",
       copy: "Properties, screening, assignments, and applications"
     });
   }
 
   if (session.capabilities.canAccessInternal && activeWorkspaceRole === "internal") {
+    var isAdminWorkspace = session.capabilities.canManagePlatform;
     items.push({
       to: "/app/internal",
-      label: "Review Center",
-      copy: "Reviews, disputes, automation, audits, and system health"
+      label: isAdminWorkspace ? "Admin Center" : "Review Center",
+      icon: "internal",
+      tone: "internal",
+      copy: isAdminWorkspace
+        ? "Account roles, runtime controls, scoring, and audit"
+        : "Case reviews, evidence decisions, and disputes"
     });
   }
 
   items.push({
     to: "/app/security",
     label: "Account",
+    icon: "security",
+    tone: "security",
     copy: "Sessions and sign-in activity"
   });
 
@@ -99,11 +119,19 @@ function NavigationLink(item) {
       key: item.to,
       to: item.to,
       className: function classNameResolver(navState) {
-        return navState.isActive ? "shell-nav is-active" : "shell-nav";
+        var toneClass = item.tone ? " shell-nav-" + item.tone : "";
+        return (navState.isActive ? "shell-nav is-active" : "shell-nav") + toneClass;
       }
     },
     [
-      e("span", { className: "shell-nav-label", key: item.to + "-label" }, item.label),
+      e("span", { className: "shell-nav-head", key: item.to + "-head" }, [
+        e(VisualIcon, {
+          className: "shell-nav-icon",
+          key: item.to + "-icon",
+          name: item.icon || item.tone
+        }),
+        e("span", { className: "shell-nav-label text-static", key: item.to + "-label" }, item.label)
+      ]),
       e("span", { className: "shell-nav-copy", key: item.to + "-copy" }, item.copy)
     ]
   );
@@ -117,8 +145,8 @@ export function AppShell() {
   var setIsLoggingOut = logoutState[1];
   var navigation = buildNavigation(session);
   var activeWorkspaceRole = session.activeWorkspaceRole || "tenant";
-  var activeWorkspaceLabel = getWorkspaceRoleLabel(activeWorkspaceRole);
-  var activeWorkspaceCopy = getWorkspaceRoleCopy(activeWorkspaceRole);
+  var activeWorkspaceLabel = getWorkspaceRoleLabel(activeWorkspaceRole, session.user);
+  var activeWorkspaceCopy = getWorkspaceRoleCopy(activeWorkspaceRole, session.user);
 
   React.useEffect(function syncFixedWorkspaceDensity() {
     if (typeof document === "undefined") {
@@ -163,7 +191,7 @@ export function AppShell() {
         e("p", { className: "sidebar-user-name", key: "name" }, session.user.full_name),
         session.availableWorkspaceRoles.length > 1
           ? e("label", { className: "workspace-role-switch", key: "role-switch" }, [
-              e("span", { className: "sidebar-user-role", key: "label" }, "Active role"),
+              e("span", { className: "sidebar-user-role text-static", key: "label" }, "Active role"),
               e(
                 "select",
                 {
@@ -176,35 +204,50 @@ export function AppShell() {
                   return e(
                     "option",
                     { value: role, key: role },
-                    getWorkspaceRoleLabel(role)
+                    getWorkspaceRoleLabel(role, session.user)
                   );
                 })
               )
             ])
           : e(
               "p",
-              { className: "sidebar-user-role", key: "single-role" },
-              "Active role: " + activeWorkspaceLabel
+              { className: "sidebar-user-role meta-row", key: "single-role" },
+              [
+                e("span", { className: "text-static", key: "label" }, "Active role"),
+                e("strong", { className: "text-dynamic", key: "value" }, activeWorkspaceLabel)
+              ]
             ),
         e(
           "p",
-          { className: "sidebar-user-role", key: "role" },
-          "Access level: " + formatRoleLabel(session.user.system_role)
+          { className: "sidebar-user-role meta-row", key: "role" },
+          [
+            e("span", { className: "text-static", key: "label" }, "Access level"),
+            e("strong", { className: "text-dynamic", key: "value" }, formatRoleLabel(session.user.system_role))
+          ]
         ),
         session.capabilities.canOperateAgency
           ? e(
               "p",
-              { className: "sidebar-user-role", key: "agency-role" },
-              "Agency access: " +
-                String(session.organizations.filter(function onlyAgencies(organization) {
-                  return organization.organization_type === "agency";
-                }).length)
+              { className: "sidebar-user-role meta-row", key: "agency-role" },
+              [
+                e("span", { className: "text-static", key: "label" }, "Agency access"),
+                e(
+                  "strong",
+                  { className: "text-dynamic", key: "value" },
+                  String(session.organizations.filter(function onlyAgencies(organization) {
+                    return organization.organization_type === "agency";
+                  }).length)
+                )
+              ]
             )
           : null,
         e(
           "p",
-          { className: "sidebar-user-role", key: "workspace-kind" },
-          "Workspace mode: " + activeWorkspaceLabel
+          { className: "sidebar-user-role meta-row", key: "workspace-kind" },
+          [
+            e("span", { className: "text-static", key: "label" }, "Workspace mode"),
+            e("strong", { className: "text-dynamic", key: "value" }, activeWorkspaceLabel)
+          ]
         ),
         e(
           "button",
@@ -233,7 +276,7 @@ export function AppShell() {
         e("div", { className: "topbar-controls", key: "controls" }, [
           e(
             "div",
-            { className: "status-chip", key: "status" },
+            { className: "status-chip dynamic-token", key: "status" },
             "Showing " + activeWorkspaceLabel.toLowerCase() + " info only"
           )
         ])

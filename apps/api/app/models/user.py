@@ -166,7 +166,14 @@ class User(TimestampedModel, table=True):
         back_populates="requested_from_user",
         sa_relationship_kwargs={"foreign_keys": "ReferenceRequest.requested_from_user_id"},
     )
-    listings_created: List["Listing"] = Relationship(back_populates="created_by_user")
+    listings_created: List["Listing"] = Relationship(
+        back_populates="created_by_user",
+        sa_relationship_kwargs={"foreign_keys": "Listing.created_by_user_id"},
+    )
+    listings_as_owner_landlord: List["Listing"] = Relationship(
+        back_populates="owner_landlord_user",
+        sa_relationship_kwargs={"foreign_keys": "Listing.owner_landlord_user_id"},
+    )
     applications_as_applicant: List["ListingApplication"] = Relationship(
         back_populates="applicant_user",
         sa_relationship_kwargs={"foreign_keys": "ListingApplication.applicant_user_id"},
@@ -266,6 +273,10 @@ class User(TimestampedModel, table=True):
     properties_created: List["Property"] = Relationship(
         back_populates="created_by_user",
         sa_relationship_kwargs={"foreign_keys": "Property.created_by_user_id"},
+    )
+    properties_as_owner_landlord: List["Property"] = Relationship(
+        back_populates="owner_landlord_user",
+        sa_relationship_kwargs={"foreign_keys": "Property.owner_landlord_user_id"},
     )
     properties_as_assigned_agent: List["Property"] = Relationship(
         back_populates="assigned_agency_user",

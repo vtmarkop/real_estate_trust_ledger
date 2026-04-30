@@ -148,7 +148,7 @@ def parse_score_recalculation_scope(scope_type: str) -> ScoreRecalculationScope:
 def create_direct_score_recalculation_request(
     payload: TrustScoreRecalculationDirectCreateRequest,
     session: SessionDep,
-    current_user=Depends(require_system_roles(SystemRole.REVIEWER, SystemRole.ADMIN)),
+    current_user=Depends(require_system_roles(SystemRole.ADMIN)),
 ) -> TrustScoreRecalculationRequestResponse:
     user = resolve_scoring_user(
         session=session,
@@ -175,7 +175,7 @@ def list_score_recalculation_requests(
     session: SessionDep,
     status_filter: ScoreRecalculationStatus | None = Query(default=None),
     limit: int = Query(default=20, ge=1, le=200),
-    current_user=Depends(require_system_roles(SystemRole.REVIEWER, SystemRole.ADMIN)),
+    current_user=Depends(require_system_roles(SystemRole.ADMIN)),
 ) -> list[TrustScoreRecalculationRequestResponse]:
     query = select(TrustScoreRecalculationRequest)
     if status_filter is not None:
@@ -200,7 +200,7 @@ def list_score_recalculation_batches(
     session: SessionDep,
     status_filter: ScoreRecalculationStatus | None = Query(default=None),
     limit: int = Query(default=20, ge=1, le=200),
-    current_user=Depends(require_system_roles(SystemRole.REVIEWER, SystemRole.ADMIN)),
+    current_user=Depends(require_system_roles(SystemRole.ADMIN)),
 ) -> list[TrustScoreRecalculationBatchResponse]:
     query = select(TrustScoreRecalculationBatch)
     if status_filter is not None:
@@ -226,7 +226,7 @@ def create_user_score_recalculation_request_endpoint(
     user_id: UUID,
     session: SessionDep,
     scheduled_for: datetime | None = None,
-    current_user=Depends(require_system_roles(SystemRole.REVIEWER, SystemRole.ADMIN)),
+    current_user=Depends(require_system_roles(SystemRole.ADMIN)),
 ) -> TrustScoreRecalculationRequestResponse:
     user = get_scoring_user_or_404(session=session, user_id=user_id)
     request = create_user_score_recalculation_request(
@@ -248,7 +248,7 @@ def create_user_score_recalculation_request_endpoint(
 def get_user_score_recalculation_request(
     request_id: UUID,
     session: SessionDep,
-    current_user=Depends(require_system_roles(SystemRole.REVIEWER, SystemRole.ADMIN)),
+    current_user=Depends(require_system_roles(SystemRole.ADMIN)),
 ) -> TrustScoreRecalculationRequestResponse:
     request = get_scoring_request_or_404(session=session, request_id=request_id)
     return build_score_recalculation_request_response(recalculation_request=request)
@@ -261,7 +261,7 @@ def get_user_score_recalculation_request(
 def process_user_score_recalculation_request(
     request_id: UUID,
     session: SessionDep,
-    current_user=Depends(require_system_roles(SystemRole.REVIEWER, SystemRole.ADMIN)),
+    current_user=Depends(require_system_roles(SystemRole.ADMIN)),
 ) -> TrustScoreRecalculationRequestResponse:
     request = get_scoring_request_or_404(session=session, request_id=request_id)
     processed_request = process_score_recalculation_request(
@@ -282,7 +282,7 @@ def process_user_score_recalculation_request(
 def create_score_recalculation_batch_endpoint(
     payload: TrustScoreRecalculationBatchCreateRequest,
     session: SessionDep,
-    current_user=Depends(require_system_roles(SystemRole.REVIEWER, SystemRole.ADMIN)),
+    current_user=Depends(require_system_roles(SystemRole.ADMIN)),
 ) -> TrustScoreRecalculationBatchResponse:
     scope_type = parse_score_recalculation_scope(payload.scope_type)
     organization = None
@@ -321,7 +321,7 @@ def create_score_recalculation_batch_endpoint(
 def get_score_recalculation_batch(
     batch_id: UUID,
     session: SessionDep,
-    current_user=Depends(require_system_roles(SystemRole.REVIEWER, SystemRole.ADMIN)),
+    current_user=Depends(require_system_roles(SystemRole.ADMIN)),
 ) -> TrustScoreRecalculationBatchResponse:
     batch = get_scoring_batch_or_404(session=session, batch_id=batch_id)
     return build_score_recalculation_batch_response(session=session, batch=batch)
@@ -334,7 +334,7 @@ def get_score_recalculation_batch(
 def recalculate_user_trust_score_direct(
     payload: TrustScoreRecalculationDirectCreateRequest,
     session: SessionDep,
-    current_user=Depends(require_system_roles(SystemRole.REVIEWER, SystemRole.ADMIN)),
+    current_user=Depends(require_system_roles(SystemRole.ADMIN)),
 ) -> TrustScoreSummaryResponse:
     user = resolve_scoring_user(
         session=session,
@@ -365,7 +365,7 @@ def recalculate_user_trust_score_direct(
 def recalculate_user_trust_score(
     user_id: UUID,
     session: SessionDep,
-    current_user=Depends(require_system_roles(SystemRole.REVIEWER, SystemRole.ADMIN)),
+    current_user=Depends(require_system_roles(SystemRole.ADMIN)),
 ) -> TrustScoreSummaryResponse:
     user = get_scoring_user_or_404(session=session, user_id=user_id)
     request = create_user_score_recalculation_request(
@@ -391,7 +391,7 @@ def recalculate_user_trust_score(
 def list_user_trust_score_history(
     user_id: UUID,
     session: SessionDep,
-    current_user=Depends(require_system_roles(SystemRole.REVIEWER, SystemRole.ADMIN)),
+    current_user=Depends(require_system_roles(SystemRole.ADMIN)),
 ) -> list[TrustScoreHistoryResponse]:
     user = get_scoring_user_or_404(session=session, user_id=user_id)
     history_entries = session.exec(

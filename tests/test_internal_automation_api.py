@@ -32,6 +32,7 @@ from app.models import (  # noqa: E402
 )
 from app.models.common import utcnow  # noqa: E402
 from trustledger_domain import (  # noqa: E402
+    AccountWorkspaceRole,
     AutomationTaskStatus,
     AutomationTaskType,
     SystemRole,
@@ -70,6 +71,7 @@ class InternalAutomationApiTests(unittest.TestCase):
         full_name: str,
         password: str,
         system_role: SystemRole = SystemRole.USER,
+        workspace_roles: tuple[AccountWorkspaceRole, ...] | None = None,
     ) -> User:
         with Session(self.engine) as session:
             user = User(
@@ -78,6 +80,8 @@ class InternalAutomationApiTests(unittest.TestCase):
                 password_hash=hash_password(password),
                 system_role=system_role,
             )
+            if workspace_roles is not None:
+                user.set_workspace_roles(workspace_roles)
             session.add(user)
             session.commit()
             session.refresh(user)
@@ -107,12 +111,13 @@ class InternalAutomationApiTests(unittest.TestCase):
             email="reviewer@example.com",
             full_name="Reviewer User",
             password="reviewer-password-123",
-            system_role=SystemRole.REVIEWER,
+            system_role=SystemRole.ADMIN,
         )
         self.seed_user(
             email="owner@agency.example",
             full_name="Agency Owner",
             password="owner-password-123",
+            workspace_roles=(AccountWorkspaceRole.AGENCY,),
         )
         subject = self.seed_user(
             email="tenant@example.com",
@@ -179,12 +184,12 @@ class InternalAutomationApiTests(unittest.TestCase):
             self.assertEqual(len(tasks), 1)
             self.assertEqual(tasks[0].status, AutomationTaskStatus.CANCELED)
 
-    def test_reviewer_can_create_and_process_follow_up_task(self) -> None:
+    def test_admin_can_create_and_process_follow_up_task(self) -> None:
         self.seed_user(
             email="reviewer@example.com",
             full_name="Reviewer User",
             password="reviewer-password-123",
-            system_role=SystemRole.REVIEWER,
+            system_role=SystemRole.ADMIN,
         )
         subject = self.seed_user(
             email="subject@example.com",
@@ -195,6 +200,7 @@ class InternalAutomationApiTests(unittest.TestCase):
             email="owner@agency.example",
             full_name="Agency Owner",
             password="owner-password-123",
+            workspace_roles=(AccountWorkspaceRole.AGENCY,),
         )
 
         owner_client = self.new_client()
@@ -261,7 +267,7 @@ class InternalAutomationApiTests(unittest.TestCase):
             self.assertEqual(task.task_type, AutomationTaskType.INTERNAL_FOLLOW_UP)
             self.assertEqual(task.status, AutomationTaskStatus.COMPLETED)
 
-    def test_non_reviewer_is_denied_internal_automation_access(self) -> None:
+    def test_non_admin_is_denied_internal_automation_access(self) -> None:
         self.seed_user(
             email="plain@example.com",
             full_name="Plain User",
@@ -274,12 +280,12 @@ class InternalAutomationApiTests(unittest.TestCase):
         denied = plain_client.get("/api/v1/internal/automation/tasks")
         self.assertEqual(denied.status_code, 403, denied.text)
 
-    def test_reviewer_can_claim_due_tasks_without_claiming_future_tasks(self) -> None:
+    def test_admin_can_claim_due_tasks_without_claiming_future_tasks(self) -> None:
         self.seed_user(
             email="reviewer@example.com",
             full_name="Reviewer User",
             password="reviewer-password-123",
-            system_role=SystemRole.REVIEWER,
+            system_role=SystemRole.ADMIN,
         )
         subject = self.seed_user(
             email="subject@example.com",
@@ -325,17 +331,18 @@ class InternalAutomationApiTests(unittest.TestCase):
             self.assertEqual(due_record.status, AutomationTaskStatus.PROCESSING)
             self.assertEqual(future_record.status, AutomationTaskStatus.PENDING)
 
-    def test_reviewer_can_execute_active_consent_reminder_and_cleanup_expired_one(self) -> None:
+    def test_admin_can_execute_active_consent_reminder_and_cleanup_expired_one(self) -> None:
         self.seed_user(
             email="reviewer@example.com",
             full_name="Reviewer User",
             password="reviewer-password-123",
-            system_role=SystemRole.REVIEWER,
+            system_role=SystemRole.ADMIN,
         )
         self.seed_user(
             email="owner@agency.example",
             full_name="Agency Owner",
             password="owner-password-123",
+            workspace_roles=(AccountWorkspaceRole.AGENCY,),
         )
         self.seed_user(
             email="tenant@example.com",
@@ -417,12 +424,12 @@ class InternalAutomationApiTests(unittest.TestCase):
         self.assertEqual(cleaned_task.json()["status"], "canceled")
         self.assertIn("expired", cleaned_task.json()["result_notes"].lower())
 
-    def test_reviewer_can_cleanup_stale_follow_up_tasks(self) -> None:
+    def test_admin_can_cleanup_stale_follow_up_tasks(self) -> None:
         self.seed_user(
             email="reviewer@example.com",
             full_name="Reviewer User",
             password="reviewer-password-123",
-            system_role=SystemRole.REVIEWER,
+            system_role=SystemRole.ADMIN,
         )
         subject = self.seed_user(
             email="subject@example.com",
@@ -479,12 +486,12 @@ class InternalAutomationApiTests(unittest.TestCase):
         self.assertEqual(fresh_after_cleanup.status_code, 200, fresh_after_cleanup.text)
         self.assertEqual(fresh_after_cleanup.json()["status"], "pending")
 
-    def test_reviewer_can_create_follow_up_task_by_subject_email(self) -> None:
+    def test_admin_can_create_follow_up_task_by_subject_email(self) -> None:
         self.seed_user(
             email="reviewer@example.com",
             full_name="Reviewer User",
             password="reviewer-password-123",
-            system_role=SystemRole.REVIEWER,
+            system_role=SystemRole.ADMIN,
         )
         subject = self.seed_user(
             email="subject@example.com",
@@ -507,12 +514,12 @@ class InternalAutomationApiTests(unittest.TestCase):
         self.assertEqual(create_follow_up.json()["subject_user_id"], str(subject.id))
         self.assertEqual(create_follow_up.json()["subject_user_email"], "subject@example.com")
 
-    def test_reviewer_can_schedule_and_execute_user_score_refresh_task(self) -> None:
+    def test_admin_can_schedule_and_execute_user_score_refresh_task(self) -> None:
         reviewer = self.seed_user(
             email="reviewer@example.com",
             full_name="Reviewer User",
             password="reviewer-password-123",
-            system_role=SystemRole.REVIEWER,
+            system_role=SystemRole.ADMIN,
         )
         subject = self.seed_user(
             email="subject@example.com",
@@ -557,17 +564,18 @@ class InternalAutomationApiTests(unittest.TestCase):
             self.assertEqual(request.calculation_reason, "scheduled_automation_refresh")
             self.assertEqual(request.status.value, "pending")
 
-    def test_reviewer_can_schedule_and_execute_organization_score_batch_task(self) -> None:
+    def test_admin_can_schedule_and_execute_organization_score_batch_task(self) -> None:
         reviewer = self.seed_user(
             email="reviewer@example.com",
             full_name="Reviewer User",
             password="reviewer-password-123",
-            system_role=SystemRole.REVIEWER,
+            system_role=SystemRole.ADMIN,
         )
         owner = self.seed_user(
             email="owner@agency.example",
             full_name="Agency Owner",
             password="owner-password-123",
+            workspace_roles=(AccountWorkspaceRole.AGENCY,),
         )
         member = self.seed_user(
             email="member@agency.example",
